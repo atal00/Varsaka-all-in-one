@@ -1,0 +1,164 @@
+.chatbot-toggler {
+  position: fixed; bottom: 30px; left: 30px; z-index: 1000;
+  width: 64px; height: 64px; border-radius: 50%;
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  color: #fff; border: none;
+  font-size: 1.8rem; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; box-shadow: 0 8px 32px rgba(37, 99, 235, 0.4);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  overflow: hidden;
+}
+
+.chatbot-toggler::after {
+  content: ''; position: absolute; top: -50%; left: -150%; width: 100%; height: 200%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  transform: rotate(35deg); animation: shineSweep 4s infinite;
+}
+
+.chatbot-toggler:hover { transform: scale(1.1) rotate(5deg); box-shadow: 0 12px 40px rgba(37, 99, 235, 0.5); }
+
+@keyframes bot-wave { 0%,100%{transform:rotate(-5deg) scale(1)} 50%{transform:rotate(5deg) scale(1.12)} }
+.animated-bot { animation: bot-wave 1.5s ease-in-out infinite; display: inline-block; font-size: 1.8rem; }
+
+.chatbot-window {
+  position: fixed; bottom: 110px; left: 30px; z-index: 999;
+  width: 360px; max-height: 550px;
+  background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px);
+  border-radius: 24px; overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  display: flex; flex-direction: column;
+  animation: fadeUp 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.chat-header {
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  color: #fff; padding: 1.2rem 1.5rem;
+  display: flex; justify-content: space-between; align-items: center;
+  font-family: var(--font-h); font-weight: 800; font-size: 1rem;
+}
+
+.header-info { display: flex; align-items: center; gap: 10px; }
+.header-status { width: 10px; height: 10px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.2); }
+
+.chat-body { flex: 1; overflow-y: auto; padding: 1.5rem; display: flex; flex-direction: column; gap: 1.2rem; background: #fcfdfe; }
+.chat-body::-webkit-scrollbar { width: 4px; }
+.chat-body::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+.message { 
+  max-width: 85%; padding: 0.85rem 1.1rem; border-radius: 20px; font-size: 0.92rem; line-height: 1.6; 
+  position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.02); transition: all 0.2s;
+}
+
+.bot-message { background: #ffffff; color: #1e293b; border-bottom-left-radius: 4px; border: 1px solid #f1f5f9; }
+.user-message { background: linear-gradient(135deg, #2563eb, #7c3aed); color: #fff; border-bottom-right-radius: 4px; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.2); }
+
+.chat-opt { 
+  background: #ffffff; border: 1px solid #e2e8f0; color: #1e293b; 
+  padding: 0.6rem 1.2rem; border-radius: 100px; font-size: 0.82rem; font-weight: 700; 
+  cursor: pointer; transition: all 0.3s; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  white-space: nowrap;
+}
+.chat-opt:hover { border-color: #2563eb; color: #2563eb; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1); }
+
+.chat-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 5px;
+}
+
+.chat-footer { display: flex; gap: 0.6rem; padding: 1rem 1.2rem; border-top: 1px solid #f1f5f9; background: #fff; align-items: center; }
+.chat-input { flex: 1; border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 0.75rem 1.2rem; font-size: 0.92rem; outline: none; transition: border-color 0.2s; background: #f8fafc; }
+.chat-input:focus { border-color: #2563eb; background: #fff; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.05); }
+
+.chat-send-btn { 
+  background: linear-gradient(135deg, #2563eb, #7c3aed); color: #fff; border: none; 
+  border-radius: 12px; width: 42px; height: 42px; font-size: 1.1rem; cursor: pointer; 
+  display: flex; align-items: center; justify-content: center; transition: all 0.3s;
+}
+
+.close-chat { 
+  background: rgba(255, 255, 255, 0.1); 
+  border: 1px solid rgba(255, 255, 255, 0.2); 
+  color: #fff; 
+  width: 28px; height: 28px; 
+  border-radius: 50%; 
+  display: flex; align-items: center; justify-content: center; 
+  cursor: pointer; 
+  transition: all 0.2s; 
+  font-size: 0.8rem;
+}
+.close-chat:hover { 
+  background: #fff; 
+  color: #2563eb; 
+  transform: rotate(90deg) scale(1.1); 
+}
+
+.chat-send-btn:hover:not(:disabled) { transform: scale(1.05) rotate(-5deg); box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3); }
+
+@keyframes shineSweep {
+  0% { left: -150%; }
+  20% { left: 150%; }
+  100% { left: 150%; }
+}
+
+.chatbot-tooltip {
+  position: fixed;
+  bottom: 105px;
+  left: 30px;
+  z-index: 998;
+  background: white;
+  padding: 0.65rem 0.75rem 0.65rem 1.2rem;
+  border-radius: 100px;
+  border-bottom-left-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1e293b;
+  box-shadow: 0 10px 25px rgba(37, 99, 235, 0.15);
+  border: 1px solid #e2e8f0;
+  animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.chatbot-tooltip:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(37, 99, 235, 0.2);
+  border-color: #2563eb;
+}
+
+.chatbot-tooltip-close {
+  background: #f1f5f9;
+  border: none;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  font-size: 0.7rem;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  font-weight: 700;
+  line-height: 1;
+}
+.chatbot-tooltip-close:hover {
+  background: #dc2626;
+  color: white;
+  transform: scale(1.1);
+}
+
+@keyframes bounceIn {
+  0% { opacity: 0; transform: translateY(20px) scale(0.9); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media(max-width: 480px) {
+  .chatbot-toggler { bottom: 20px; left: 20px; width: 56px; height: 56px; }
+  .chatbot-tooltip { bottom: 85px; left: 20px; font-size: 0.8rem; padding: 0.6rem 1rem; }
+  .chatbot-window { width: calc(100vw - 32px); left: 16px; bottom: 90px; max-height: 75vh; }
+}

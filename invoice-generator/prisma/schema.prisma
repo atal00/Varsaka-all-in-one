@@ -1,0 +1,163 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  invoices   Invoice[]
+  clients    Client[]
+  savedItems SavedItem[]
+}
+
+model Invoice {
+  id            String   @id @default(cuid())
+  invoiceNumber String
+  poCode        String?
+  issueDate     String
+  dueDate       String
+  template      String   @default("standard")
+  
+  senderName    String
+  senderEmail   String
+  senderPhone   String
+  senderAddress String
+  senderTaxId   String?
+
+  clientName    String
+  clientEmail   String
+  clientAddress String
+  clientTaxId   String?
+
+  discountType  String
+  discountValue Float
+  taxRate1      Float
+  taxRate2      Float
+  currency      String
+  notes         String
+  terms         String
+
+  status        String   @default("Pending")
+  themeColor    String?
+  logoUrl       String?
+  fontFamily    String?
+  
+  bankName      String?
+  accountName   String?
+  accountNumber String?
+  routingCode   String?
+  bankAddress   String?
+  ifscCode      String?
+  swiftCode     String?
+  bankNotes     String?
+
+  dispatchVehicleNo   String?
+  dispatchEwayBill    String?
+  dispatchDestination String?
+  reverseCharge       Boolean? @default(false)
+
+  subtotal      Float
+  total         Float
+
+  lineItems     LineItem[]
+
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model LineItem {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  quantity    Float
+  rate        Float
+  unit        String
+  hsnCode     String?
+  taxRate     Float?
+  
+  invoiceId   String
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+}
+
+model Client {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  address   String?
+  taxId     String?
+  
+  customerType  String? // 'business' | 'individual'
+  salutation    String?
+  firstName     String?
+  lastName      String?
+  companyName   String?
+  workPhone     String?
+  mobilePhone   String?
+  
+  gstTreatment  String?
+  placeOfSupply String?
+  pan           String?
+  taxPreference String?
+  currency      String?
+  openingBalance String?
+  paymentTerms  String?
+
+  billingAttention String?
+  billingCountry   String?
+  billingStreet1   String?
+  billingStreet2   String?
+  billingCity      String?
+  billingState     String?
+  billingPinCode   String?
+  billingPhone     String?
+
+  shippingAttention String?
+  shippingCountry   String?
+  shippingStreet1   String?
+  shippingStreet2   String?
+  shippingCity      String?
+  shippingState     String?
+  shippingPinCode   String?
+  shippingPhone     String?
+
+  contactPersons String? // JSON string
+  remarks        String?
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SavedItem {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  rate        Float
+  unit        String
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model IpBlock {
+  id             String    @id @default(cuid())
+  ip             String    @unique
+  failedAttempts Int       @default(0)
+  blockedUntil   DateTime?
+  isPermanent    Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}

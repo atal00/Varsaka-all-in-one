@@ -1,0 +1,112 @@
+.case-page {
+  padding-bottom: 8rem;
+}
+
+.case-hero {
+  padding: 8rem 5% 3rem;
+  background: radial-gradient(circle at bottom right, var(--blue-light) 0%, var(--bg) 60%, var(--bg) 100%);
+  text-align: center;
+}
+
+.case-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.case-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 2.5rem;
+}
+
+.case-card {
+  background: var(--bg-white);
+  border-radius: 32px;
+  border: 1px solid var(--border);
+  padding: 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: var(--shadow-sm);
+}
+
+.case-card:hover {
+  transform: translateY(-12px);
+  border-color: var(--blue-mid);
+  box-shadow: var(--shadow-lg);
+}
+
+.case-icon {
+  width: 60px;
+  height: 60px;
+  background: var(--blue-light);
+  color: var(--blue-mid);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.case-tag {
+  display: inline-block;
+  padding: 0.4rem 1rem;
+  background: rgba(37, 99, 235, 0.05);
+  color: var(--blue-mid);
+  font-size: 0.75rem;
+  font-weight: 800;
+  border-radius: 100px;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.case-card h3 {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 1rem;
+}
+
+.case-outcome {
+  background: linear-gradient(to right, var(--blue-mid), var(--blue-bright));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 900;
+  font-size: 1.1rem;
+  margin-bottom: 1.5rem;
+  line-height: 1.4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.case-card p {
+  color: var(--text-muted);
+  line-height: 1.7;
+  font-size: 1.05rem;
+}
+
+@media (max-width: 768px) {
+  .case-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .case-hero {
+    padding-top: 6rem;
+  }
+}
+
+/* 🌙 Dark Mode Support */
+[data-theme="dark"] .case-card {
+  background: rgba(30, 41, 59, 0.5);
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .case-icon {
+  background: rgba(56, 189, 248, 0.1);
+}

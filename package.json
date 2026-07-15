@@ -1,0 +1,24 @@
+{
+  "name": "varsaka",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently -n \"react,admin,invoice,blogs,server\" -c \"blue,magenta,yellow,cyan,green\" \"npm run dev --prefix varsaka-react -- --port 5173\" \"npm run dev --prefix varsaka-admin -- --port 5174\" \"npm run dev --prefix invoice-generator -- -p 3000\" \"npm run dev --prefix varsaka-blogs -- -p 3001\" \"npm run dev --prefix varsaka-server\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/atal00/Varsaka.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/atal00/Varsaka/issues"
+  },
+  "homepage": "https://github.com/atal00/Varsaka#readme",
+  "devDependencies": {
+    "concurrently": "^10.0.3"
+  }
+}

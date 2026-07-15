@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="shortcut icon" href="/src/assets/logo.png" type="image/x-icon" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- 📊 Google Analytics 4 (GA4) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-XXXXXXXXXX');
+    </script>
+
+    <!-- 🛡️ Enterprise Security Headers -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    
+    <!-- Hardened Content Security Policy (CSP) -->
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self';
+      script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://*.supabase.co https://*.googletagmanager.com;
+      style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com;
+      img-src 'self' data: https://*.supabase.co https://fonts.gstatic.com https://*.googleusercontent.com https://*.googletagmanager.com;
+      font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com;
+      connect-src 'self' https://*.supabase.co https://supabase.co https://*.google.com https://*.formsubmit.co https://formsubmit.co https://*.google-analytics.com;
+      frame-src 'none';
+      object-src 'none';
+      base-uri 'self';
+      form-action 'self' https://*.formsubmit.co https://formsubmit.co;
+      upgrade-insecure-requests;
+    " />
+    
+    <!-- Prevent Clickjacking & MIME Sniffing -->
+    <meta http-equiv="X-Frame-Options" content="DENY" />
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="X-Download-Options" content="noopen" />
+    <meta http-equiv="X-Permitted-Cross-Domain-Policies" content="none" />
+    
+    <meta name="description" content="Varsaka Labs is a premier software testing company providing functional, automation, performance, security, and AI-powered QA services." />
+    <meta name="keywords" content="software testing company, quality assurance, automation testing, performance testing, security testing, AI testing" />
+    <meta name="author" content="Varsaka Labs" />
+    
+    <!-- Open Graph / Social Media -->
+    <meta property="og:title" content="Varsaka Labs – Quality Engineering & Development" />
+    <meta property="og:description" content="Top Software Testing Company providing end-to-end QA solutions." />
+    <meta property="og:image" content="https://varsaka.com/og-image.png" />
+    <meta property="og:url" content="https://varsaka.com" />
+    <meta property="og:type" content="website" />
+
+    <title>Varsaka Labs – Top Software Testing Company | Quality Engineering</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

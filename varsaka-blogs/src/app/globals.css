@@ -1,0 +1,71 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@plugin "@tailwindcss/typography";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-serif: var(--font-serif);
+  --font-mono: var(--font-mono);
+  --font-heading: var(--font-serif);
+  
+  --color-surface: var(--surface);
+  --color-surface2: var(--surface2);
+  --color-v-muted: var(--muted);
+  --color-v-faint: var(--faint);
+  
+  --color-border: var(--border);
+  --color-ring: var(--border);
+
+  --color-primary: #2f6f4e;
+  --color-primary-foreground: #FAF9F6;
+}
+
+:root {
+  --background: #FAF9F6;
+  --foreground: #15140F;
+  --surface: #F2F0E9;
+  --surface2: #ECEAE1;
+  --border: #E3DFD4;
+  --line: #D8D3C6;
+  --muted: #6E6A5F;
+  --faint: #A8A294;
+  --pass: #4FA87B;
+  
+  /* Required defaults for base styling */
+  --ring: #E3DFD4;
+}
+
+.dark {
+  --background: #0E0D0A;
+  --foreground: #FAF9F6;
+  --surface: #1A1916;
+  --surface2: #262420;
+  --border: #262420;
+  --line: #33312B;
+  --muted: #94917F;
+  --faint: #6E6A5F;
+  --pass: #4FA87B;
+  
+  --ring: #262420;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif;
+  }
+}

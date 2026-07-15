@@ -1,0 +1,108 @@
+.varsaka-signature-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 600px;
+  overflow: visible;
+  color: var(--text, #000);
+}
+
+.varsaka-signature-wrapper svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible !important;
+}
+
+/* Base states */
+.varsaka-signature-wrapper .sig-mask-rect {
+  width: 0;
+  transition: width 2.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.varsaka-signature-wrapper .sig-underline {
+  stroke-dasharray: 9000;
+  stroke-dashoffset: 9000;
+  transition: stroke-dashoffset 1s cubic-bezier(0.2, 0.8, 0.2, 1);
+  opacity: 0;
+}
+
+.varsaka-signature-wrapper .sig-dots circle {
+  opacity: 0 !important;
+  transform: scale(0);
+  transform-origin: center;
+  transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.3, 0, 0.1, 1);
+}
+
+.varsaka-signature-wrapper > svg > circle {
+  opacity: 0 !important;
+  transform: scale(0.5);
+  transform-origin: -8px -78px;
+  transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.3, 0, 0.1, 1);
+}
+
+/* Animating states */
+.varsaka-signature-wrapper.is-animating .sig-mask-rect {
+  width: 954px; /* full width of viewBox */
+}
+
+/* Underline starts 1.4s after the signature wipe begins */
+.varsaka-signature-wrapper.is-animating .sig-underline {
+  stroke-dashoffset: 0 !important;
+  opacity: 0.8; /* original opacity */
+  transition-delay: 1.4s;
+}
+
+/* Dots pop in after signature is almost done */
+.varsaka-signature-wrapper.is-animating .sig-dots circle {
+  opacity: 1 !important;
+  transform: scale(1);
+}
+
+.varsaka-signature-wrapper.is-animating .sig-dots circle:nth-child(1) { transition-delay: 1.8s; }
+.varsaka-signature-wrapper.is-animating .sig-dots circle:nth-child(2) { transition-delay: 1.85s; }
+.varsaka-signature-wrapper.is-animating .sig-dots circle:nth-child(3) { transition-delay: 1.9s; }
+.varsaka-signature-wrapper.is-animating .sig-dots circle:nth-child(4) { transition-delay: 1.95s; }
+.varsaka-signature-wrapper.is-animating .sig-dots circle:nth-child(5) { transition-delay: 2.0s; }
+.varsaka-signature-wrapper.is-animating .sig-dots circle:nth-child(6) { transition-delay: 2.05s; }
+.varsaka-signature-wrapper.is-animating .sig-dots circle:nth-child(n+7) { transition-delay: 2.1s; }
+
+/* The moving pen pointer */
+.varsaka-signature-wrapper.is-animating .sig-pointer {
+  animation: pointer-move 2.2s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+@keyframes pointer-move {
+  0% { transform: translate(0px, 0px); }
+  100% { transform: translate(954px, 0px); }
+}
+
+.varsaka-signature-wrapper .sig-pointer circle {
+  opacity: 0 !important;
+  transform: scale(0.5);
+  transform-origin: -8px -78px;
+}
+
+.varsaka-signature-wrapper.is-animating .sig-pointer circle {
+  animation: pointer-fade 2.4s linear forwards;
+}
+
+@keyframes pointer-fade {
+  0% { opacity: 0; transform: scale(0.5); }
+  5% { opacity: 1; transform: scale(1); }
+  85% { opacity: 1; transform: scale(1); }
+  95% { opacity: 0; transform: scale(0.5); }
+  100% { opacity: 0; transform: scale(0.5); }
+}
+
+/* Specifically for the blur circle */
+.varsaka-signature-wrapper.is-animating .sig-pointer circle[opacity="0.16"] {
+  animation: pointer-fade-blur 2.4s linear forwards;
+}
+
+@keyframes pointer-fade-blur {
+  0% { opacity: 0; transform: scale(0.5); }
+  5% { opacity: 0.16; transform: scale(1); }
+  85% { opacity: 0.16; transform: scale(1); }
+  95% { opacity: 0; transform: scale(0.5); }
+  100% { opacity: 0; transform: scale(0.5); }
+}
