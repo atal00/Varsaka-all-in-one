@@ -18,7 +18,6 @@ const CaseStudies = lazy(() => import('./pages/CaseStudies'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 const TermsOfService = lazy(() => import('./pages/TermsOfService'));
 const NdaTemplate = lazy(() => import('./pages/NdaTemplate'));
-const Login = lazy(() => import('./pages/Login'));
 const Portal = lazy(() => import('./pages/Portal'));
 const FunctionalTesting = lazy(() => import('./pages/FunctionalTesting'));
 const AutomationTesting = lazy(() => import('./pages/AutomationTesting'));
@@ -30,7 +29,6 @@ const Apply = lazy(() => import('./pages/Apply'));
 const BlogDetail = lazy(() => import('./pages/BlogDetail'));
 const VerifyCertificate = lazy(() => import('./pages/VerifyCertificate'));
 const Fake404 = lazy(() => import('./pages/Fake404'));
-const TimeBasedLogin = lazy(() => import('./pages/TimeBasedLogin'));
 import './index.css';
 
 function AnimationTrigger() {
@@ -154,7 +152,6 @@ export default function App() {
             
             {/* Dynamic Security & 404 Pages */}
             <Route path="/404" element={<Fake404 />} />
-            <Route path="/:accessCode" element={<TimeBasedLogin />} />
             <Route path="*" element={<Fake404 />} />
           </Routes>
         </Suspense>
