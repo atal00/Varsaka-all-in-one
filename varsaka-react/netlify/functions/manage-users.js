@@ -1,9 +1,17 @@
 const { createClient } = require('@supabase/supabase-js');
 
 exports.handler = async (event, context) => {
-  // CORS Headers
+  // Strict CORS checking
+  const allowedOrigins = (process.env.ALLOWED_ORIGIN || 'https://varsaka.com').split(',').map(o => o.trim());
+  const requestOrigin = event.headers.origin;
+  
+  let corsOrigin = allowedOrigins[0];
+  if (requestOrigin && (allowedOrigins.includes(requestOrigin) || requestOrigin.includes('localhost') || requestOrigin.includes('127.0.0.1'))) {
+    corsOrigin = requestOrigin;
+  }
+
   const headers = {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': corsOrigin,
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Allow-Methods': 'POST, OPTIONS'
   };
@@ -58,6 +66,17 @@ exports.handler = async (event, context) => {
     if (action === 'create') {
       const { email, password, full_name, role, permissions } = payload;
       
+      // Input Validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!email || !emailRegex.test(email)) {
+        return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid email format' }) };
+      }
+      
+      const allowedRoles = ['admin', 'super_admin', 'employee', 'manager'];
+      if (role && !allowedRoles.includes(role)) {
+        return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid role specified' }) };
+      }
+      
       const { data: authData, error: createError } = await supabaseAdmin.auth.admin.createUser({
         email,
         password,
@@ -83,6 +102,12 @@ exports.handler = async (event, context) => {
     
     else if (action === 'update') {
       const { userId, role, permissions } = payload;
+      
+      // Input Validation
+      const allowedRoles = ['admin', 'super_admin', 'employee', 'manager'];
+      if (role && !allowedRoles.includes(role)) {
+        return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid role specified' }) };
+      }
       const { error: updateError } = await supabaseAdmin.from('profiles').update({
         role,
         permissions

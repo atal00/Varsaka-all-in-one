@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "concurrently -n \"react,admin,invoice,blogs,server\" -c \"blue,magenta,yellow,cyan,green\" \"npm run dev --prefix varsaka-react -- --port 5173\" \"npm run dev --prefix varsaka-admin -- --port 5174\" \"npm run dev --prefix invoice-generator -- -p 3000\" \"npm run dev --prefix varsaka-blogs -- -p 3001\" \"npm run dev --prefix varsaka-server\""
+    "dev": "concurrently -n \"react,admin,invoice,blogs,server\" -c \"blue,magenta,yellow,cyan,green\" \"npm run dev --prefix varsaka-react -- --port 5173 --strictPort\" \"npm run dev --prefix varsaka-admin -- --port 5174 --strictPort\" \"npm run dev --prefix invoice-generator -- -p 3000\" \"npm run dev --prefix varsaka-blogs -- -p 3001\" \"npm run dev --prefix varsaka-server\""
   },
   "repository": {
     "type": "git",

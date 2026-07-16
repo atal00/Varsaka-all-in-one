@@ -3,12 +3,26 @@ const { Resend } = require('resend');
 const ipCache = new Map();
 
 exports.handler = async (event, context) => {
+  // Strict CORS checking
+  const allowedOrigins = (process.env.ALLOWED_ORIGIN || 'https://varsaka.com').split(',').map(o => o.trim());
+  const requestOrigin = event.headers.origin;
+  
+  let corsOrigin = allowedOrigins[0];
+  if (requestOrigin && (allowedOrigins.includes(requestOrigin) || requestOrigin.includes('localhost') || requestOrigin.includes('127.0.0.1'))) {
+    corsOrigin = requestOrigin;
+  }
+
+  const headers = {
+    'Access-Control-Allow-Origin': corsOrigin,
+    'Access-Control-Allow-Headers': 'Content-Type'
+  };
+
   if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'Content-Type' } };
+    return { statusCode: 200, headers };
   }
   
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
+    return { statusCode: 405, headers, body: 'Method Not Allowed' };
   }
 
   // Rate Limiting (5 requests per hour)
@@ -25,20 +39,25 @@ exports.handler = async (event, context) => {
   ipCache.set(ip, requestInfo);
 
   if (requestInfo.count > 5) {
-    return { statusCode: 429, body: JSON.stringify({ error: 'Too many requests. Please try again later.' }) };
+    return { statusCode: 429, headers, body: JSON.stringify({ error: 'Too many requests. Please try again later.' }) };
   }
 
   try {
     const data = JSON.parse(event.body);
 
     if (data._honey) {
-      return { statusCode: 200, body: JSON.stringify({ success: true, message: 'Application submitted successfully' }) };
+      return { statusCode: 200, headers, body: JSON.stringify({ success: true, message: 'Application submitted successfully' }) };
     }
 
     const { name, email, phone, role, experience, resumeLink, coverLetter } = data;
 
     if (!name || !email || !role || !resumeLink) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'Missing required fields' }) };
+      return { statusCode: 400, headers, body: JSON.stringify({ error: 'Missing required fields' }) };
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid email format' }) };
     }
 
     const resendKey = process.env.RESEND_API_KEY;
@@ -66,7 +85,7 @@ exports.handler = async (event, context) => {
 
     return {
       statusCode: 200,
-      headers: { 'Access-Control-Allow-Origin': '*' },
+      headers,
       body: JSON.stringify({ success: true, message: 'Application submitted successfully' })
     };
 
@@ -74,6 +93,7 @@ exports.handler = async (event, context) => {
     console.error('Function Error:', error);
     return {
       statusCode: 500,
+      headers,
       body: JSON.stringify({ error: 'Internal server error' })
     };
   }

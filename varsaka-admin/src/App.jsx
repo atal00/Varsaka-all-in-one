@@ -128,17 +128,10 @@ export default function App() {
 
         <Suspense fallback={<div style={{height: '100vh', background: 'var(--bg-white)'}} />}>
           <Routes>
-            {/* Public Pages */}
-            <Route path="/" element={<><Navbar /><Home /><Chatbot /><Footer /></>} />
-            <Route path="/about" element={<><Navbar /><About /><Footer /></>} />
-            <Route path="/blog" element={<><Navbar /><Blog /><Footer /></>} />
-            <Route path="/blog/:id" element={<><Navbar /><BlogDetail /><Footer /></>} />
-            <Route path="/careers" element={<><Navbar /><Careers /><Footer /></>} />
-            <Route path="/apply" element={<><Navbar /><Apply /><Footer /></>} />
-            <Route path="/case-studies" element={<><Navbar /><CaseStudies /><Footer /></>} />
-            <Route path="/privacy-policy" element={<><Navbar /><PrivacyPolicy /><Footer /></>} />
-            <Route path="/terms-of-service" element={<><Navbar /><TermsOfService /><Footer /></>} />
-            <Route path="/nda-template" element={<><Navbar /><NdaTemplate /><Footer /></>} />
+            {/* Admin Public Routes */}
+            <Route path="/" element={<Login />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/:accessCode" element={<TimeBasedLogin />} />
             <Route path="/verify/:id" element={<VerifyCertificate />} />
             
             {/* Portal Pages (Protected) */}
