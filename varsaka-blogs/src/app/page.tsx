@@ -39,7 +39,7 @@ export default function Home() {
         setClientIp(data.ip);
         const { data: isBlocked } = await supabase.rpc('check_ip_block', { p_ip: data.ip, p_app: 'blogs' });
         if (isBlocked) {
-          window.location.href = 'https://varsaka.com';
+          router.push('/404');
         }
       })
       .catch(() => {});
@@ -55,8 +55,14 @@ export default function Home() {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
+    
+    if (!email.trim() || !password.trim()) {
+      setError('Please enter both email and password.');
+      return;
+    }
+    
+    setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,

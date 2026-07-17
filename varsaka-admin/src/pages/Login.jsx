@@ -36,7 +36,7 @@ export default function Login() {
         setClientIp(data.ip);
         const { data: isBlocked } = await supabase.rpc('check_ip_block', { p_ip: data.ip, p_app: 'admin' });
         if (isBlocked) {
-          window.location.href = 'https://varsaka.com';
+          navigate('/404', { replace: true });
         }
       })
       .catch(() => {});
@@ -51,6 +51,11 @@ export default function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (!user.trim() || !pass.trim()) {
+      setError('Please enter both username and password.');
+      return;
+    }
 
     if (!isCaptchaValid) {
       handleFailedAttempt();

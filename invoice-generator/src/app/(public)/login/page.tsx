@@ -30,7 +30,7 @@ export default function LoginPage() {
           });
           const isBlocked = await checkRes.json();
           if (isBlocked) {
-            window.location.href = 'https://varsaka.com';
+            router.push('/404');
           }
         } catch (err) {}
       })
@@ -60,10 +60,18 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
     const formData = new FormData(e.currentTarget);
+    const emailStr = formData.get('email')?.toString() || '';
+    const passStr = formData.get('password')?.toString() || '';
+    
+    if (!emailStr.trim() || !passStr.trim()) {
+      setError('Please enter both email and password.');
+      return;
+    }
+
     const res = await signIn('credentials', {
       redirect: false,
-      email: formData.get('email'),
-      password: formData.get('password'),
+      email: emailStr,
+      password: passStr,
     });
     if (res?.error) {
        handleFailedAttempt();
