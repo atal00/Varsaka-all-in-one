@@ -39,7 +39,7 @@ export default function Home() {
         setClientIp(data.ip);
         const { data: isBlocked } = await supabase.rpc('check_ip_block', { p_ip: data.ip, p_app: 'blogs' });
         if (isBlocked) {
-          router.push('/404');
+          router.push('/security-redirect');
         }
       })
       .catch(() => {});
