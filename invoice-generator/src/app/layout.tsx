@@ -29,7 +29,7 @@ export default async function RootLayout({
   const ip = forwardedFor ? forwardedFor.split(',')[0].trim() : 'unknown';
 
   if (ip !== 'unknown') {
-    const block = await prisma.ipBlock.findUnique({ where: { ip } });
+    const block = await prisma.ipBlock.findUnique({ where: { ip_app: { ip, app: 'invoice' } } });
     if (block && (block.isPermanent || (block.blockedUntil && block.blockedUntil > new Date()))) {
       return (
         <html lang="en">
