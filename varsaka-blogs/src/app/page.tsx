@@ -13,6 +13,8 @@ export default function Home() {
   const router = useRouter();
   const [supabase] = useState(() => createClient());
 
+  const [clientIp, setClientIp] = useState('Unknown');
+
   useEffect(() => {
     // If they got kicked out for access denied, ensure they are locally signed out
     if (typeof window !== 'undefined' && window.location.search.includes('error=access_denied')) {
@@ -30,8 +32,30 @@ export default function Home() {
       setSession(session);
     });
 
+    // Check if IP is blocked on mount
+    fetch('https://api.ipify.org?format=json')
+      .then(res => res.json())
+      .then(async data => {
+        setClientIp(data.ip);
+        const { data: isBlocked } = await supabase.rpc('check_ip_block', { p_ip: data.ip, p_app: 'blogs' });
+        if (isBlocked) {
+          router.push('/security-redirect');
+        }
+      })
+      .catch(() => {});
+
     return () => subscription.unsubscribe();
-  }, []);
+  }, [router, supabase]);
+
+  const handleFailedAttempt = async () => {
+    await supabase.rpc('log_failed_attempt', { p_ip: clientIp, p_app: 'blogs' });
+    const { data: isBlocked } = await supabase.rpc('check_ip_block', { p_ip: clientIp, p_app: 'blogs' });
+    if (isBlocked) {
+      router.push('/security-redirect');
+    } else {
+      setError('Invalid credentials. Too many failed attempts will result in an IP block.');
+    }
+  };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,8 +66,9 @@ export default function Home() {
       password,
     });
     if (error) {
-      setError(error.message);
+      handleFailedAttempt();
     } else {
+      await supabase.rpc('clear_ip_block', { p_ip: clientIp, p_app: 'blogs' });
       router.push("/dashboard");
     }
     setLoading(false);

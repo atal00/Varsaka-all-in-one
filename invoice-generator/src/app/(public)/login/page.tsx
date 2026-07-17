@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -10,9 +10,69 @@ import styles from '@/components/ui/ui.module.css';
 export default function LoginPage() {
   const router = useRouter();
   const [error, setError] = useState('');
+  const [clientIp, setClientIp] = useState('Unknown');
+
+  // Check if IP is blocked on mount
+  useEffect(() => {
+    fetch('https://api.ipify.org?format=json')
+      .then(res => res.json())
+      .then(async data => {
+        setClientIp(data.ip);
+        try {
+          const checkRes = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/check_ip_block`, {
+            method: 'POST',
+            headers: {
+              'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+              'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ p_ip: data.ip, p_app: 'invoice' })
+          });
+          const isBlocked = await checkRes.json();
+          if (isBlocked) {
+            router.push('/security-redirect');
+          }
+        } catch (err) {}
+      })
+      .catch(() => {});
+  }, [router]);
+
+  const handleFailedAttempt = async () => {
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/log_failed_attempt`, {
+        method: 'POST',
+        headers: {
+          'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ p_ip: clientIp, p_app: 'invoice' })
+      });
+      
+      const checkRes = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/check_ip_block`, {
+        method: 'POST',
+        headers: {
+          'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ p_ip: clientIp, p_app: 'invoice' })
+      });
+      const isBlocked = await checkRes.json();
+      
+      if (isBlocked) {
+        router.push('/security-redirect');
+      } else {
+        setError('Invalid credentials. Too many failed attempts will result in an IP block.');
+      }
+    } catch (err) {
+      setError('Invalid credentials.');
+    }
+  };
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setError('');
     const formData = new FormData(e.currentTarget);
     const res = await signIn('credentials', {
       redirect: false,
@@ -20,8 +80,19 @@ export default function LoginPage() {
       password: formData.get('password'),
     });
     if (res?.error) {
-       router.push('/security-redirect');
+       handleFailedAttempt();
     } else {
+       try {
+         await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/clear_ip_block`, {
+           method: 'POST',
+           headers: {
+             'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+             'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+             'Content-Type': 'application/json'
+           },
+           body: JSON.stringify({ p_ip: clientIp, p_app: 'invoice' })
+         });
+       } catch (err) {}
        router.push('/dashboard');
     }
   }

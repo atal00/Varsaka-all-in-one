@@ -5,6 +5,7 @@ import logo from '../assets/logo.png';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
 import { sanitize } from '../utils/security'; // 🛡️ Security Guard
+import SecurityLogsPanel from '../components/SecurityLogsPanel';
 import './Portal.css';
 
 const ALL_COUNTRIES = [
@@ -800,6 +801,7 @@ export default function Portal() {
     { id: 'FAQ', icon: 'fa-solid fa-circle-question', label: 'FAQ' },
     { id: 'Media', icon: 'fa-solid fa-image', label: 'Media' },
     { id: 'Users', icon: 'fa-solid fa-users', label: 'Users' },
+    { id: 'Security Logs', icon: 'fa-solid fa-shield-halved', label: 'Security Logs' },
     { id: 'Settings', icon: 'fa-solid fa-gear', label: 'Settings' }
   ];
 
@@ -1133,6 +1135,12 @@ export default function Portal() {
                 </tbody>
               </table>
             </div>
+          </div>
+        )}
+
+        {activeTab === 'Security Logs' && (
+          <div className="portal-container" style={{padding: '2rem'}}>
+            <SecurityLogsPanel />
           </div>
         )}
 
