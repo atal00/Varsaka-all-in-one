@@ -29,19 +29,24 @@ export default async function RootLayout({
   const ip = forwardedFor ? forwardedFor.split(',')[0].trim() : 'unknown';
 
   if (ip !== 'unknown') {
-    const block = await prisma.ipBlock.findUnique({ where: { ip_app: { ip, app: 'invoice' } } });
-    if (block && (block.isPermanent || (block.blockedUntil && block.blockedUntil > new Date()))) {
-      return (
-        <html lang="en">
-          <body className={`${inter.variable} ${roboto.variable} ${playfair.variable} ${spaceMono.variable} ${outfit.variable} ${inter.className}`}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#f8fafc', color: '#0f172a', fontFamily: 'sans-serif' }}>
-              <h1 style={{ fontSize: '6rem', fontWeight: 900, margin: 0, color: '#e2e8f0' }}>404</h1>
-              <h2 style={{ fontSize: '2rem', marginTop: '-1rem', zIndex: 1 }}>Page Not Found</h2>
-              <p style={{ marginTop: '1rem', color: '#64748b' }}>The requested resource was not found.</p>
-            </div>
-          </body>
-        </html>
-      );
+    try {
+      const block = await prisma.ipBlock.findUnique({ where: { ip_app: { ip, app: 'invoice' } } });
+      if (block && (block.isPermanent || (block.blockedUntil && block.blockedUntil > new Date()))) {
+        return (
+          <html lang="en">
+            <body className={`${inter.variable} ${roboto.variable} ${playfair.variable} ${spaceMono.variable} ${outfit.variable} ${inter.className}`}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#f8fafc', color: '#0f172a', fontFamily: 'sans-serif' }}>
+                <h1 style={{ fontSize: '6rem', fontWeight: 900, margin: 0, color: '#e2e8f0' }}>404</h1>
+                <h2 style={{ fontSize: '2rem', marginTop: '-1rem', zIndex: 1 }}>Page Not Found</h2>
+                <p style={{ marginTop: '1rem', color: '#64748b' }}>The requested resource was not found.</p>
+              </div>
+            </body>
+          </html>
+        );
+      }
+    } catch (e) {
+      console.error("IP Block check failed:", e);
+      // Fail open: don't crash the whole site if DB query fails
     }
   }
 
