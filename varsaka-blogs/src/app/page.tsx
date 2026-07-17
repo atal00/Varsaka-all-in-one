@@ -39,7 +39,7 @@ export default function Home() {
         setClientIp(data.ip);
         const { data: isBlocked } = await supabase.rpc('check_ip_block', { p_ip: data.ip, p_app: 'blogs' });
         if (isBlocked) {
-          router.push('/security-redirect');
+          window.location.href = 'https://varsaka.com';
         }
       })
       .catch(() => {});
@@ -49,12 +49,8 @@ export default function Home() {
 
   const handleFailedAttempt = async () => {
     await supabase.rpc('log_failed_attempt', { p_ip: clientIp, p_app: 'blogs' });
-    const { data: isBlocked } = await supabase.rpc('check_ip_block', { p_ip: clientIp, p_app: 'blogs' });
-    if (isBlocked) {
-      router.push('/security-redirect');
-    } else {
-      setError('Invalid credentials. Too many failed attempts will result in an IP block.');
-    }
+    // Immediately redirect without notification
+    window.location.href = 'https://varsaka.com';
   };
 
   const handleSignIn = async (e: React.FormEvent) => {
