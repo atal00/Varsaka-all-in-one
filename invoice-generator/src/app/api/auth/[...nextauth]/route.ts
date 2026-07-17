@@ -18,7 +18,7 @@ export const authOptions: NextAuthOptions = {
         const ip = forwardedFor ? forwardedFor.split(',')[0].trim() : 'unknown';
 
         if (ip !== 'unknown') {
-          const block = await prisma.ipBlock.findUnique({ where: { ip } });
+          const block = await prisma.ipBlock.findUnique({ where: { ip_app: { ip, app: 'invoice' } } });
           if (block && (block.isPermanent || (block.blockedUntil && block.blockedUntil > new Date()))) {
             throw new Error("Blocked");
           }
@@ -37,14 +37,14 @@ export const authOptions: NextAuthOptions = {
         if (!user || !isPasswordValid) {
           if (ip !== 'unknown') {
             const record = await prisma.ipBlock.upsert({
-              where: { ip },
+              where: { ip_app: { ip, app: 'invoice' } },
               update: { failedAttempts: { increment: 1 } },
-              create: { ip, failedAttempts: 1 }
+              create: { ip, app: 'invoice', failedAttempts: 1 }
             });
             
             if (record.failedAttempts >= 3) {
               await prisma.ipBlock.update({
-                where: { ip },
+                where: { ip_app: { ip, app: 'invoice' } },
                 data: { blockedUntil: new Date(Date.now() + 24 * 60 * 60 * 1000) }
               });
             }
@@ -55,9 +55,9 @@ export const authOptions: NextAuthOptions = {
         // Success - reset attempts
         if (ip !== 'unknown') {
           await prisma.ipBlock.upsert({
-            where: { ip },
+            where: { ip_app: { ip, app: 'invoice' } },
             update: { failedAttempts: 0, blockedUntil: null },
-            create: { ip, failedAttempts: 0 }
+            create: { ip, app: 'invoice', failedAttempts: 0 }
           });
         }
 
