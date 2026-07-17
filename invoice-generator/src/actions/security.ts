@@ -15,6 +15,7 @@ async function checkMasterAdmin() {
 export async function getBlockedIps() {
   await checkMasterAdmin();
   return prisma.ipBlock.findMany({
+    where: { app: 'invoice' },
     orderBy: { updatedAt: 'desc' }
   });
 }
@@ -23,7 +24,7 @@ export async function unblockIp(ip: string) {
   await checkMasterAdmin();
   
   await prisma.ipBlock.update({
-    where: { ip },
+    where: { ip_app: { ip, app: 'invoice' } },
     data: { blockedUntil: null, failedAttempts: 0, isPermanent: false }
   });
   
@@ -34,7 +35,7 @@ export async function togglePermanentBlock(ip: string, isPermanent: boolean) {
   await checkMasterAdmin();
   
   await prisma.ipBlock.update({
-    where: { ip },
+    where: { ip_app: { ip, app: 'invoice' } },
     data: { isPermanent }
   });
   
@@ -45,7 +46,7 @@ export async function deleteIpBlock(ip: string) {
   await checkMasterAdmin();
   
   await prisma.ipBlock.delete({
-    where: { ip }
+    where: { ip_app: { ip, app: 'invoice' } }
   });
   
   revalidatePath('/admin/security');
