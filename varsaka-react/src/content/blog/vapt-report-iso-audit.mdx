@@ -1,0 +1,34 @@
+---
+title: "What a VAPT report should include before an ISO audit"
+description: "If you're heading into an ISO 27001 or SOC 2 audit, your VAPT report needs more than a vulnerability list. Here's the structure auditors expect."
+date: "2026-02-26"
+intent: "Security / high-intent"
+category: "Security"
+author: "Priya Nair"
+authorRole: "Security Lead"
+read: "7 min"
+---
+
+A vulnerability scan dump is not a VAPT report. If you're submitting one for an ISO 27001 or SOC 2 audit, here's what it actually needs to contain.
+
+## The sections auditors look for
+
+1. **Executive summary** — scope, dates, overall risk posture in plain language a non-technical auditor can act on.
+2. **Methodology** — what standard you tested against (OWASP Top 10, etc.), tools used, and the testing window.
+3. **Findings, each with:**
+   - A **CVSS score** and severity rating
+   - **Evidence** (request/response, screenshots) proving it's real
+   - **Business impact** in concrete terms
+   - **Remediation steps** specific enough to action
+4. **Re-test results** — proof that remediated findings were verified fixed, not just reported.
+5. **Scope statement** — exactly what was and wasn't in scope, so the auditor knows the boundaries.
+
+## The detail that trips teams up
+
+Auditors care about **CVSS scoring and remediation evidence**, not finding count. A report listing 40 "issues" with no severity, impact, or fix verification is worse than one showing 5 properly scored findings, all re-tested and closed. The story the report tells is: *we found risk, we understood it, we fixed it, we proved the fix.*
+
+## Timing
+
+Run VAPT early enough to **remediate and re-test before** the audit window — not the week before. Findings often need code changes, and the re-test is what auditors trust.
+
+See [our VAPT and security testing service](/services/security-testing-vapt) for how we deliver audit-ready, CVSS-scored reports, or [book a free QA audit](/contact) to scope an engagement before your audit deadline.

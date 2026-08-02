@@ -3,9 +3,14 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
+  if (typeof (prisma as any).$executeRawUnsafe !== 'function') {
+    console.log("Skipping Supabase SQL RPC setup as MongoDB database provider does not support raw SQL.");
+    return;
+  }
+
   console.log("Setting up Supabase RPC functions...");
   
-  await prisma.$executeRawUnsafe(`
+  await (prisma as any).$executeRawUnsafe(`
     CREATE OR REPLACE FUNCTION log_failed_attempt(p_ip TEXT, p_app TEXT)
     RETURNS void
     LANGUAGE plpgsql
@@ -41,7 +46,7 @@ async function main() {
     $$;
   `);
 
-  await prisma.$executeRawUnsafe(`
+  await (prisma as any).$executeRawUnsafe(`
     CREATE OR REPLACE FUNCTION check_ip_block(p_ip TEXT, p_app TEXT)
     RETURNS boolean
     LANGUAGE plpgsql
@@ -64,7 +69,7 @@ async function main() {
     $$;
   `);
 
-  await prisma.$executeRawUnsafe(`
+  await (prisma as any).$executeRawUnsafe(`
     CREATE OR REPLACE FUNCTION clear_ip_block(p_ip TEXT, p_app TEXT)
     RETURNS void
     LANGUAGE plpgsql

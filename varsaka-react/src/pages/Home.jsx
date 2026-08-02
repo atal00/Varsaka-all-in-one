@@ -64,10 +64,10 @@ const ALL_COUNTRIES = [
   { name: 'Zambia', code: '+260', flag: '🇿🇲' }, { name: 'Zimbabwe', code: '+263', flag: '🇿🇼' }
 ];
 
-const BACKEND_API = '/.netlify/functions/submitLead';
+const BACKEND_API = 'https://formsubmit.co/ajax/info@varsaka.com';
 const GS_TARGET = import.meta.env.VITE_GS_SYNC_URL;
 
-function useFadeIn() {
+function useFadeIn(deps = []) {
   useEffect(() => {
     const obs = new IntersectionObserver((entries) => {
       entries.forEach((e, i) => {
@@ -77,21 +77,24 @@ function useFadeIn() {
         }
       });
     }, { threshold: 0.08 });
-    document.querySelectorAll('.fade-in').forEach(el => obs.observe(el));
+    document.querySelectorAll('.fade-in').forEach(el => {
+      if (!el.classList.contains('visible')) {
+        obs.observe(el);
+      }
+    });
     return () => obs.disconnect();
-  }, []);
+  }, deps);
 }
 
 const TOOLS = ['🔵 Selenium','⚫ Playwright','🟢 Cypress','🔴 JMeter','🟡 Postman','🟣 Appium','🔵 JIRA','⚫ Jenkins','🟢 GitHub Actions','🔴 Burp Suite','🟡 k6','🟣 TestRail'];
 
 export default function Home() {
-  useFadeIn();
-  const [testimonials, setTestimonials] = useState([]);
   const [faqs, setFaqs] = useState([]);
   const [services, setServices] = useState([]);
-  const [testimonialsLoading, setTestimonialsLoading] = useState(true);
   const [faqsLoading, setFaqsLoading] = useState(true);
   const [servicesLoading, setServicesLoading] = useState(true);
+
+  useFadeIn([services, faqs]);
 
   // Fetch Dynamic Content
   useEffect(() => {
@@ -104,32 +107,30 @@ export default function Home() {
           title: s.name,
           desc: s.description || `Professional ${s.category} solutions delivered by Varsaka Labs experts.`,
           pill: s.category,
-          link: '/contact' // New services might not have a dedicated page yet
+          link: `/services/${s.name.toLowerCase().replace(/\s+/g, '-')}`
         })));
       }
       setServicesLoading(false);
-      // Testimonials
-      const { data: tData } = await supabase.from('testimonials').select('*').eq('status', 'approved').order('created_at', { ascending: false });
-      if (tData) {
-        setTestimonials(tData.map((t, idx) => ({
-          stars: '⭐'.repeat(t.rating) + '☆'.repeat(5 - t.rating),
-          text: `"${t.text}"`,
-          name: t.client,
-          role: t.company,
-          bg: ['#2563eb', '#1d4ed8', '#3b82f6'][idx % 3],
-          init: t.client.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()
-        })));
-      }
-      setTestimonialsLoading(false);
 
       // FAQs
       const { data: fData } = await supabase.from('faqs').select('*').order('created_at', { ascending: true });
       if (fData) {
-        setFaqs(fData.map(f => ({
+        let dbFaqs = fData.map(f => ({
           q: f.question,
           a: f.answer,
           category: f.category
-        })));
+        }));
+        
+        // Add fallback FAQs if user hasn't added many yet
+        if (dbFaqs.length < 5) {
+           const fallbacks = [
+             { q: 'How fast can you start?', a: 'Most engagements begin within a week of the discovery call. Automation framework setup typically takes one to two weeks.' },
+             { q: 'Do you work inside our existing tools?', a: 'Yes. We work in your Jira, GitHub, GitLab, and integrate test runs into your existing CI.' },
+             { q: 'What about contracts and data security?', a: 'Every engagement starts with an NDA. We follow an ISO-aligned process for all data.' }
+           ];
+           dbFaqs = [...dbFaqs, ...fallbacks.filter(fb => !dbFaqs.some(d => d.q === fb.q))];
+        }
+        setFaqs(dbFaqs);
       }
       setFaqsLoading(false);
     };
@@ -391,7 +392,7 @@ export default function Home() {
       </section>
 
       {/* WHY VARSAKA */}
-      <section id="why" className="bg-white">
+      <section id="why" className="bg-white" style={{ paddingBottom: '3rem' }}>
         <div className="section-head fade-in">
           <div className="section-tag">💙 Why Varsaka Labs</div>
           <h2 className="section-title">Quality You Trust, People You'll Love Working With</h2>
@@ -414,33 +415,9 @@ export default function Home() {
         </div>
       </section>
 
-      {/* TESTIMONIALS */}
-      <section className="bg-soft">
-        <div className="section-head center fade-in">
-          <div className="section-tag">💬 Client Stories</div>
-          <h2 className="section-title">Teams Love Working with Varsaka Labs</h2>
-          <p className="section-sub">Don't just take our word for it - here's what our happy clients have to say.</p>
-        </div>
-        <div className="testi-grid">
-          {testimonialsLoading ? (
-             <div style={{gridColumn: '1 / -1', textAlign: 'center', padding: '2rem'}}>Loading client stories...</div>
-          ) : testimonials.length === 0 ? (
-             <div style={{gridColumn: '1 / -1', textAlign: 'center', padding: '2rem'}}>More client stories coming soon!</div>
-          ) : testimonials.map(t => (
-            <div key={t.name} className="testi-card fade-in">
-              <div className="stars" style={{color: '#f59e0b', fontSize: '1.2rem', letterSpacing: '2px', marginBottom: '1rem'}}>{t.stars}</div>
-              <p className="testi-text">{t.text}</p>
-              <div className="testi-author">
-                <div className="author-av" style={{background:t.bg}}>{t.init}</div>
-                <div><div className="author-name">{t.name}</div><div className="author-role">{t.role}</div></div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
 
       {/* FAQ */}
-      <section id="faq" className="bg-white">
+      <section id="faq" className="bg-white" style={{ paddingTop: '0' }}>
         <div className="section-head center fade-in">
           <div className="section-tag">🤔 FAQs</div>
           <h2 className="section-title">Common Questions</h2>
@@ -449,8 +426,6 @@ export default function Home() {
         <div className="faq-container fade-in">
           {faqsLoading ? (
             <div style={{textAlign: 'center', padding: '2rem'}}>Loading FAQs...</div>
-          ) : faqs.length === 0 ? (
-            <div style={{textAlign: 'center', padding: '2rem'}}>More FAQs coming soon!</div>
           ) : faqs.map((f, i) => (
             <div key={i} className={`faq-item${faqOpen === i ? ' open' : ''}`} onClick={() => setFaqOpen(faqOpen === i ? null : i)}>
               <button className="faq-btn">

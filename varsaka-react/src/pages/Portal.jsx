@@ -796,7 +796,7 @@ export default function Portal() {
     { id: 'Case Studies', icon: 'fa-solid fa-book-open', label: 'Case Studies' },
     { id: 'Care Requests', icon: 'fa-solid fa-heart-pulse', label: 'Care Requests' },
     { id: 'Jobs', icon: 'fa-solid fa-user-tie', label: 'Jobs' },
-    { id: 'Testimonials', icon: 'fa-solid fa-comment-dots', label: 'Testimonials' },
+
     { id: 'FAQ', icon: 'fa-solid fa-circle-question', label: 'FAQ' },
     { id: 'Media', icon: 'fa-solid fa-image', label: 'Media' },
     { id: 'Users', icon: 'fa-solid fa-users', label: 'Users' },

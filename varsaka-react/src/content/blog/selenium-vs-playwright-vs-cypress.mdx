@@ -1,0 +1,34 @@
+---
+title: "Selenium vs Playwright vs Cypress in 2026"
+description: "A practical comparison of the three major web automation frameworks — speed, debugging, browser support, and when to pick which."
+date: "2026-02-12"
+intent: "Tool research / automation"
+category: "Automation"
+author: "Marcus Lindqvist"
+authorRole: "Automation Lead"
+read: "8 min"
+---
+
+There's no universally "best" framework — only the right fit for your stack and team. Here's how the three compare where it matters.
+
+## The short version
+
+- **Playwright** — our default for new suites. Fast, parallel by design, excellent auto-waiting, real cross-browser (Chromium, Firefox, WebKit), great debugging (trace viewer). Microsoft-backed and shipping fast.
+- **Cypress** — best developer experience for teams already in it. Superb time-travel debugging and a friendly API. Weaker on multi-tab/multi-origin flows and true cross-browser breadth.
+- **Selenium** — the veteran. Unmatched language and browser-grid support, huge ecosystem. More boilerplate, slower to write, and you assemble the waiting/reporting yourself.
+
+## How to choose
+
+| If you… | Pick |
+|---|---|
+| Are starting fresh and want speed + cross-browser | Playwright |
+| Already use Cypress and your flows are single-origin | Cypress |
+| Need broad language support or a large legacy grid | Selenium |
+
+## What rarely changes the outcome
+
+Framework choice matters less than **suite design**. A well-structured Cypress suite beats a tangled Playwright one every time. Stable locators, isolated tests, and CI integration drive reliability far more than the logo on the tin.
+
+We build in whichever fits your stack — see [our automation testing approach](/services/automation-testing), or read our guide on [wiring Playwright into GitHub Actions](/blog/playwright-github-actions-pipeline).
+
+[Book a free QA audit](/contact) and we'll recommend the right framework for your codebase — and tell you why.

@@ -184,6 +184,8 @@ export default function Portal() {
   const [mockBlogs, setMockBlogs] = useState([]);
   const [mockTestimonials, setMockTestimonials] = useState([]);
   const [mockFaqs, setMockFaqs] = useState([]);
+  const [mockCaseStudies, setMockCaseStudies] = useState([]);
+  const [mockJobs, setMockJobs] = useState([]);
 
   const handleOpenGenericModal = (type, data = null) => {
     setGenericModal({ isOpen: true, type, data });
@@ -203,6 +205,12 @@ export default function Portal() {
     else if (genericModal.type === 'Blog') table = 'blogs';
     else if (genericModal.type === 'Testimonial') table = 'testimonials';
     else if (genericModal.type === 'FAQ') table = 'faqs';
+    else if (genericModal.type === 'Case Study') table = 'case_studies';
+    else if (genericModal.type === 'Career') table = 'jobs';
+
+    if (genericModal.type === 'Career' && updates.tags) {
+      updates.tags = updates.tags.split(',').map(t => t.trim()).filter(Boolean);
+    }
     
     // For users, it's more complex (Supabase Auth). We skip database modification for mocked users for now.
     if (genericModal.type === 'User') {
@@ -221,6 +229,8 @@ export default function Portal() {
         if (table === 'blogs') setMockBlogs(mockBlogs.map(s => s.id === genericModal.data.id ? {...s, ...updates} : s));
         if (table === 'testimonials') setMockTestimonials(mockTestimonials.map(s => s.id === genericModal.data.id ? {...s, ...updates} : s));
         if (table === 'faqs') setMockFaqs(mockFaqs.map(s => s.id === genericModal.data.id ? {...s, ...updates} : s));
+        if (table === 'case_studies') setMockCaseStudies(mockCaseStudies.map(s => s.id === genericModal.data.id ? {...s, ...updates} : s));
+        if (table === 'jobs') setMockJobs(mockJobs.map(s => s.id === genericModal.data.id ? {...s, ...updates} : s));
       } else {
         const { data, error } = await supabase.from(table).insert([updates]).select();
         if (error) throw error;
@@ -230,6 +240,8 @@ export default function Portal() {
         if (table === 'blogs') setMockBlogs([newItem, ...mockBlogs]);
         if (table === 'testimonials') setMockTestimonials([newItem, ...mockTestimonials]);
         if (table === 'faqs') setMockFaqs([newItem, ...mockFaqs]);
+        if (table === 'case_studies') setMockCaseStudies([newItem, ...mockCaseStudies]);
+        if (table === 'jobs') setMockJobs([newItem, ...mockJobs]);
       }
       handleCloseGenericModal();
     } catch (err) {
@@ -243,6 +255,8 @@ export default function Portal() {
     else if (genericModal.type === 'Blog') table = 'blogs';
     else if (genericModal.type === 'Testimonial') table = 'testimonials';
     else if (genericModal.type === 'FAQ') table = 'faqs';
+    else if (genericModal.type === 'Case Study') table = 'case_studies';
+    else if (genericModal.type === 'Career') table = 'jobs';
 
     if (genericModal.type === 'User') {
       setMockUsers(mockUsers.filter(s => s.id !== genericModal.data.id));
@@ -258,6 +272,8 @@ export default function Portal() {
       if (table === 'blogs') setMockBlogs(mockBlogs.filter(s => s.id !== genericModal.data.id));
       if (table === 'testimonials') setMockTestimonials(mockTestimonials.filter(s => s.id !== genericModal.data.id));
       if (table === 'faqs') setMockFaqs(mockFaqs.filter(s => s.id !== genericModal.data.id));
+      if (table === 'case_studies') setMockCaseStudies(mockCaseStudies.filter(s => s.id !== genericModal.data.id));
+      if (table === 'jobs') setMockJobs(mockJobs.filter(s => s.id !== genericModal.data.id));
       
       handleCloseGenericModal();
     } catch (err) {
@@ -310,18 +326,24 @@ export default function Portal() {
         { data: sData },
         { data: bData },
         { data: tData },
-        { data: fData }
+        { data: fData },
+        csResult,
+        jobsResult
       ] = await Promise.all([
         supabase.from('services').select('*').order('created_at', { ascending: false }),
         supabase.from('blogs').select('*').order('created_at', { ascending: false }),
         supabase.from('testimonials').select('*').order('created_at', { ascending: false }),
-        supabase.from('faqs').select('*').order('created_at', { ascending: false })
+        supabase.from('faqs').select('*').order('created_at', { ascending: false }),
+        supabase.from('case_studies').select('*').order('created_at', { ascending: false }).then(res => res).catch(() => ({ data: [] })),
+        supabase.from('jobs').select('*').order('created_at', { ascending: false }).then(res => res).catch(() => ({ data: [] }))
       ]);
 
       if (sData) setMockServices(sData);
       if (bData) setMockBlogs(bData);
       if (tData) setMockTestimonials(tData);
       if (fData) setMockFaqs(fData);
+      if (csResult?.data) setMockCaseStudies(csResult.data);
+      if (jobsResult?.data) setMockJobs(jobsResult.data);
 
       setData(leads.map(l => ({
         id: l.id,
@@ -406,27 +428,63 @@ export default function Portal() {
 
   // Fetch data only after session is validated and set
   useEffect(() => {
-    if (session) {
-      setTimeout(() => {
-        fetchData();
-        fetchStaff();
-      }, 0);
-      const interval = setInterval(fetchData, 60000);
-      return () => clearInterval(interval);
-    }
+    if (!session?.id) return;
+
+    // Initial fetch
+    fetchData();
+    fetchStaff();
+
+    // ⚡ Supabase Realtime: auto-refresh when any table changes
+    const channel = supabase
+      .channel('admin-portal-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'jobs' }, () => {
+        supabase.from('jobs').select('*').order('created_at', { ascending: false })
+          .then(({ data }) => { if (data) setMockJobs(data); });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'services' }, () => {
+        supabase.from('services').select('*').order('created_at', { ascending: false })
+          .then(({ data }) => { if (data) setMockServices(data); });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'blogs' }, () => {
+        supabase.from('blogs').select('*').order('created_at', { ascending: false })
+          .then(({ data }) => { if (data) setMockBlogs(data); });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'testimonials' }, () => {
+        supabase.from('testimonials').select('*').order('created_at', { ascending: false })
+          .then(({ data }) => { if (data) setMockTestimonials(data); });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'faqs' }, () => {
+        supabase.from('faqs').select('*').order('created_at', { ascending: false })
+          .then(({ data }) => { if (data) setMockFaqs(data); });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'case_studies' }, () => {
+        supabase.from('case_studies').select('*').order('created_at', { ascending: false })
+          .then(({ data }) => { if (data) setMockCaseStudies(data); });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'certificates' }, () => fetchInterns())
+      .subscribe();
+
+    // Fallback polling every 60s (backup)
+    const interval = setInterval(fetchData, 60000);
+
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(interval);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session]);
+  }, [session?.id]);
 
   // 🔔 Post-Login Notification
   useEffect(() => {
-    if (session && !sessionStorage.getItem('notified_refresh')) {
+    if (session?.id && !sessionStorage.getItem('notified_refresh')) {
       setTimeout(() => {
         triggerInfo('Welcome back! Kindly refresh from the top button to see the latest leads.');
       }, 0);
       sessionStorage.setItem('notified_refresh', 'true');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session]);
+  }, [session?.id]);
 
   // 🧹 BACKGROUND CLEANUP: Auto-delete rejected leads after 60 mins
   useEffect(() => {
@@ -532,11 +590,13 @@ export default function Portal() {
     else fetchInterns();
   };
 
-  const handleLogout = async () => {
-    await signOut();
-    sessionStorage.removeItem('notified_refresh'); // 🔄 Clear flag on logout
-    navigate('/login');
+  const handleLogout = () => {
+    // Fire and forget signOut so it doesn't block the redirect
+    signOut().catch(e => console.error('Logout error:', e));
+    sessionStorage.removeItem('notified_refresh');
+    window.location.href = 'https://varsaka.com';
   };
+
 
   const assignTask = async (leadId, staffId) => {
     if (session?.role !== 'admin') {
@@ -782,10 +842,10 @@ export default function Portal() {
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    if (tab === 'Jobs') {
+    if (tab === 'Certificates') {
       setShowTeam(false);
       fetchInterns();
-    } else if (tab === 'Care Requests') {
+    } else if (tab === 'Care Requests' || tab === 'Careers') {
       setShowTeam(false);
     }
   };
@@ -796,7 +856,8 @@ export default function Portal() {
     { id: 'Blog', icon: 'fa-solid fa-pen-nib', label: 'Blog' },
     { id: 'Case Studies', icon: 'fa-solid fa-book-open', label: 'Case Studies' },
     { id: 'Care Requests', icon: 'fa-solid fa-heart-pulse', label: 'Care Requests' },
-    { id: 'Jobs', icon: 'fa-solid fa-user-tie', label: 'Jobs' },
+    { id: 'Careers', icon: 'fa-solid fa-briefcase', label: 'Careers' },
+    { id: 'Certificates', icon: 'fa-solid fa-graduation-cap', label: 'Certificates' },
     { id: 'Testimonials', icon: 'fa-solid fa-comment-dots', label: 'Testimonials' },
     { id: 'FAQ', icon: 'fa-solid fa-circle-question', label: 'FAQ' },
     { id: 'Media', icon: 'fa-solid fa-image', label: 'Media' },
@@ -1026,12 +1087,40 @@ export default function Portal() {
             <div className="dash-panel">
               <div className="panel-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                 <h2>Case Studies</h2>
-                <button className="btn-settings" style={{background: 'var(--brand-blue)', color: 'white'}}>➕ Add Study</button>
+                <button className="btn-settings" style={{background: 'var(--brand-blue)', color: 'white'}} onClick={() => handleOpenGenericModal('Case Study')}>➕ Add Study</button>
               </div>
-              <div className="empty-state" style={{marginTop: '2rem'}}>
-                <h3>No Case Studies Published</h3>
-                <p>Add your first case study to showcase your work.</p>
-              </div>
+              
+              {mockCaseStudies.length === 0 ? (
+                <div className="empty-state" style={{marginTop: '2rem'}}>
+                  <h3>No Case Studies Published</h3>
+                  <p>Add your first case study to showcase your work.</p>
+                </div>
+              ) : (
+                <div className="leads-table-wrap" style={{marginTop: '1.5rem'}}>
+                  <table className="leads-table">
+                    <thead>
+                      <tr>
+                        <th>Client</th>
+                        <th>Category Tag</th>
+                        <th>Outcome</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {mockCaseStudies.map(cs => (
+                        <tr key={cs.id}>
+                          <td><strong>{cs.client}</strong></td>
+                          <td><span className="role-badge employee" style={{background:'#eff6ff', color:'#1d4ed8'}}>{cs.tag}</span></td>
+                          <td>{cs.outcome}</td>
+                          <td>
+                            <button className="btn-action" onClick={() => handleOpenGenericModal('Case Study', cs)}>Edit</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -1212,7 +1301,7 @@ export default function Portal() {
           </div>
         )}
 
-        {(activeTab === 'Care Requests' || activeTab === 'Jobs') && (
+        {(activeTab === 'Care Requests' || activeTab === 'Certificates') && (
           <div className="portal-container" style={{padding: 0}}>
             
             {/* Context Actions */}
@@ -1227,7 +1316,7 @@ export default function Portal() {
                   {showTeam ? '📋 Show Leads' : '👥 Team Workload'}
                 </button>
               )}
-              {session.role === 'admin' && activeTab === 'Jobs' && (
+              {session.role === 'admin' && activeTab === 'Certificates' && (
                 <button className="btn-settings" style={{background: '#faf5ff', color: '#7c3aed', border: '1px solid #e9d5ff'}} onClick={() => setShowAddIntern(!showAddIntern)}>
                   ➕ Add Intern
                 </button>
@@ -1358,13 +1447,15 @@ export default function Portal() {
             </div>
           </div>
         )}
-        {showInterns && session.role === 'admin' && (
+        {activeTab === 'Certificates' && (
           <div className="portal-settings-panel fade-in visible" style={{borderColor: '#7c3aed'}}>
             <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.5rem'}}>
               <h3>🎓 Intern Certificate Management</h3>
-              <button className="btn-save" onClick={() => setShowAddIntern(!showAddIntern)} style={{background: '#7c3aed'}}>
-                {showAddIntern ? '✕ Close Form' : '➕ Add Intern'}
-              </button>
+              {session.role === 'admin' && (
+                <button className="btn-save" onClick={() => setShowAddIntern(!showAddIntern)} style={{background: '#7c3aed'}}>
+                  {showAddIntern ? '✕ Close Form' : '➕ Add Intern'}
+                </button>
+              )}
             </div>
 
             {showAddIntern && (
@@ -1516,8 +1607,10 @@ export default function Portal() {
                       <td>{new Date(intern.start_date).toLocaleDateString()} - {new Date(intern.end_date).toLocaleDateString()}</td>
                       <td>
                         <div style={{display:'flex', gap:'10px'}}>
-                          <button className="btn-refresh" onClick={() => window.open(`/verify/${intern.certificate_id}`, '_blank')} style={{padding:'4px 8px', fontSize:'0.75rem'}}>View</button>
-                          <button className="btn-del-staff" onClick={() => deleteIntern(intern.id)} style={{position:'static'}}>✕</button>
+                          <button className="btn-refresh" onClick={() => window.open(`http://localhost:5173/verify/${intern.certificate_id}`, '_blank')} style={{padding:'4px 8px', fontSize:'0.75rem'}}>View</button>
+                          {session.role === 'admin' && (
+                            <button className="btn-del-staff" onClick={() => deleteIntern(intern.id)} style={{position:'static'}}>✕</button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -1714,6 +1807,51 @@ export default function Portal() {
 
         </div>
         )}
+
+        {activeTab === 'Careers' && (
+          <div className="portal-container" style={{padding: '2rem'}}>
+            <div className="dash-panel">
+              <div className="panel-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                <h2>Careers / Open Positions</h2>
+                <button className="btn-settings" style={{background: 'var(--brand-blue)', color: 'white'}} onClick={() => handleOpenGenericModal('Career')}>➕ Add Position</button>
+              </div>
+              
+              {mockJobs.length === 0 ? (
+                <div className="empty-state" style={{marginTop: '2rem'}}>
+                  <h3>No Careers / Open Positions Listed</h3>
+                  <p>Add your first job opening to start receiving applications.</p>
+                </div>
+              ) : (
+                <div className="leads-table-wrap" style={{marginTop: '1.5rem'}}>
+                  <table className="leads-table">
+                    <thead>
+                      <tr>
+                        <th>Title</th>
+                        <th>Type</th>
+                        <th>Experience</th>
+                        <th>Location</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {mockJobs.map(job => (
+                        <tr key={job.id}>
+                          <td><strong>{job.icon} {job.title}</strong></td>
+                          <td><span className="pill badge-blue" style={{textTransform:'none'}}>{job.type}</span></td>
+                          <td>{job.exp}</td>
+                          <td>📍 {job.location}</td>
+                          <td>
+                            <button className="btn-action" onClick={() => handleOpenGenericModal('Career', job)}>Edit</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
         </main>
       </div>
 
@@ -1728,6 +1866,8 @@ export default function Portal() {
                 {genericModal.type === 'Testimonial' && '💬 '}
                 {genericModal.type === 'FAQ' && '❓ '}
                 {genericModal.type === 'User' && '👤 '}
+                {genericModal.type === 'Case Study' && '📖 '}
+                {genericModal.type === 'Career' && '💼 '}
                 {genericModal.data ? 'Edit' : 'Add'} {genericModal.type}
               </h3>
               <button type="button" className="modern-modal-close" onClick={handleCloseGenericModal}>✕</button>
@@ -1830,6 +1970,31 @@ export default function Portal() {
                 </>
               )}
 
+              {genericModal.type === 'Case Study' && (
+                <>
+                  <div className="modern-form-group full-width">
+                    <label>Client Name</label>
+                    <input type="text" name="client" className="modern-input" defaultValue={genericModal.data?.client || ''} required placeholder="e.g., TakeCare360" />
+                  </div>
+                  <div className="modern-form-group">
+                    <label>Category Tag</label>
+                    <input type="text" name="tag" className="modern-input" defaultValue={genericModal.data?.tag || ''} required placeholder="e.g., Security Testing" />
+                  </div>
+                  <div className="modern-form-group">
+                    <label>Icon Class (FontAwesome)</label>
+                    <input type="text" name="icon" className="modern-input" defaultValue={genericModal.data?.icon || 'fa-briefcase'} required placeholder="e.g., fa-shield-halved" />
+                  </div>
+                  <div className="modern-form-group full-width">
+                    <label>Key Outcome</label>
+                    <input type="text" name="outcome" className="modern-input" defaultValue={genericModal.data?.outcome || ''} required placeholder="e.g., Critical Risks Remediated" />
+                  </div>
+                  <div className="modern-form-group full-width">
+                    <label>Description</label>
+                    <textarea name="description" className="modern-input modern-textarea" defaultValue={genericModal.data?.description || ''} required placeholder="Describe the project and results..."></textarea>
+                  </div>
+                </>
+              )}
+
               {genericModal.type === 'User' && (
                 <>
                   <div className="modern-form-group">
@@ -1855,6 +2020,51 @@ export default function Portal() {
                     </select>
                   </div>
                   <input type="hidden" name="lastLogin" value={genericModal.data?.lastLogin || 'Never'} />
+                </>
+              )}
+
+              {genericModal.type === 'Career' && (
+                <>
+                  <div className="modern-form-group">
+                    <label>Job Title</label>
+                    <input type="text" name="title" className="modern-input" defaultValue={genericModal.data?.title || ''} required placeholder="e.g., QA Automation Engineer" />
+                  </div>
+                  <div className="modern-form-group">
+                    <label>Icon Emoji</label>
+                    <input type="text" name="icon" className="modern-input" defaultValue={genericModal.data?.icon || '💼'} required placeholder="e.g., 🎓, 🤖, ⚡" />
+                  </div>
+                  <div className="modern-form-group">
+                    <label>Location</label>
+                    <input type="text" name="location" className="modern-input" defaultValue={genericModal.data?.location || ''} required placeholder="e.g., Remote / Hyderabad" />
+                  </div>
+                  <div className="modern-form-group">
+                    <label>Job Type</label>
+                    <input type="text" name="type" className="modern-input" defaultValue={genericModal.data?.type || 'Full-Time'} required placeholder="e.g., Full-Time / Internship" />
+                  </div>
+                  <div className="modern-form-group">
+                    <label>Experience Level</label>
+                    <input type="text" name="exp" className="modern-input" defaultValue={genericModal.data?.exp || ''} required placeholder="e.g., 2+ Years / Students" />
+                  </div>
+                  <div className="modern-form-group">
+                    <label>Tags / Skills (comma-separated)</label>
+                    <input type="text" name="tags" className="modern-input" defaultValue={genericModal.data?.tags ? (Array.isArray(genericModal.data.tags) ? genericModal.data.tags.join(', ') : genericModal.data.tags) : ''} placeholder="e.g., Selenium, Playwright, Cypress" />
+                  </div>
+                  <div className="modern-form-group full-width">
+                    <label>Description</label>
+                    <textarea name="description" className="modern-input modern-textarea" defaultValue={genericModal.data?.description || ''} required placeholder="Describe the responsibilities and requirements..."></textarea>
+                  </div>
+                  <div className="modern-form-group">
+                    <label>Posted Date</label>
+                    <input type="text" name="posted" className="modern-input" defaultValue={genericModal.data?.posted || ''} required placeholder="e.g., 10 May 2026" />
+                  </div>
+                  <div className="modern-form-group">
+                    <label>Closes Date</label>
+                    <input type="text" name="closes" className="modern-input" defaultValue={genericModal.data?.closes || ''} required placeholder="e.g., 10 Jun 2026" />
+                  </div>
+                  <div className="modern-form-group full-width">
+                    <label>Apply Link (Optional)</label>
+                    <input type="text" name="apply_link" className="modern-input" defaultValue={genericModal.data?.apply_link || ''} placeholder="Leave empty for default application form link" />
+                  </div>
                 </>
               )}
 

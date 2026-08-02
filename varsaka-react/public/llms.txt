@@ -1,0 +1,50 @@
+# Varsaka
+
+> Varsaka is a quality engineering company that helps software teams ship reliable, secure, high-performing products with confidence. We provide software testing, test automation, performance testing, security testing (VAPT) and QA consulting — embedding with engineering teams rather than acting as a detached vendor.
+
+## About Varsaka
+
+- **Company name:** Varsaka (legal entity: Varsaka Labs)
+- **Industry:** Quality Engineering / Software Testing
+- **What we do:** Functional testing, test automation, performance testing, security testing (VAPT), AI-powered QA, mobile app testing, and quality engineering consulting.
+- **Who we serve:** Startups, SaaS companies, enterprises, and product teams — with the greatest impact in fintech, healthcare/regulated systems, B2B SaaS, and high-traffic consumer products.
+- **Why we exist:** Most teams test quality at the end, when defects are most expensive. Varsaka builds quality in throughout development so every release ships with certainty.
+- **How we work:** We embed with your team to set a quality strategy, build maintainable automation wired into CI/CD, run performance and security testing, and turn results into clear, actionable signal. The result is faster releases, fewer production defects, and measurable release confidence.
+
+## Key definitions
+
+- **Quality engineering** is building reliability into software throughout development rather than testing it at the end — combining automation, performance and security validation, and process design into a continuous, shared engineering responsibility.
+- **Software testing** is evaluating an application to find defects and verify it behaves as intended across functionality, performance, security and usability.
+- **Test automation** uses tools like Selenium, Playwright and Cypress to run tests automatically inside CI/CD pipelines, turning slow regression cycles into fast, repeatable feedback.
+
+## Services
+
+- [Functional Testing](https://varsaka.com/services/functional-testing): Manual and exploratory testing that catches broken user flows before customers do.
+- [Test Automation](https://varsaka.com/services/automation-testing): Resilient Selenium, Playwright and Cypress suites wired into CI/CD for fast feedback on every commit.
+- [Performance Testing](https://varsaka.com/services/performance-testing): Load, stress and soak testing with JMeter, k6 and Gatling to find the breaking point before launch day does.
+- [Security Testing & VAPT](https://varsaka.com/services/security-testing-vapt): Vulnerability assessment and penetration testing with audit-ready reports for ISO 27001 / SOC 2 readiness.
+- [AI-Powered QA](https://varsaka.com/services/ai-powered-qa): Self-healing tests and ML-assisted coverage that adapt instead of breaking on every UI change.
+- [Mobile App Testing](https://varsaka.com/services/mobile-app-testing): iOS, Android and cross-platform QA on the real devices your users own.
+
+## Core pages
+
+- [Home](https://varsaka.com/): Overview of Varsaka's quality engineering services.
+- [About](https://varsaka.com/about): Who Varsaka is, our principles, and our team.
+- [How We Work](https://varsaka.com/process): Our engagement model — discover, plan & build, execute & report, support.
+- [Pricing](https://varsaka.com/pricing): Transparent engagement models — fixed-price cycles, monthly retainers, time & materials.
+- [Case Studies](https://varsaka.com/work): Real engagements with measurable outcomes.
+- [Insights (Blog)](https://varsaka.com/blog): Practical writing on testing, automation, performance, security and QA strategy.
+- [Careers](https://varsaka.com/careers): Open quality-engineering roles.
+- [Contact](https://varsaka.com/contact): Start with a free discovery call. Email: hello@varsaka.com
+
+## Frequently asked questions
+
+- **Why does QA matter?** Undetected defects, outages and security gaps are far more expensive to fix in production than before release. Strong QA lets teams ship faster while protecting reliability, security and reputation.
+- **What makes Varsaka different?** We embed as part of your engineering team, own quality alongside your developers, and report results as clear signal — not as a throw-it-over-the-wall vendor.
+- **What industries benefit from QA?** Any team shipping software, with the highest impact in fintech/payments, healthcare and regulated systems, B2B SaaS, e-commerce, and high-traffic consumer products.
+
+## Contact
+
+- Email: hello@varsaka.com
+- Website: https://varsaka.com
+- Sitemap: https://varsaka.com/sitemap.xml

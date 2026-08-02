@@ -3,17 +3,17 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mongodb"
 }
 
 model User {
-  id        String   @id @default(cuid())
-  supabaseId String   @unique
-  email     String   @unique
-  role      Role     @default(AUTHOR)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  articles  Article[]
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  supabaseId String    @unique
+  email      String    @unique
+  role       Role      @default(AUTHOR)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  articles   Article[]
 }
 
 enum Role {
@@ -23,21 +23,21 @@ enum Role {
 }
 
 model Topic {
-  id               String   @id @default(cuid())
-  name             String
-  trendScore       Float?
-  seoScore         Float?
-  competitionScore Float?
-  searchIntent     String?
-  estimatedVolume  Int?
-  difficulty       Float?
-  suggestedType    String?
+  id                String      @id @default(auto()) @map("_id") @db.ObjectId
+  name              String
+  trendScore        Float?
+  seoScore          Float?
+  competitionScore  Float?
+  searchIntent      String?
+  estimatedVolume   Int?
+  difficulty        Float?
+  suggestedType     String?
   suggestedAudience String?
-  status           TopicStatus @default(DISCOVERED)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  articles         Article[]
-  researches       Research[]
+  status            TopicStatus @default(DISCOVERED)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  articles          Article[]
+  researches        Research[]
 }
 
 enum TopicStatus {
@@ -50,38 +50,38 @@ enum TopicStatus {
 }
 
 model Research {
-  id        String   @id @default(cuid())
-  topicId   String
-  topic     Topic    @relation(fields: [topicId], references: [id])
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  topicId   String    @db.ObjectId
+  topic     Topic     @relation(fields: [topicId], references: [id])
   sources   String[] // URLs
   facts     Json     // Extracted facts, knowledge graph
   status    String   // PENDING, COMPLETED
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   Article   Article[]
 }
 
 model Article {
-  id               String   @id @default(cuid())
-  topicId          String?
-  topic            Topic?   @relation(fields: [topicId], references: [id])
-  researchId       String?
-  research         Research? @relation(fields: [researchId], references: [id])
-  authorId         String?
-  author           User?    @relation(fields: [authorId], references: [id])
+  id               String        @id @default(auto()) @map("_id") @db.ObjectId
+  topicId          String?       @db.ObjectId
+  topic            Topic?        @relation(fields: [topicId], references: [id])
+  researchId       String?       @db.ObjectId
+  research         Research?     @relation(fields: [researchId], references: [id])
+  authorId         String?       @db.ObjectId
+  author           User?         @relation(fields: [authorId], references: [id])
   
   title            String
-  slug             String   @unique
+  slug             String        @unique
   metaDescription  String?
   keywords         String[]
-  content          String   @db.Text
+  content          String
   
   status           ArticleStatus @default(DRAFT)
   plagiarismScore  Float?
-  factVerification String?  // JSON or text
+  factVerification String?       // JSON or text
   
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
   publishedAt      DateTime?
 }
 

@@ -1,0 +1,13 @@
+:root {
+  --bg:#FAF9F6; --surface:#F2F0E9; --surface2:#ECEAE1; --border:#E3DFD4; --line:#D8D3C6;
+  --text:#15140F; --muted:#6E6A5F; --faint:#A8A294;
+  --inv-bg:#0E0D0A; --inv-text:#FAF9F6; --inv-muted:#94917F; --inv-border:#262420;
+  --pass:#4FA87B;
+  --serif:'Newsreader',Georgia,serif;
+  --sans:'Hanken Grotesk',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',monospace;
+}
+@keyframes vk-marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes ak-spin{to{transform:rotate(360deg)}}
+@keyframes ak-pulse{0%,100%{opacity:.5}50%{opacity:1}}
+@keyframes ak-bar{from{transform:scaleX(0)}to{transform:scaleX(1)}}

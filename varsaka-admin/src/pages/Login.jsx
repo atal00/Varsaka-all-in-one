@@ -17,6 +17,7 @@ export default function Login() {
   const [clientIp, setClientIp] = useState('Unknown');
   const navigate = useNavigate();
   const { session } = useAuth();
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   useEffect(() => {
     setCaptchaKey(prev => prev + 1);
@@ -26,8 +27,8 @@ export default function Login() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    if (session) navigate('/portal');
-  }, [session, navigate]);
+    if (session && !isLoggingIn) navigate('/portal');
+  }, [session, navigate, isLoggingIn]);
 
   useEffect(() => {
     fetch('https://api.ipify.org?format=json')
@@ -51,14 +52,17 @@ export default function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
+    setIsLoggingIn(true);
 
     if (!user.trim() || !pass.trim()) {
       setError('Please enter both username and password.');
+      setIsLoggingIn(false);
       return;
     }
 
     if (!isCaptchaValid) {
       handleFailedAttempt();
+      setIsLoggingIn(false);
       return;
     }
 
@@ -74,6 +78,7 @@ export default function Login() {
 
     if (authError) {
       handleFailedAttempt();
+      setIsLoggingIn(false);
       return;
     }
 
@@ -91,12 +96,18 @@ export default function Login() {
     // If the user selected 'Employee' tab but their account is 'admin', block them.
     if (role === 'admin' && userRole !== 'admin') {
       await supabase.auth.signOut();
-      setError('This account does not have Admin privileges.');
+      setError('This account does not have Admin privileges. Redirecting...');
+      setTimeout(() => {
+        window.location.href = 'https://varsaka.com';
+      }, 2000);
       return;
     }
     if (role === 'employee' && userRole === 'admin') {
       await supabase.auth.signOut();
-      setError('Admins must log in through the Admin tab.');
+      setError('Admins must log in through the Admin tab. Redirecting...');
+      setTimeout(() => {
+        window.location.href = 'https://varsaka.com';
+      }, 2000);
       return;
     }
 

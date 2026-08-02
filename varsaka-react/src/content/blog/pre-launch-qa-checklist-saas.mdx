@@ -1,0 +1,46 @@
+---
+title: "Pre-launch QA checklist for SaaS startups"
+description: "The concrete checks to run before a SaaS launch — functional, performance, security, and the cross-cutting ones teams forget."
+date: "2026-03-12"
+intent: "Functional / process"
+category: "Strategy"
+author: "Dana Whitfield"
+authorRole: "Principal QE"
+read: "6 min"
+---
+
+Launch day is the worst time to discover a bug. This is the checklist we run before a SaaS product ships.
+
+## Functional
+
+- [ ] Every critical path works end to end (signup → onboarding → core action → billing)
+- [ ] Error and empty states are handled, not just the happy path
+- [ ] Form validation holds on boundary and malicious input
+- [ ] Email/notification flows fire correctly (and don't double-fire)
+- [ ] Cross-browser and mobile-web behaviour confirmed
+
+## Performance
+
+- [ ] Load tested at realistic peak concurrency
+- [ ] Breaking point known (and it's comfortably above expected launch traffic)
+- [ ] No memory leak under sustained load (soak test)
+- [ ] Key pages meet Core Web Vitals on mobile
+
+## Security
+
+- [ ] OWASP Top 10 pass on auth, access control, and injection
+- [ ] No secrets in client bundles or logs
+- [ ] Rate limiting on auth and sensitive endpoints
+
+## The cross-cutting ones teams forget
+
+- [ ] **Rollback plan tested**, not just written
+- [ ] **Monitoring + alerting live** before launch, not after the first incident
+- [ ] **Data migration** dry-run on production-like data
+- [ ] **Third-party failure modes** — what happens when Stripe/Auth0/your email provider is down?
+
+## How to use it
+
+Don't treat this as a final-night ritual. Run functional and performance checks continuously, and reserve the launch window for confirmation, not discovery. That's the whole point of building a [continuous quality gate](/services/functional-testing).
+
+Want a tailored version for your product? [Book a free QA audit](/contact) and we'll map this to your actual launch.

@@ -8,12 +8,20 @@ export function AuthProvider({ children }) {
   const [userRole, setUserRole] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchAndSetRole = async (userId) => {
+  const fetchAndSetRole = async (user) => {
+    if (!user) return;
+    
+    // 🛡️ Read role from JWT user metadata first (instant, no database query, avoids RLS blocks)
+    if (user.user_metadata?.role) {
+      setUserRole(user.user_metadata.role);
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from('profiles')
         .select('role')
-        .eq('id', userId)
+        .eq('id', user.id)
         .single();
         
       if (!error && data) {
@@ -23,6 +31,7 @@ export function AuthProvider({ children }) {
       }
     } catch (err) {
       console.error('Failed to fetch role:', err);
+      setUserRole('employee');
     }
   };
 
@@ -41,7 +50,7 @@ export function AuthProvider({ children }) {
         
         if (currentSession?.user) {
           setSession(currentSession);
-          await fetchAndSetRole(currentSession.user.id);
+          await fetchAndSetRole(currentSession.user);
         } else {
           setSession(null);
           setUserRole(null);
@@ -66,7 +75,7 @@ export function AuthProvider({ children }) {
           setUserRole(null);
         } else if (newSession) {
           setSession(newSession);
-          await fetchAndSetRole(newSession.user.id);
+          await fetchAndSetRole(newSession.user);
         }
       } catch (err) {
         console.error("Auth state change error:", err);

@@ -1,36 +1,14 @@
-import { useEffect, useState, lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
-import { supabase } from './supabaseClient';
+import { useEffect, lazy, Suspense } from 'react';
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { HelmetProvider } from 'react-helmet-async';
-import Navbar from './components/Navbar';
-import Footer from './components/Footer';
-import Chatbot from './components/Chatbot';
-import ScrollTop from './components/ScrollTop';
-import Home from './pages/Home';
-import Preloader from './components/Preloader';
+import TimeBasedLogin from './pages/TimeBasedLogin';
 
 // 🚀 Performance: Lazy Load non-critical pages
-const About = lazy(() => import('./pages/About'));
-const Blog = lazy(() => import('./pages/Blog'));
-const Careers = lazy(() => import('./pages/Careers'));
-const CaseStudies = lazy(() => import('./pages/CaseStudies'));
-const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
-const TermsOfService = lazy(() => import('./pages/TermsOfService'));
-const NdaTemplate = lazy(() => import('./pages/NdaTemplate'));
 const Login = lazy(() => import('./pages/Login'));
 const Portal = lazy(() => import('./pages/Portal'));
-const FunctionalTesting = lazy(() => import('./pages/FunctionalTesting'));
-const AutomationTesting = lazy(() => import('./pages/AutomationTesting'));
-const PerformanceTesting = lazy(() => import('./pages/PerformanceTesting'));
-const SecurityTesting = lazy(() => import('./pages/SecurityTesting'));
-const AIPoweredTesting = lazy(() => import('./pages/AIPoweredTesting'));
-const MobileTesting = lazy(() => import('./pages/MobileTesting'));
-const Apply = lazy(() => import('./pages/Apply'));
-const BlogDetail = lazy(() => import('./pages/BlogDetail'));
 const VerifyCertificate = lazy(() => import('./pages/VerifyCertificate'));
 const Fake404 = lazy(() => import('./pages/Fake404'));
-const TimeBasedLogin = lazy(() => import('./pages/TimeBasedLogin'));
 import './index.css';
 
 function AnimationTrigger() {
@@ -122,28 +100,17 @@ export default function App() {
     <HelmetProvider>
       <AuthProvider>
         <BrowserRouter>
-        <Preloader />
         <AnimationTrigger />
-        <ScrollTop />
 
         <Suspense fallback={<div style={{height: '100vh', background: 'var(--bg-white)'}} />}>
           <Routes>
             {/* Admin Public Routes */}
             <Route path="/" element={<Login />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/:accessCode" element={<TimeBasedLogin />} />
             <Route path="/verify/:id" element={<VerifyCertificate />} />
             
             {/* Portal Pages (Protected) */}
             <Route path="/portal" element={<RequireAuth allowedRoles={['superadmin', 'admin', 'employee']}><Portal /></RequireAuth>} />
-
-            {/* Service Pages */}
-            <Route path="/services/functional-testing" element={<><Navbar /><FunctionalTesting /><Footer /></>} />
-            <Route path="/services/automation-testing" element={<><Navbar /><AutomationTesting /><Footer /></>} />
-            <Route path="/services/performance-testing" element={<><Navbar /><PerformanceTesting /><Footer /></>} />
-            <Route path="/services/security-testing" element={<><Navbar /><SecurityTesting /><Footer /></>} />
-            <Route path="/services/ai-powered-testing" element={<><Navbar /><AIPoweredTesting /><Footer /></>} />
-            <Route path="/services/mobile-testing" element={<><Navbar /><MobileTesting /><Footer /></>} />
             
             {/* Dynamic Security & 404 Pages */}
             <Route path="/404" element={<Fake404 />} />

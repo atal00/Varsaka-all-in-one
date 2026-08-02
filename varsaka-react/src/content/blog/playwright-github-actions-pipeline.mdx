@@ -1,0 +1,54 @@
+---
+title: "Setting up a Playwright + GitHub Actions pipeline: a practical guide"
+description: "A working pattern for running Playwright tests on every pull request with GitHub Actions — parallelism, artifacts, and keeping it fast."
+date: "2026-03-26"
+intent: "Automation / dev audience"
+category: "Automation"
+author: "Marcus Lindqvist"
+authorRole: "Automation Lead"
+read: "5 min"
+---
+
+Automation only pays off when it runs on every commit without anyone thinking about it. Here's a practical pattern for Playwright on GitHub Actions.
+
+## The minimal workflow
+
+```yaml
+name: e2e
+on: [pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: npm }
+      - run: npm ci
+      - run: npx playwright install --with-deps
+      - run: npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+```
+
+That alone gets you tests-on-every-PR with an HTML report attached to each run.
+
+## Make it fast
+
+- **Shard across runners.** Playwright supports `--shard=1/4`; run a matrix of 4 jobs and your suite finishes in roughly a quarter of the time.
+- **Cache the browser binaries** keyed on the Playwright version to skip re-downloading Chromium each run.
+- **Run only what changed** on PRs where it's safe, full suite on merge to main.
+
+## Make it trustworthy
+
+- **Upload traces on failure** (`trace: 'on-first-retry'`) — the trace viewer turns "it's flaky" into a precise diagnosis.
+- **One retry, not three.** Masking flakiness with retries hides real bugs. Fix the flake instead.
+- **Block merge on red.** A green check that doesn't gate merge is decoration.
+
+## The payoff
+
+Done right, this is how a 6-hour manual regression becomes a 45-minute automated one that no one has to remember to run. That's the core of [our automation testing work](/services/automation-testing) — and if you're choosing a framework first, see [Selenium vs Playwright vs Cypress](/blog/selenium-vs-playwright-vs-cypress).
+
+[Book a free QA audit](/contact) and we'll help you stand up a pipeline like this on your repo.

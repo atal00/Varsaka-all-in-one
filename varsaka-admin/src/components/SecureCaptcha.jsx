@@ -74,7 +74,8 @@ const SecureCaptcha = ({ onValidate }) => {
   const handleChange = (e) => {
     const val = e.target.value;
     setUserInput(val);
-    if (val.toLowerCase() === captchaText.toLowerCase() && captchaText.length > 0) {
+    // 🛡️ Made Case-Sensitive for higher security
+    if (val === captchaText && captchaText.length > 0) {
       onValidate(true);
     } else {
       onValidate(false);
@@ -120,7 +121,7 @@ const SecureCaptcha = ({ onValidate }) => {
         type="text" 
         value={userInput}
         onChange={handleChange}
-        placeholder="Enter the text from image"
+        placeholder="Enter text (Case-sensitive)"
         required
         spellCheck="false"
         style={{

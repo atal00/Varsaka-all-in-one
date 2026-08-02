@@ -27,6 +27,7 @@ const AIPoweredTesting = lazy(() => import('./pages/AIPoweredTesting'));
 const MobileTesting = lazy(() => import('./pages/MobileTesting'));
 const Apply = lazy(() => import('./pages/Apply'));
 const BlogDetail = lazy(() => import('./pages/BlogDetail'));
+const CaseStudyDetail = lazy(() => import('./pages/CaseStudyDetail'));
 const VerifyCertificate = lazy(() => import('./pages/VerifyCertificate'));
 const Fake404 = lazy(() => import('./pages/Fake404'));
 import './index.css';
@@ -134,6 +135,7 @@ export default function App() {
             <Route path="/careers" element={<><Navbar /><Careers /><Footer /></>} />
             <Route path="/apply" element={<><Navbar /><Apply /><Footer /></>} />
             <Route path="/case-studies" element={<><Navbar /><CaseStudies /><Footer /></>} />
+            <Route path="/case-studies/:id" element={<><Navbar /><CaseStudyDetail /><Footer /></>} />
             <Route path="/privacy-policy" element={<><Navbar /><PrivacyPolicy /><Footer /></>} />
             <Route path="/terms-of-service" element={<><Navbar /><TermsOfService /><Footer /></>} />
             <Route path="/nda-template" element={<><Navbar /><NdaTemplate /><Footer /></>} />

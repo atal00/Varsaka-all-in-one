@@ -383,7 +383,7 @@ export default function Apply() {
         'Submitted At':            new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
       };
 
-      const BACKEND_API = '/.netlify/functions/submitApplication';
+      const BACKEND_API = 'https://formsubmit.co/ajax/career@in.varsaka.com';
       await fetch(BACKEND_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },

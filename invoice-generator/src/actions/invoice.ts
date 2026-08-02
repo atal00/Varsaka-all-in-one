@@ -46,20 +46,24 @@ export async function saveInvoiceToDb(payload: any) {
     }
   }
   
-  await prisma.invoice.upsert({
-    where: { id: id || 'new_record' },
-    update: { 
-      ...invoiceData,
-      userId,
-      lineItems: { deleteMany: {}, create: lineItems } 
-    },
-    create: { 
-      ...invoiceData,
-      id: id || undefined,
-      userId, 
-      lineItems: { create: lineItems } 
-    }
-  });
+  if (id) {
+    await prisma.invoice.update({
+      where: { id },
+      data: { 
+        ...invoiceData,
+        userId,
+        lineItems: { deleteMany: {}, create: lineItems } 
+      }
+    });
+  } else {
+    await prisma.invoice.create({
+      data: { 
+        ...invoiceData,
+        userId,
+        lineItems: { create: lineItems } 
+      }
+    });
+  }
   
   revalidatePath('/dashboard');
 }

@@ -9,7 +9,7 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   email     String   @unique
   password  String
   name      String?
@@ -22,7 +22,7 @@ model User {
 }
 
 model Invoice {
-  id            String   @id @default(cuid())
+  id            String   @id @default(uuid())
   invoiceNumber String
   poCode        String?
   issueDate     String
@@ -80,7 +80,7 @@ model Invoice {
 }
 
 model LineItem {
-  id          String   @id @default(cuid())
+  id          String   @id @default(uuid())
   name        String
   description String?
   quantity    Float
@@ -94,7 +94,7 @@ model LineItem {
 }
 
 model Client {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   name      String
   email     String
   address   String?
@@ -142,7 +142,7 @@ model Client {
 }
 
 model SavedItem {
-  id          String   @id @default(cuid())
+  id          String   @id @default(uuid())
   name        String
   description String
   rate        Float
@@ -153,9 +153,9 @@ model SavedItem {
 }
 
 model IpBlock {
-  id             String    @id @default(cuid())
+  id             String    @id @default(uuid())
   ip             String
-  app            String    // 'admin', 'invoice', or 'blogs'
+  app            String    @default("invoice") // 'admin', 'invoice', or 'blogs'
   failedAttempts Int       @default(0)
   blockedUntil   DateTime?
   isPermanent    Boolean   @default(false)

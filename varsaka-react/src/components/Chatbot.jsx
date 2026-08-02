@@ -4,7 +4,7 @@ import { supabase } from '../supabaseClient';
 import { sanitize } from '../utils/security';
 import './Chatbot.css';
 
-const BACKEND_API = '/.netlify/functions/submitLead';
+const BACKEND_API = 'https://formsubmit.co/ajax/info@varsaka.com';
 
 const INITIAL_MSGS = [{ from: 'bot', text: "Hi there! 👋 I'm the Varsaka Labs assistant. How can I help you today?", time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }];
 

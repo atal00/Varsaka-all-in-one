@@ -1,37 +1,8 @@
 import { useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { caseStudiesData as studies } from '../data/caseStudiesData';
 import SEO from '../components/SEO';
 import './CaseStudies.css';
-
-const studies = [
-  { 
-    client: 'Ourfab Technologies', 
-    tag: 'Security Testing', 
-    icon: 'fa-shield-halved',
-    outcome: 'Critical Security Risks Remediated Post-Audit', 
-    desc: 'Conducted a comprehensive OWASP security audit on their fintech platform. Identified and helped the engineering team remediate several critical vulnerabilities before the public production release.' 
-  },
-  { 
-    client: 'Techtd Platform', 
-    tag: 'Automation', 
-    icon: 'fa-bolt-lightning',
-    outcome: 'Regression Testing Time Significantly Optimized', 
-    desc: 'Developed a custom Cypress automation framework integrated with their CI/CD pipeline. Successfully reduced the manual regression effort, allowing faster feedback for developers.' 
-  },
-  { 
-    client: 'TakeCare360', 
-    tag: 'AI-Powered Testing', 
-    icon: 'fa-robot',
-    outcome: 'Test Coverage Expanded to 85%+', 
-    desc: 'Implemented AI-assisted test generation to bridge existing coverage gaps. Successfully expanded the automated test suite to cover critical edge cases in their healthcare platform.' 
-  },
-  { 
-    client: 'RetailEdge India', 
-    tag: 'Performance Testing', 
-    icon: 'fa-gauge-high',
-    outcome: 'System Reliability Improved Under Load', 
-    desc: 'Performed targeted load and stress testing using JMeter. Identified performance bottlenecks in the checkout flow, leading to infrastructure optimizations for peak traffic periods.' 
-  },
-];
 
 export default function CaseStudies() {
   useEffect(() => { 
@@ -70,7 +41,7 @@ export default function CaseStudies() {
       <div className="case-container">
         <div className="case-grid">
           {studies.map((s, i) => (
-            <div key={i} className="case-card fade-in">
+            <div key={i} className="case-card fade-in" style={{ display: 'flex', flexDirection: 'column' }}>
               <div className="case-icon">
                 <i className={`fa-solid ${s.icon}`}></i>
               </div>
@@ -80,7 +51,10 @@ export default function CaseStudies() {
                 <i className="fa-solid fa-circle-check" style={{ marginTop: '4px' }}></i>
                 <span>{s.outcome}</span>
               </div>
-              <p>{s.desc}</p>
+              <p style={{ flexGrow: 1 }}>{s.desc}</p>
+              <Link to={`/case-studies/${s.id}`} className="read-more" style={{ marginTop: '1.5rem', fontWeight: 700, color: '#2563eb', textDecoration: 'none', display: 'inline-block' }}>
+                Read Full Story <i className="fa-solid fa-arrow-right" style={{ marginLeft: '6px' }}></i>
+              </Link>
             </div>
           ))}
         </div>
