@@ -3,11 +3,12 @@ generator client {
 }
 
 datasource db {
-  provider = "mongodb"
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 model User {
-  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  id         String    @id @default(uuid())
   supabaseId String    @unique
   email      String    @unique
   role       Role      @default(AUTHOR)
@@ -23,7 +24,7 @@ enum Role {
 }
 
 model Topic {
-  id                String      @id @default(auto()) @map("_id") @db.ObjectId
+  id                String      @id @default(uuid())
   name              String
   trendScore        Float?
   seoScore          Float?
@@ -50,10 +51,10 @@ enum TopicStatus {
 }
 
 model Research {
-  id        String    @id @default(auto()) @map("_id") @db.ObjectId
-  topicId   String    @db.ObjectId
+  id        String    @id @default(uuid())
+  topicId   String    
   topic     Topic     @relation(fields: [topicId], references: [id])
-  sources   String[] // URLs
+  sources   String // URLs
   facts     Json     // Extracted facts, knowledge graph
   status    String   // PENDING, COMPLETED
   createdAt DateTime  @default(now())
@@ -62,18 +63,18 @@ model Research {
 }
 
 model Article {
-  id               String        @id @default(auto()) @map("_id") @db.ObjectId
-  topicId          String?       @db.ObjectId
+  id               String        @id @default(uuid())
+  topicId          String?       
   topic            Topic?        @relation(fields: [topicId], references: [id])
-  researchId       String?       @db.ObjectId
+  researchId       String?       
   research         Research?     @relation(fields: [researchId], references: [id])
-  authorId         String?       @db.ObjectId
+  authorId         String?       
   author           User?         @relation(fields: [authorId], references: [id])
   
   title            String
   slug             String        @unique
   metaDescription  String?
-  keywords         String[]
+  keywords         String
   content          String
   
   status           ArticleStatus @default(DRAFT)
@@ -91,4 +92,16 @@ enum ArticleStatus {
   APPROVED
   PUBLISHED
   REJECTED
+}
+
+model CaseStudy {
+  id               String        @id @default(uuid())
+  title            String
+  slug             String        @unique
+  client           String?
+  industry         String?
+  content          String
+  status           String        @default("DRAFT")
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 }

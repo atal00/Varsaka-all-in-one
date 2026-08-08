@@ -3,6 +3,7 @@
 // hero of the blog editor: calm, comfortable, distraction-free.
 import { useState } from 'react'
 import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 
 marked.setOptions({ gfm: true, breaks: false })
 
@@ -73,7 +74,7 @@ export default function RichText({ value = '', onChange, placeholder = 'Write yo
         )}
         {mode !== 'write' && (
           <div className="vk-article" style={{ padding: 'clamp(20px,3vw,36px)', minHeight, overflowWrap: 'anywhere' }}
-            dangerouslySetInnerHTML={{ __html: html || '<p style="color:var(--faint)">Nothing to preview yet.</p>' }} />
+            dangerouslySetInnerHTML={{ __html: html ? DOMPurify.sanitize(html) : '<p style="color:var(--faint)">Nothing to preview yet.</p>' }} />
         )}
       </div>
     </div>

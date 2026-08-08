@@ -75,32 +75,8 @@ function RequireAuth({ children, allowedRoles }) {
   return children;
 }
 
-export default function App() {
+  export default function App() {
   useEffect(() => {
-    // 🛡️ THE GREAT WALL: Anti-Hacker Protection
-    const block = (e) => e.preventDefault();
-    
-    // Disable Right Click
-    document.addEventListener('contextmenu', block);
-
-    const keyBlock = (e) => {
-      // Block F12, Ctrl+Shift+I (Inspect), Ctrl+Shift+J (Console), Ctrl+U (Source), Ctrl+S (Save), Ctrl+Shift+C (Inspect Element)
-      if (
-        e.keyCode === 123 || 
-        (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || 
-        (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83 || e.keyCode === 70)) || 
-        (e.metaKey && e.shiftKey && e.keyCode === 73) || // Mac support
-        (e.metaKey && e.altKey && e.keyCode === 73) // Safari support
-      ) {
-        e.preventDefault();
-        return false;
-      }
-    };
-    document.addEventListener('keydown', keyBlock);
-
-    // Disable Drag & Drop (prevents people from stealing assets easily)
-    document.addEventListener('dragstart', block);
-    
     // 🛡️ Prevent Console Logging in Production
     if (import.meta.env.PROD) {
       const noop = () => {};
@@ -109,12 +85,6 @@ export default function App() {
       Object.defineProperty(window.console, 'error', { value: noop, writable: false });
       Object.defineProperty(window.console, 'info', { value: noop, writable: false });
     }
-
-    return () => {
-      document.removeEventListener('contextmenu', block);
-      document.removeEventListener('keydown', keyBlock);
-      document.removeEventListener('dragstart', block);
-    };
   }, []);
 
   return (
@@ -142,7 +112,7 @@ export default function App() {
             <Route path="/verify/:id" element={<VerifyCertificate />} />
             
             {/* Portal Pages (Protected) */}
-            <Route path="/portal" element={<RequireAuth allowedRoles={['superadmin', 'admin', 'employee']}><Portal /></RequireAuth>} />
+            <Route path="/portal" element={<RequireAuth allowedRoles={['admin', 'employee', 'blogger']}><Portal /></RequireAuth>} />
 
             {/* Service Pages */}
             <Route path="/services/functional-testing" element={<><Navbar /><FunctionalTesting /><Footer /></>} />

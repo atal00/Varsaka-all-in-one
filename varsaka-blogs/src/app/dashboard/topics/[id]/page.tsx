@@ -2,15 +2,11 @@ import Link from 'next/link';
 import { ArrowLeft, ExternalLink, Calendar, User, Lightbulb, Key, TrendingUp } from 'lucide-react';
 import { GenerateArticleButton } from '@/components/generate-article-button';
 
+import { getTopicById } from '@/app/actions/topics';
+
 async function getTopic(id: string) {
   try {
-    const res = await fetch(`http://127.0.0.1:3001/topics/${id}`, {
-      cache: 'no-store'
-    });
-    if (!res.ok) {
-      return null;
-    }
-    return res.json();
+    return await getTopicById(id);
   } catch (err) {
     return null;
   }

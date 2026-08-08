@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Search, RefreshCw, Loader2, PlusCircle } from 'lucide-react';
+import { createTopic } from '@/app/actions/topics';
 
 export function TopicsClientView({ initialTopics }: { initialTopics: any[] }) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -51,11 +52,8 @@ export function TopicsClientView({ initialTopics }: { initialTopics: any[] }) {
     setIsGenerating(true);
 
     try {
-      await fetch('http://127.0.0.1:3001/topics/custom', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: activeTab === 'case-studies' ? `Case Study: ${searchQuery.trim()}` : searchQuery.trim() })
-      });
+      const topicName = activeTab === 'case-studies' ? `Case Study: ${searchQuery.trim()}` : searchQuery.trim();
+      await createTopic(topicName);
       // Clear search and refresh data
       setSearchQuery('');
       router.refresh();

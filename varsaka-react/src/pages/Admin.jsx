@@ -163,7 +163,7 @@ const errMsg = (e) => (e && e.message) || 'Something went wrong.'
 
 /* ── Sidebar ──────────────────────────────────────────────────────────────── */
 /* Each nav item declares the permission(s) that gate its visibility. `any` means
-   the item shows if the user holds ANY of the listed permissions. super_admin holds
+   the item shows if the user holds ANY of the listed permissions. admin holds
    '*' so it sees everything. */
 const NAV_CONFIG = [
   { label:'Dashboard',           slug:'dashboard',     perm:'analytics.view' },

@@ -17,8 +17,17 @@ CREATE TABLE "IpBlock" (
 -- Add unique constraint
 CREATE UNIQUE INDEX "IpBlock_ip_app_key" ON "IpBlock"("ip", "app");
 
--- Enable RLS but allow anyone to read/write via RPC
+-- Enable RLS
 ALTER TABLE "IpBlock" ENABLE ROW LEVEL SECURITY;
+
+-- Allow authenticated users to view IP blocks (for Admin Panel)
+CREATE POLICY "Allow authenticated to read IpBlock" ON "IpBlock"
+  FOR SELECT TO authenticated USING (true);
+
+-- Allow authenticated users to update IP blocks (for Unblock/Ban actions in Admin Panel)
+CREATE POLICY "Allow authenticated to update IpBlock" ON "IpBlock"
+  FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
+
 
 -- Create function to log failed attempt
 CREATE OR REPLACE FUNCTION log_failed_attempt(p_ip TEXT, p_app TEXT)

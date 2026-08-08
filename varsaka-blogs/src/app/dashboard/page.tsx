@@ -1,29 +1,7 @@
 import { Database, FileText, BrainCircuit, Activity } from 'lucide-react';
 import Link from 'next/link';
 
-async function getStats() {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000);
-    const res = await fetch('http://127.0.0.1:3001/stats', {
-      next: { revalidate: 60 },
-      signal: controller.signal
-    });
-    clearTimeout(timeoutId);
-    if (!res.ok) throw new Error('Failed to fetch');
-    return await res.json();
-  } catch (error) {
-    return {
-      topicsDiscovered: 1248,
-      topicsTrend: '+12% from last week',
-      articlesGenerated: 156,
-      articlesTrend: '+5 new today',
-      deepResearchScans: 89,
-      activeCrawlers: 3,
-      dataSources: '4.2M'
-    };
-  }
-}
+import { getStats } from '@/app/actions/dashboard';
 
 export default async function DashboardOverviewPage() {
   const stats = await getStats();

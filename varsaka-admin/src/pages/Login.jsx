@@ -31,9 +31,11 @@ export default function Login() {
   }, [session, navigate, isLoggingIn]);
 
   useEffect(() => {
+    let active = true;
     fetch('https://api.ipify.org?format=json')
       .then(res => res.json())
       .then(async data => {
+        if (!active) return;
         setClientIp(data.ip);
         const { data: isBlocked } = await supabase.rpc('check_ip_block', { p_ip: data.ip, p_app: 'admin' });
         if (isBlocked) {
@@ -41,6 +43,7 @@ export default function Login() {
         }
       })
       .catch(() => {});
+    return () => { active = false; };
   }, [navigate]);
 
   const handleFailedAttempt = async () => {
@@ -71,13 +74,17 @@ export default function Login() {
     // For now, let's assume they enter their email.
     const loginEmail = user.includes('@') ? user.trim() : `${user.trim()}@varsaka.com`;
 
+    // Record explicit login time BEFORE signIn to prevent race condition with onAuthStateChange
+    sessionStorage.setItem('varsaka_login_time', Date.now().toString());
+
     const { data, error: authError } = await supabase.auth.signInWithPassword({
       email: loginEmail,
       password: pass.trim(),
     });
 
     if (authError) {
-      handleFailedAttempt();
+      sessionStorage.removeItem('varsaka_login_time');
+      await handleFailedAttempt();
       setIsLoggingIn(false);
       return;
     }

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Search, Loader2, Database, ExternalLink, Trash2 } from 'lucide-react';
+import { createResearchScan, deleteResearch } from '@/app/actions/research';
 
 export function ResearchClientView({ initialResearch }: { initialResearch: any[] }) {
   const [topicName, setTopicName] = useState('');
@@ -18,13 +19,8 @@ export function ResearchClientView({ initialResearch }: { initialResearch: any[]
     
     setIsScanning(true);
     try {
-      const res = await fetch('http://127.0.0.1:3001/research/scan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topicName: topicName.trim() })
-      });
-      
-      if (res.ok) {
+      const res = await createResearchScan(topicName.trim());
+      if (res.success) {
         setTopicName('');
         router.refresh();
       }
@@ -57,9 +53,7 @@ export function ResearchClientView({ initialResearch }: { initialResearch: any[]
     if (!confirm(`Are you sure you want to delete ${idsToDelete.length} item(s)?`)) return;
     setIsDeleting(true);
     try {
-      await Promise.all(idsToDelete.map(id => 
-        fetch(`http://127.0.0.1:3001/research/${id}`, { method: 'DELETE' })
-      ));
+      await Promise.all(idsToDelete.map(id => deleteResearch(id)));
       setSelectedIds(new Set());
       router.refresh();
     } catch (err) {

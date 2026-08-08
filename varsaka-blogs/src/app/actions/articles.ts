@@ -4,29 +4,15 @@ import prisma from '@/lib/prisma'
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 
-// Example: Securely fetching articles
 export async function getArticles() {
-  const supabase = await createClient()
-  
-  // 1. Verify User Authentication (Safe from hacking)
-  const { data: { user }, error } = await supabase.auth.getUser()
-  
-  if (error || !user) {
-    throw new Error('Unauthorized access. Please log in.')
-  }
-
-  // 2. Fetch data from Prisma Database
   try {
     const articles = await prisma.article.findMany({
       orderBy: { createdAt: 'desc' },
-      // Example of Row Level Security in code: Only fetch articles by this user
-      // where: { author: { supabaseId: user.id } },
     })
-    
     return articles
   } catch (dbError) {
     console.error('Error fetching articles:', dbError)
-    throw new Error('Failed to fetch articles')
+    return []
   }
 }
 

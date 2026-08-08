@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 import Seo from '../components/Seo.jsx'
 import { titleFor } from '../lib/seo.js'
 import { articleSchema, breadcrumbSchema } from '../lib/schema.js'
@@ -204,7 +205,7 @@ export function Component() {
               </nav>
             </aside>
           )}
-          <div ref={bodyRef} className="vk-article" dangerouslySetInnerHTML={{ __html: html }} />
+          <div ref={bodyRef} className="vk-article" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }} />
         </div>
 
         {(prev || next) && (

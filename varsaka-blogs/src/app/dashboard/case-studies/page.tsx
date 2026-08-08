@@ -1,15 +1,7 @@
 import Link from 'next/link';
 import { Briefcase, Edit } from 'lucide-react';
 
-async function getCaseStudies() {
-  try {
-    const res = await fetch('http://127.0.0.1:3001/case-studies', { cache: 'no-store' });
-    if (!res.ok) return [];
-    return res.json();
-  } catch (err) {
-    return [];
-  }
-}
+import { getCaseStudies } from '@/app/actions/case-studies';
 
 export default async function CaseStudiesPage() {
   const caseStudies = await getCaseStudies();

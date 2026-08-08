@@ -28,7 +28,7 @@ export function Sidebar() {
     <div className="flex h-screen flex-col border-r border-border bg-surface w-64 shadow-sm">
       <div className="flex h-16 items-center px-6 border-b border-border">
         <Link href="/dashboard" className="flex items-center gap-2 font-bold text-xl text-foreground">
-          <img src="https://varsaka.com/logo.png" alt="Varsaka Logo" className="h-6 w-6 object-contain" />
+          <img src="/logo.png" alt="Varsaka Logo" className="h-6 w-6 object-contain" />
           <span className="font-serif font-medium">Varsaka</span>
         </Link>
       </div>

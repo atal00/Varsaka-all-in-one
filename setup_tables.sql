@@ -114,5 +114,6 @@ ALTER TABLE certificates ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Public can read services" ON services FOR SELECT USING (true);
 CREATE POLICY "Public can read testimonials" ON testimonials FOR SELECT USING (true);
 CREATE POLICY "Public can read faqs" ON faqs FOR SELECT USING (true);
-CREATE POLICY "Public can read blogs" ON blogs FOR SELECT USING (true);
+CREATE POLICY "Public can read blogs" ON blogs FOR SELECT USING (status = 'published');
+-- WARNING: This allows unauthenticated users to insert leads. In production, this should be protected by a Captcha verified via Edge Function to prevent spam.
 CREATE POLICY "Public can insert leads" ON leads FOR INSERT WITH CHECK (true);

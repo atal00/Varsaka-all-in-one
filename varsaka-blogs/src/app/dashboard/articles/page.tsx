@@ -1,15 +1,7 @@
 import Link from 'next/link';
 import { FileText, Edit } from 'lucide-react';
 
-async function getArticles() {
-  try {
-    const res = await fetch('http://127.0.0.1:3001/articles', { cache: 'no-store' });
-    if (!res.ok) return [];
-    return res.json();
-  } catch (err) {
-    return [];
-  }
-}
+import { getArticles } from '@/app/actions/articles';
 
 export default async function ArticlesPage() {
   const articles = await getArticles();

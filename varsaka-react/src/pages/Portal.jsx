@@ -91,8 +91,37 @@ const ASSIGNMENT_MESSAGES = [
   "📈 Fresh Assignment! A new project is now under your care."
 ];
 
+const TimerBanner = ({ sessionExpiry }) => {
+  const [timeLeft, setTimeLeft] = useState('');
+
+  useEffect(() => {
+    if (!sessionExpiry) return;
+    const updateTimer = () => {
+      const remaining = sessionExpiry - Date.now();
+      if (remaining <= 0) {
+        setTimeLeft('00:00');
+      } else {
+        const mins = Math.floor(remaining / 60000);
+        const secs = Math.floor((remaining % 60000) / 1000);
+        setTimeLeft(`${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`);
+      }
+    };
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [sessionExpiry]);
+
+  if (!sessionExpiry) return null;
+
+  return (
+    <div style={{ backgroundColor: '#ff4d4f', color: '#fff', textAlign: 'center', padding: '10px', fontWeight: 'bold', fontSize: '16px', zIndex: 1000, position: 'sticky', top: 0 }}>
+      ⏳ Your session will expire in {timeLeft} minutes.
+    </div>
+  );
+};
+
 export default function Portal() {
-  const { session: authSession, userRole, signOut } = useAuth();
+  const { session: authSession, userRole, signOut, sessionExpiry } = useAuth();
   
   // Mimic old session object for minimal refactoring
   const session = authSession ? {
@@ -845,6 +874,7 @@ export default function Portal() {
 
       {/* MAIN CONTENT */}
       <div className="admin-main">
+        <TimerBanner sessionExpiry={sessionExpiry} />
         <header className="admin-topbar">
           <h1>{activeTab}</h1>
           <div className="topbar-right">

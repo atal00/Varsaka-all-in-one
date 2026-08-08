@@ -57,7 +57,7 @@ exports.handler = async (event, context) => {
 
     // Check if caller is admin
     const { data: profile } = await supabaseAdmin.from('profiles').select('role').eq('id', user.id).single();
-    if (!profile || (profile.role !== 'admin' && profile.role !== 'super_admin')) {
+    if (!profile || profile.role !== 'admin') {
       return { statusCode: 403, headers, body: JSON.stringify({ error: 'Forbidden: Admin access required' }) };
     }
 
@@ -72,7 +72,7 @@ exports.handler = async (event, context) => {
         return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid email format' }) };
       }
       
-      const allowedRoles = ['admin', 'super_admin', 'employee', 'manager'];
+      const allowedRoles = ['admin', 'employee', 'blogger'];
       if (role && !allowedRoles.includes(role)) {
         return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid role specified' }) };
       }
@@ -104,7 +104,7 @@ exports.handler = async (event, context) => {
       const { userId, role, permissions } = payload;
       
       // Input Validation
-      const allowedRoles = ['admin', 'super_admin', 'employee', 'manager'];
+      const allowedRoles = ['admin', 'employee', 'blogger'];
       if (role && !allowedRoles.includes(role)) {
         return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid role specified' }) };
       }

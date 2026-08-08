@@ -30,8 +30,23 @@ export default async function RootLayout({
 
   if (ip !== 'unknown') {
     try {
-      const block = await prisma.ipBlock.findUnique({ where: { ip_app: { ip, app: 'invoice' } } });
-      if (block && (block.isPermanent || (block.blockedUntil && block.blockedUntil > new Date()))) {
+      const checkRes = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/check_ip_block`, {
+        method: 'POST',
+        headers: {
+          'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ p_ip: ip, p_app: 'invoice' }),
+        cache: 'no-store' // Ensure we get fresh block status
+      });
+      
+      let isBlocked = false;
+      if (checkRes.ok) {
+        isBlocked = await checkRes.json();
+      }
+
+      if (isBlocked === true) {
         return (
           <html lang="en">
             <head>

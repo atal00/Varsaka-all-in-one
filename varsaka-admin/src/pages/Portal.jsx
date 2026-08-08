@@ -92,8 +92,37 @@ const ASSIGNMENT_MESSAGES = [
   "📈 Fresh Assignment! A new project is now under your care."
 ];
 
+const TimerBanner = ({ sessionExpiry }) => {
+  const [timeLeft, setTimeLeft] = useState('');
+
+  useEffect(() => {
+    if (!sessionExpiry) return;
+    const updateTimer = () => {
+      const remaining = sessionExpiry - Date.now();
+      if (remaining <= 0) {
+        setTimeLeft('00:00');
+      } else {
+        const mins = Math.floor(remaining / 60000);
+        const secs = Math.floor((remaining % 60000) / 1000);
+        setTimeLeft(`${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`);
+      }
+    };
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [sessionExpiry]);
+
+  if (!sessionExpiry) return null;
+
+  return (
+    <div style={{ backgroundColor: '#ff4d4f', color: '#fff', textAlign: 'center', padding: '10px', fontWeight: 'bold', fontSize: '16px', zIndex: 1000, position: 'sticky', top: 0 }}>
+      ⏳ Your session will expire in {timeLeft} minutes.
+    </div>
+  );
+};
+
 export default function Portal() {
-  const { session: authSession, userRole, signOut } = useAuth();
+  const { session: authSession, userRole, signOut, sessionExpiry } = useAuth();
   
   // Mimic old session object for minimal refactoring
   const session = authSession ? {
@@ -108,7 +137,11 @@ export default function Portal() {
   const [, setError] = useState(null);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
-  const [activeTab, setActiveTab] = useState('Dashboard');
+  const [activeTab, setActiveTab] = useState(() => {
+    if (userRole === 'blogger') return 'Blog';
+    if (userRole === 'employee') return 'Care Requests';
+    return 'Dashboard';
+  });
   const [showTeam, setShowTeam] = useState(false);
   const [staffList, setStaffList] = useState([]);
   const [showInfoModal, setShowInfoModal] = useState(false);
@@ -719,8 +752,7 @@ export default function Portal() {
 
       triggerInfo(isStaff ? 'Lead submitted for Admin approval!' : 'Lead added successfully!');
       
-      // 🛡️ GATED APPROVAL: Only sync to GS if Admin is adding it directly.
-      // Employee leads wait for Admin Approval.
+      // 🛡️ GATED APPROVAL
       const gsUrl = import.meta.env.VITE_GS_SYNC_URL;
       if (!isStaff && gsUrl) {
         fetch(gsUrl, {
@@ -729,18 +761,19 @@ export default function Portal() {
           body: JSON.stringify({ 
             action: 'add', 
             ...newLead,
-            phone: `'${newLead.countryCode} ${newLead.phone}` // 🛠️ Fix: Add ' to prevent GS formula error
+            phone: `'${newLead.countryCode} ${newLead.phone}`
           })
         }).catch(err => console.error('GS Sync Error:', err));
       }
       
       setNewLead({ name: '', email: '', phone: '', countryCode: '+91', service: 'Functional Testing', msg: '' });
       setShowAddLead(false);
-      fetchData();
+      fetchData(); // Refresh data
     } catch (err) {
-      triggerInfo('Error: ' + err.message);
+      triggerInfo('Error: ' + (err?.message || err || 'Unknown Error'));
+    } finally {
+      setAddingLead(false);
     }
-    setAddingLead(false);
   };
 
   const approveLead = async (lead) => {
@@ -864,7 +897,16 @@ export default function Portal() {
     { id: 'Users', icon: 'fa-solid fa-users', label: 'Users' },
     { id: 'Security Logs', icon: 'fa-solid fa-shield-halved', label: 'Security Logs' },
     { id: 'Settings', icon: 'fa-solid fa-gear', label: 'Settings' }
-  ];
+  ].filter(item => {
+    if (session.role === 'blogger') {
+      return ['Blog', 'Media', 'Settings'].includes(item.id);
+    }
+    if (session.role === 'employee') {
+      return ['Care Requests', 'Certificates', 'Settings'].includes(item.id);
+    }
+    // Admin gets everything
+    return true;
+  });
 
   return (
     <div className="admin-layout">
@@ -878,7 +920,7 @@ export default function Portal() {
           <img src={logo} alt="Varsaka Labs" />
           <div className="sidebar-brand-text">
             <h2>Varsaka Labs</h2>
-            <span>Admin Panel</span>
+            <span>{session?.role === 'admin' ? 'Admin Panel' : 'Staff Portal'}</span>
           </div>
         </div>
         
@@ -908,6 +950,7 @@ export default function Portal() {
 
       {/* MAIN CONTENT */}
       <div className="admin-main">
+        <TimerBanner sessionExpiry={sessionExpiry} />
         <header className="admin-topbar">
           <h1>{activeTab}</h1>
           <div className="topbar-right">

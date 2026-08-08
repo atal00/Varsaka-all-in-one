@@ -28,9 +28,14 @@ export default function LoginPage() {
             },
             body: JSON.stringify({ p_ip: data.ip, p_app: 'invoice' })
           });
-          const isBlocked = await checkRes.json();
-          if (isBlocked) {
-            router.push('/404');
+          
+          if (checkRes.ok) {
+            const isBlocked = await checkRes.json();
+            if (isBlocked === true) {
+              router.push('/404');
+            }
+          } else {
+            console.error("Failed to check IP block:", await checkRes.text());
           }
         } catch (err) {}
       })
@@ -74,7 +79,7 @@ export default function LoginPage() {
       password: passStr,
     });
     if (res?.error) {
-       handleFailedAttempt();
+       await handleFailedAttempt();
     } else {
        try {
          await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/clear_ip_block`, {

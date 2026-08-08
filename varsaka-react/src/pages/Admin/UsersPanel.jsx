@@ -41,10 +41,10 @@ function assignableRoles(myRole) {
   const all = [
     { value:'admin', label:'Admin', level:ROLE_LEVELS.admin },
     { value:'employee', label:'Employee', level:ROLE_LEVELS.employee },
-    { value:'client', label:'Client', level:ROLE_LEVELS.client },
+    { value:'blogger', label:'Blogger', level:ROLE_LEVELS.blogger },
   ]
-  if (myRole === 'super_admin') return all // super_admin: admin/employee/client
-  return all.filter(r => r.level < myLevel) // admin: employee/client only
+  if (myRole === 'admin') return all // admin: admin/employee/blogger
+  return all.filter(r => r.level < myLevel)
 }
 
 /* ── Create / Edit drawer ─────────────────────────────────────────────────── */
@@ -72,8 +72,8 @@ function UserDrawer({ open, onClose, user, catalog, onSaved, showToast }) {
   }
   if (!open && hydrated) setHydrated(false)
 
-  // Constrain the grantable permission set to what the actor holds (super_admin: all).
-  const allow = auth.isSuperAdmin ? undefined : (perm)=>auth.can(perm)
+  // Constrain the grantable permission set to what the actor holds (admin: all).
+  const allow = auth.role === 'admin' ? undefined : (perm)=>auth.can(perm)
 
   async function save() {
     if (!name.trim()) { setError('Name is required.'); return }

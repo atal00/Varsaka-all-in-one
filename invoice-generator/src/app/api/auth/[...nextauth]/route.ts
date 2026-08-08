@@ -18,9 +18,25 @@ export const authOptions: NextAuthOptions = {
         const ip = forwardedFor ? forwardedFor.split(',')[0].trim() : 'unknown';
 
         if (ip !== 'unknown') {
-          const block = await prisma.ipBlock.findUnique({ where: { ip_app: { ip, app: 'invoice' } } });
-          if (block && (block.isPermanent || (block.blockedUntil && block.blockedUntil > new Date()))) {
-            throw new Error("Blocked");
+          try {
+            const checkRes = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/check_ip_block`, {
+              method: 'POST',
+              headers: {
+                'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+                'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ p_ip: ip, p_app: 'invoice' }),
+              cache: 'no-store'
+            });
+            if (checkRes.ok) {
+              const isBlocked = await checkRes.json();
+              if (isBlocked === true) {
+                throw new Error("Blocked");
+              }
+            }
+          } catch (e) {
+            if (e instanceof Error && e.message === "Blocked") throw e;
           }
         }
 
@@ -36,29 +52,34 @@ export const authOptions: NextAuthOptions = {
 
         if (!user || !isPasswordValid) {
           if (ip !== 'unknown') {
-            const record = await prisma.ipBlock.upsert({
-              where: { ip_app: { ip, app: 'invoice' } },
-              update: { failedAttempts: { increment: 1 } },
-              create: { ip, app: 'invoice', failedAttempts: 1 }
-            });
-            
-            if (record.failedAttempts >= 3) {
-              await prisma.ipBlock.update({
-                where: { ip_app: { ip, app: 'invoice' } },
-                data: { blockedUntil: new Date(Date.now() + 24 * 60 * 60 * 1000) }
+            try {
+              await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/log_failed_attempt`, {
+                method: 'POST',
+                headers: {
+                  'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+                  'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ p_ip: ip, p_app: 'invoice' })
               });
-            }
+            } catch (e) {}
           }
           throw new Error("InvalidCredentials");
         }
 
         // Success - reset attempts
         if (ip !== 'unknown') {
-          await prisma.ipBlock.upsert({
-            where: { ip_app: { ip, app: 'invoice' } },
-            update: { failedAttempts: 0, blockedUntil: null },
-            create: { ip, app: 'invoice', failedAttempts: 0 }
-          });
+          try {
+            await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/clear_ip_block`, {
+              method: 'POST',
+              headers: {
+                'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+                'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ p_ip: ip, p_app: 'invoice' })
+            });
+          } catch (e) {}
         }
 
         return { id: user.id, email: user.email, name: user.name }

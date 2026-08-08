@@ -1,14 +1,6 @@
 import { ResearchClientView } from './research-client-view';
 
-async function getResearch() {
-  try {
-    const res = await fetch('http://127.0.0.1:3001/research', { cache: 'no-store' });
-    if (!res.ok) return [];
-    return res.json();
-  } catch (err) {
-    return [];
-  }
-}
+import { getResearch } from '@/app/actions/research';
 
 export default async function ResearchPage() {
   const research = await getResearch();

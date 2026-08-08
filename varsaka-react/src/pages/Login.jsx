@@ -30,41 +30,32 @@ export default function Login() {
   }, [session, navigate]);
 
   useEffect(() => {
+    let active = true;
     // Check if IP is blocked and get user's IP
     fetch('https://api.ipify.org?format=json')
       .then(res => res.json())
-      .then(data => {
+      .then(async data => {
+        if (!active) return;
         setClientIp(data.ip);
-        const blocked = JSON.parse(localStorage.getItem('admin_blocked_ips') || '[]');
-        const record = blocked.find(b => b.ip === data.ip);
-        if (record) {
-          const hoursPassed = (Date.now() - record.time) / (1000 * 60 * 60);
-          if (hoursPassed < 24) {
-            navigate('/404', { replace: true });
-          } else {
-            // Unblock after 24 hours
-            localStorage.setItem('admin_blocked_ips', JSON.stringify(blocked.filter(b => b.ip !== data.ip)));
-          }
+        
+        // SECURE CHECK: Call Supabase RPC
+        const { data: isBlocked, error } = await supabase.rpc('check_ip_block', { p_ip: data.ip, p_app: 'varsaka_main' });
+        
+        if (isBlocked) {
+          navigate('/404', { replace: true });
         }
       })
-      .catch(() => {});
+      .catch((err) => console.error("IP Check Failed", err));
+      
+    return () => { active = false; };
   }, [navigate]);
 
-  const handleFailedAttempt = () => {
-    let currentAttempts = parseInt(localStorage.getItem('varsaka_failed_attempts') || '0') + 1;
+  const handleFailedAttempt = async () => {
+    // SECURE LOG: Log attempt to Supabase
+    await supabase.rpc('log_failed_attempt', { p_ip: clientIp || 'Unknown', p_app: 'varsaka_main' });
     
-    if (currentAttempts >= 3) {
-      // 3 fails -> Block IP for 24 hours and send to "Admin Secure Section" via localStorage
-      const blocked = JSON.parse(localStorage.getItem('admin_blocked_ips') || '[]');
-      blocked.push({ ip: clientIp, time: Date.now() });
-      localStorage.setItem('admin_blocked_ips', JSON.stringify(blocked));
-      localStorage.setItem('varsaka_failed_attempts', '0'); // reset for future
-    } else {
-      localStorage.setItem('varsaka_failed_attempts', currentAttempts.toString());
-    }
-    
-    // Immediately bounce them to 404 page
-    navigate('/404', { replace: true });
+    // Immediately bounce them to varsaka.com
+    window.location.href = 'https://varsaka.com';
   };
 
   const handleLogin = async (e) => {
@@ -81,18 +72,24 @@ export default function Login() {
     // For now, let's assume they enter their email.
     const loginEmail = user.includes('@') ? user.trim() : `${user.trim()}@varsaka.com`;
 
+    // Record explicit login time BEFORE signIn to prevent race condition with onAuthStateChange
+    sessionStorage.setItem('varsaka_login_time', Date.now().toString());
+
     const { data, error: authError } = await supabase.auth.signInWithPassword({
       email: loginEmail,
       password: pass.trim(),
     });
 
     if (authError) {
-      handleFailedAttempt();
+      sessionStorage.removeItem('varsaka_login_time');
+      await handleFailedAttempt();
       return;
     }
 
     // Reset failed attempts on successful login
-    localStorage.setItem('varsaka_failed_attempts', '0');
+    if (clientIp !== 'Unknown') {
+      await supabase.rpc('clear_ip_block', { p_ip: clientIp, p_app: 'varsaka_main' });
+    }
 
     const { user: sbUser } = data;
     

@@ -213,8 +213,7 @@ export function NoAccess({ label = "You don't have access to this module." }) {
 
 /* ── Role pill tones ──────────────────────────────────────────────────────── */
 export const ROLE_TONES = {
-  super_admin:{ fg:'var(--inv-text)', border:'var(--inv-bg)', bg:'var(--inv-bg)' },
-  admin:      { fg:'var(--text)', border:'var(--text)', bg:'color-mix(in srgb,var(--text) 6%,transparent)' },
-  employee:   { fg:'var(--text)', border:'var(--line)', bg:'var(--surface2)' },
-  client:     { fg:'var(--muted)', border:'var(--border)', bg:'transparent' },
+  admin:      { fg:'var(--inv-text)', border:'var(--inv-bg)', bg:'var(--inv-bg)' },
+  employee:   { fg:'var(--text)', border:'var(--text)', bg:'color-mix(in srgb,var(--text) 6%,transparent)' },
+  blogger:    { fg:'var(--text)', border:'var(--line)', bg:'var(--surface2)' },
 }

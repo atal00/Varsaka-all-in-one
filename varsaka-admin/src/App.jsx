@@ -110,7 +110,7 @@ export default function App() {
             <Route path="/verify/:id" element={<VerifyCertificate />} />
             
             {/* Portal Pages (Protected) */}
-            <Route path="/portal" element={<RequireAuth allowedRoles={['superadmin', 'admin', 'employee']}><Portal /></RequireAuth>} />
+            <Route path="/portal" element={<RequireAuth allowedRoles={['admin', 'employee', 'blogger']}><Portal /></RequireAuth>} />
             
             {/* Dynamic Security & 404 Pages */}
             <Route path="/404" element={<Fake404 />} />

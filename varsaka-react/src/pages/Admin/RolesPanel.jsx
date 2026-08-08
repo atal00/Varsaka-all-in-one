@@ -1,7 +1,7 @@
 // ROLES & PERMISSIONS — list of roles + the enterprise permission-matrix editor.
 // Select a role to load its permissions into the matrix; save persists via api.roles.update.
 // Create custom roles, clone, and delete non-system roles. System roles are protected;
-// super_admin's '*' renders as full read-only access.
+// admin's '*' renders as full read-only access.
 import { useEffect, useMemo, useState } from 'react'
 import { api } from '../../lib/api.js'
 import { useQuery } from '../../hooks/useApi.js'
@@ -13,7 +13,7 @@ import {
 } from './ui.jsx'
 import { PermissionMatrix } from './PermissionMatrix.jsx'
 
-const SYSTEM_SLUGS = new Set(['super_admin','admin','employee','client'])
+const SYSTEM_SLUGS = new Set(['admin','employee','blogger'])
 const isSystemRole = (r) => r.isSystem || SYSTEM_SLUGS.has(r.slug)
 const isFullAccess = (r) => (r.permissions || []).includes('*')
 

@@ -1,19 +1,6 @@
 import { TopicsClientView } from '@/components/topics-client-view';
 
-async function getTopics() {
-  // Use absolute URL since this is a server component
-  try {
-    const res = await fetch('http://127.0.0.1:3001/topics', {
-      cache: 'no-store'
-    });
-    if (!res.ok) {
-      return [];
-    }
-    return res.json();
-  } catch (err) {
-    return [];
-  }
-}
+import { getTopics } from '@/app/actions/topics';
 
 export default async function TopicsPage() {
   const topics = await getTopics();

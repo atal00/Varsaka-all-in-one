@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 import { api } from '../../../lib/api.js'
 import { useAuth } from '../../../lib/rbac.jsx'
 import { SkForm } from '../../../components/Skeleton.jsx'
@@ -305,7 +306,7 @@ export function Component() {
             </div>
           )}
           <div style={{ height: 1, background: 'var(--border)', margin: '28px 0' }} />
-          <div dangerouslySetInnerHTML={{ __html: previewHtml }} />
+          <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(previewHtml) }} />
         </article>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>

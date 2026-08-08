@@ -68,7 +68,7 @@ export default function Home() {
       password,
     });
     if (error) {
-      handleFailedAttempt();
+      await handleFailedAttempt();
     } else {
       await supabase.rpc('clear_ip_block', { p_ip: clientIp, p_app: 'blogs' });
       router.push("/dashboard");
