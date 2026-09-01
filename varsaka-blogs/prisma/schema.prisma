@@ -74,7 +74,7 @@ model Article {
   title            String
   slug             String        @unique
   metaDescription  String?
-  keywords         String
+  keywords         String        @default("")
   content          String
   
   status           ArticleStatus @default(DRAFT)

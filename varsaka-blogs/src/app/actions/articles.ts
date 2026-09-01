@@ -17,7 +17,7 @@ export async function getArticles() {
 }
 
 // Example: Securely creating an article
-export async function createArticle(title: string, content: string) {
+export async function createArticle(title: string, content: string, keywords: string = '') {
   const supabase = await createClient()
   const { data: { user }, error } = await supabase.auth.getUser()
   
@@ -30,6 +30,7 @@ export async function createArticle(title: string, content: string) {
       data: {
         title,
         content,
+        keywords: keywords || '',
         slug: title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, ''),
         // Link the article to the currently authenticated user
         author: {

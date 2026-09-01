@@ -64,7 +64,7 @@ export default async function TopicDetailsPage({ params }: { params: Promise<{ i
             </h2>
             
             <div className="space-y-4">
-              {topic.relevantLinks?.map((link: any, idx: number) => (
+              {((topic as any).relevantLinks || []).map((link: any, idx: number) => (
                 <div key={idx} className="p-4 rounded-lg border border-gray-100 dark:border-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors">
                   <a href={link.url} target="_blank" rel="noopener noreferrer" className="block">
                     <h3 className="font-medium text-blue-600 dark:text-blue-400 hover:underline mb-2">{link.title}</h3>
@@ -90,7 +90,7 @@ export default async function TopicDetailsPage({ params }: { params: Promise<{ i
             </h2>
             
             <ul className="space-y-3">
-              {topic.suggestions?.map((suggestion: string, idx: number) => (
+              {((topic as any).suggestions || []).map((suggestion: string, idx: number) => (
                 <li key={idx} className="flex items-start">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs font-bold mr-3 mt-0.5">
                     {idx + 1}
@@ -116,7 +116,7 @@ export default async function TopicDetailsPage({ params }: { params: Promise<{ i
             </h2>
             
             <div className="flex flex-wrap gap-2">
-              {topic.keywords?.map((keyword: string, idx: number) => (
+              {((topic as any).keywords || []).map((keyword: string, idx: number) => (
                 <span key={idx} className="px-3 py-1.5 rounded-md text-sm bg-gray-100 dark:bg-zinc-800 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-zinc-700">
                   {keyword}
                 </span>
