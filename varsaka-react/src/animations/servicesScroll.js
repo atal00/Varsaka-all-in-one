@@ -1,7 +1,7 @@
 // Desktop pinned scroll-link for the services section (animation.md §3). Lazy-imported after
 // mount. Pins the stage and maps scroll progress → active panel index via onUpdate, calling
 // back into React. Panel cross-fade itself is CSS (opacity + 24px translateY) keyed to the
-// active index — calmer and cheaper than per-panel GSAP tweens. Returns a cleanup fn.
+// active index - calmer and cheaper than per-panel GSAP tweens. Returns a cleanup fn.
 export async function buildServicesScroll(root, count, onIndex) {
   const { gsap } = await import('gsap')
   const { ScrollTrigger } = await import('gsap/ScrollTrigger')

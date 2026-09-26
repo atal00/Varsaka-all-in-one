@@ -29,7 +29,7 @@ export const caseStudiesData = [
       <p>Techtd had a massive SaaS platform with hundreds of screens. Every two-week sprint, their QA team spent five days just executing the exact same regression test cases. Developers were waiting forever for feedback, and hotfixes were incredibly stressful because nobody was sure what might break.</p>
       
       <h2>Our Approach: Shifting Left with Cypress</h2>
-      <p>We implemented a modern Cypress testing framework that plugged directly into their GitHub Actions CI/CD pipeline. Instead of trying to automate everything, we focused strictly on their most critical user journeys—the "Golden Paths." We also trained their developers to write their own tests alongside new features.</p>
+      <p>We implemented a modern Cypress testing framework that plugged directly into their GitHub Actions CI/CD pipeline. Instead of trying to automate everything, we focused strictly on their most critical user journeys-the "Golden Paths." We also trained their developers to write their own tests alongside new features.</p>
       
       <h2>The Impact</h2>
       <p>The results were immediate. A regression cycle that used to take five days now runs unattended in 12 minutes. Release cycles were slashed by 60%, and the QA team finally had the breathing room to do actual exploratory testing instead of acting like robots.</p>

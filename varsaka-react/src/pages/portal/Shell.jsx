@@ -1,4 +1,4 @@
-// Portal shell — top bar with Varsaka mark + "Client Portal", client name, sign-out.
+// Portal shell - top bar with Varsaka mark + "Client Portal", client name, sign-out.
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../lib/rbac.jsx'

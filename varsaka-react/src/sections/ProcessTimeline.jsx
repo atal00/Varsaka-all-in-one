@@ -2,13 +2,13 @@ import { useEffect, useRef } from 'react'
 import SectionLabel from '../components/SectionLabel.jsx'
 import usePrefersReducedMotion from '../hooks/usePrefersReducedMotion.js'
 
-// Section 5 — How We Work (prd.md §8.5, animation.md §4). 4-step engagement model as a
+// Section 5 - How We Work (prd.md §8.5, animation.md §4). 4-step engagement model as a
 // connected timeline with a scroll-scrubbed progress line (horizontal desktop / vertical
 // mobile). Steps are real content (SSR/SEO). Reduced-motion → line shown full, no scrub.
 const steps = [
-  { n: '01', title: 'Discover', body: 'A free audit of your product, stack, and current QA gaps — so the plan fits what you actually ship.' },
+  { n: '01', title: 'Discover', body: 'A free audit of your product, stack, and current QA gaps - so the plan fits what you actually ship.' },
   { n: '02', title: 'Plan & Build', body: 'We scope coverage, pick the right tools (Playwright, Selenium, JMeter…), and stand up the test framework.' },
-  { n: '03', title: 'Execute & Report', body: 'Tests run on your cadence. You get clear, prioritized reports — not a wall of unfiltered failures.' },
+  { n: '03', title: 'Execute & Report', body: 'Tests run on your cadence. You get clear, prioritized reports - not a wall of unfiltered failures.' },
   { n: '04', title: 'Support', body: 'We stay through launch and beyond, maintaining suites as your product changes.' },
 ]
 

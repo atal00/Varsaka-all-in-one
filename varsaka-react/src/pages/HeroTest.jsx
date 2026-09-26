@@ -9,7 +9,7 @@ export function Component() {
       <Seo title="Hero test (internal)" description="Isolated hero animation harness." path="/dev/hero-test" noindex />
       <HomeHero />
       <div className="container-edge py-section">
-        <p className="text-graphite-500">Scroll target — isolated hero harness.</p>
+        <p className="text-graphite-500">Scroll target - isolated hero harness.</p>
       </div>
     </>
   )

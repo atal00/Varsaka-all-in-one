@@ -89,17 +89,22 @@
   <!-- Legal Pages -->
   <url>
     <loc>https://varsaka.com/privacy-policy</loc>
-    <lastmod>2026-05-11</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <priority>0.4</priority>
   </url>
   <url>
     <loc>https://varsaka.com/terms-of-service</loc>
-    <lastmod>2026-05-11</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <priority>0.4</priority>
   </url>
   <url>
-    <loc>https://varsaka.com/nda-template</loc>
-    <lastmod>2026-05-11</lastmod>
+    <loc>https://varsaka.com/cookies-policy</loc>
+    <lastmod>2026-09-25</lastmod>
+    <priority>0.4</priority>
+  </url>
+  <url>
+    <loc>https://varsaka.com/refund-policy</loc>
+    <lastmod>2026-09-25</lastmod>
     <priority>0.4</priority>
   </url>
 </urlset>

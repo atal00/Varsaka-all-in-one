@@ -45,7 +45,7 @@ export default function BlogDetail() {
               <p>Imagine knowing where a bug is likely to occur before a single test is run. By analyzing historical commit data, past defect rates, and test results, advanced machine learning models can point QA engineers directly to the most risky areas of a codebase. This allows teams to optimize test coverage and focus their energy where it matters most.</p>
               
               <h2>What This Means for QA Teams</h2>
-              <p>Quality Assurance is no longer just about finding bugs—it's about preventing them entirely. The engineers of the future will spend less time writing repetitive scripts and more time architecting robust quality strategies, analyzing data trends, and ensuring that the final product delivers an exceptional user experience.</p>
+              <p>Quality Assurance is no longer just about finding bugs-it's about preventing them entirely. The engineers of the future will spend less time writing repetitive scripts and more time architecting robust quality strategies, analyzing data trends, and ensuring that the final product delivers an exceptional user experience.</p>
               
               <p>At Varsaka, we are already implementing these forward-thinking strategies to help our clients ship better software, faster, and with complete confidence.</p>
             ` : '<p>Content coming soon.</p>'

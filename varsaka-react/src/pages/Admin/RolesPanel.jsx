@@ -1,4 +1,4 @@
-// ROLES & PERMISSIONS — list of roles + the enterprise permission-matrix editor.
+// ROLES & PERMISSIONS - list of roles + the enterprise permission-matrix editor.
 // Select a role to load its permissions into the matrix; save persists via api.roles.update.
 // Create custom roles, clone, and delete non-system roles. System roles are protected;
 // admin's '*' renders as full read-only access.
@@ -154,7 +154,7 @@ export default function RolesPanel() {
                     {isSystemRole(r) && <Pill label="System" tone={{ fg:'var(--muted)', border:'var(--border)', bg:'transparent' }} />}
                   </div>
                   <div style={{ fontSize:11, color:'var(--faint)', fontFamily:'var(--mono)' }}>
-                    Level {r.level ?? '—'} · {permCount(r)} perms
+                    Level {r.level ?? '-'} · {permCount(r)} perms
                   </div>
                 </button>
               )

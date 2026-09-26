@@ -5,7 +5,7 @@ import ServiceMotif from '../components/ServiceMotif.jsx'
 import { ArrowLink } from '../components/Button.jsx'
 import usePrefersReducedMotion from '../hooks/usePrefersReducedMotion.js'
 
-// Section 4 — Services as a connected system (prd.md §8.4, animation.md §3).
+// Section 4 - Services as a connected system (prd.md §8.4, animation.md §3).
 // DEFAULT render (SSR / no-JS / mobile / reduced-motion) = semantic vertical stack with all
 // six panels as real content (SEO + content-equivalent mobile per seo.md §4). On desktop
 // with motion, JS enhances into the pinned scroll-link: sticky 30% label column (numeral +

@@ -6,13 +6,27 @@ const { Resend } = require('resend');
 const ipCache = new Map();
 
 exports.handler = async (event, context) => {
+  // Strict CORS checking
+  const allowedOrigins = (process.env.ALLOWED_ORIGIN || 'https://varsaka.com,https://admin.varsaka.com').split(',').map(o => o.trim());
+  const requestOrigin = event.headers.origin;
+  
+  let corsOrigin = allowedOrigins[0];
+  if (requestOrigin && (allowedOrigins.includes(requestOrigin) || requestOrigin.includes('localhost') || requestOrigin.includes('127.0.0.1'))) {
+    corsOrigin = requestOrigin;
+  }
+
+  const headers = {
+    'Access-Control-Allow-Origin': corsOrigin,
+    'Access-Control-Allow-Headers': 'Content-Type'
+  };
+
   // 1. CORS & Methods
   if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'Content-Type' } };
+    return { statusCode: 200, headers };
   }
   
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
+    return { statusCode: 405, headers, body: 'Method Not Allowed' };
   }
 
   // 2. Rate Limiting (5 requests per hour per IP)
@@ -30,7 +44,7 @@ exports.handler = async (event, context) => {
   ipCache.set(ip, requestInfo);
 
   if (requestInfo.count > limit) {
-    return { statusCode: 429, body: JSON.stringify({ error: 'Too many requests. Please try again later.' }) };
+    return { statusCode: 429, headers, body: JSON.stringify({ error: 'Too many requests. Please try again later.' }) };
   }
 
   try {
@@ -39,14 +53,19 @@ exports.handler = async (event, context) => {
     // 3. Honeypot check (Spam prevention)
     if (data._honey) {
       // Silently accept but do nothing
-      return { statusCode: 200, body: JSON.stringify({ success: true, message: 'Lead submitted successfully' }) };
+      return { statusCode: 200, headers, body: JSON.stringify({ success: true, message: 'Lead submitted successfully' }) };
     }
 
     const { name, email, phone, service, message } = data;
 
     // 4. Basic Validation
     if (!name || !email || !message) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'Missing required fields' }) };
+      return { statusCode: 400, headers, body: JSON.stringify({ error: 'Missing required fields' }) };
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid email format' }) };
     }
 
     // 5. Secure Database Insertion via Service Role
@@ -74,22 +93,39 @@ exports.handler = async (event, context) => {
       console.warn('Supabase service role key not configured. Skipping DB insert.');
     }
 
-    // 6. Send Email via Resend
+    // 6. Send Email via Resend with strict HTML escaping
     const resendKey = process.env.RESEND_API_KEY;
     if (resendKey) {
+      const escapeHtml = (str) => {
+        if (!str) return '';
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      };
+
+      const safeName = escapeHtml(name);
+      const safeEmail = escapeHtml(email);
+      const safePhone = escapeHtml(phone || 'N/A');
+      const safeService = escapeHtml(service || 'General Inquiry');
+      const safeMessage = escapeHtml(message);
+      const safeSubject = `New Lead: ${safeService} from ${safeName}`.replace(/[\r\n]+/g, ' ').substring(0, 150);
+
       const resend = new Resend(resendKey);
       await resend.emails.send({
         from: 'Varsaka Labs Leads <leads@varsaka.com>', // MUST BE VERIFIED IN RESEND
-        to: ['abhishek@ai.varsaka.com'], 
-        subject: `New Lead: ${service || 'General Inquiry'} from ${name}`,
+        to: ['info@varsaka.com'], 
+        subject: safeSubject,
         html: `
           <h3>New Lead Received</h3>
-          <p><strong>Name:</strong> ${name}</p>
-          <p><strong>Email:</strong> ${email}</p>
-          <p><strong>Phone:</strong> ${phone || 'N/A'}</p>
-          <p><strong>Service:</strong> ${service}</p>
+          <p><strong>Name:</strong> ${safeName}</p>
+          <p><strong>Email:</strong> ${safeEmail}</p>
+          <p><strong>Phone:</strong> ${safePhone}</p>
+          <p><strong>Service:</strong> ${safeService}</p>
           <p><strong>Message:</strong></p>
-          <blockquote>${message}</blockquote>
+          <blockquote>${safeMessage}</blockquote>
         `
       });
     } else {
@@ -98,7 +134,7 @@ exports.handler = async (event, context) => {
 
     return {
       statusCode: 200,
-      headers: { 'Access-Control-Allow-Origin': '*' },
+      headers,
       body: JSON.stringify({ success: true, message: 'Lead submitted successfully' })
     };
 
@@ -106,6 +142,7 @@ exports.handler = async (event, context) => {
     console.error('Function Error:', error);
     return {
       statusCode: 500,
+      headers,
       body: JSON.stringify({ error: 'Internal server error' })
     };
   }

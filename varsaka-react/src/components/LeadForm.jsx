@@ -2,22 +2,22 @@ import { useState } from 'react'
 import { api } from '../lib/api.js'
 
 // Reusable public lead-capture form. Drop it into any page (Contact, Start Project,
-// Get Quote, Consultation, Discovery Call, or any future form) — every submission
+// Get Quote, Consultation, Discovery Call, or any future form) - every submission
 // lands in the same LeadSubmissions store and shows up in the admin Leads console.
 //
 // Security: server-side validation + sanitization + rate limiting do the real work
-// (this is just UX). The hidden `website` field is a honeypot — bots fill it, humans
+// (this is just UX). The hidden `website` field is a honeypot - bots fill it, humans
 // never see it; a filled value is silently dropped server-side.
 //
 // Props:
-//   source       — sourcePage label stored with the lead (e.g. 'Start Project')
-//   topics        — optional string[] rendered as selectable pills → serviceInterested
-//   budgets       — optional string[] rendered as a budget <select> → projectBudget
-//   showCompany   — show the Company field (default true)
-//   showPhone     — show the Phone field (default false)
-//   messageLabel  — label for the message textarea
-//   submitLabel   — button text
-//   onSuccess     — optional callback after a successful submit
+//   source       - sourcePage label stored with the lead (e.g. 'Start Project')
+//   topics        - optional string[] rendered as selectable pills → serviceInterested
+//   budgets       - optional string[] rendered as a budget <select> → projectBudget
+//   showCompany   - show the Company field (default true)
+//   showPhone     - show the Phone field (default false)
+//   messageLabel  - label for the message textarea
+//   submitLabel   - button text
+//   onSuccess     - optional callback after a successful submit
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -35,6 +35,7 @@ export default function LeadForm({
     fullName: '', email: '', company: '', phone: '',
     serviceInterested: topics?.[0] || '', projectBudget: '', message: '',
     website: '', // honeypot
+    dpdpConsent: false,
   })
   const [errors, setErrors] = useState({})
   const [sending, setSending] = useState(false)
@@ -51,6 +52,7 @@ export default function LeadForm({
     if (!form.fullName.trim()) e.fullName = 'Name is required'
     if (!form.email.trim() || !EMAIL_RE.test(form.email)) e.email = 'Valid email required'
     if (!form.message.trim()) e.message = 'Message is required'
+    if (!form.dpdpConsent) e.dpdpConsent = 'Consent is required under the DPDP Act, 2023'
     return e
   }
 
@@ -69,7 +71,7 @@ export default function LeadForm({
         projectBudget: form.projectBudget || undefined,
         message: form.message,
         sourcePage: source,
-        website: form.website, // honeypot — must stay empty
+        website: form.website, // honeypot - must stay empty
       })
       setSubmitted(true)
       onSuccess?.()
@@ -83,7 +85,7 @@ export default function LeadForm({
   const fieldWrap = (name, label, node) => (
     <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
       <label style={{ fontFamily:'var(--mono)', fontSize:11, letterSpacing:'.08em', textTransform:'uppercase', color: errors[name] ? '#e55' : 'var(--muted)' }}>
-        {label}{errors[name] ? ` — ${errors[name]}` : ''}
+        {label}{errors[name] ? ` - ${errors[name]}` : ''}
       </label>
       {node}
     </div>
@@ -180,11 +182,31 @@ export default function LeadForm({
         />
       ))}
 
-      {/* Honeypot — visually hidden, off-screen, not focusable by humans. */}
+      {/* Honeypot - visually hidden, off-screen, not focusable by humans. */}
       <div aria-hidden="true" style={{ position:'absolute', left:'-9999px', top:'auto', width:1, height:1, overflow:'hidden' }}>
         <label>Leave this field empty
           <input type="text" tabIndex={-1} autoComplete="off" value={form.website} onChange={(e) => set('website', e.target.value)} />
         </label>
+      </div>
+
+      {/* 🛡️ DPDP Act, 2023 Affirmative Consent Checkbox */}
+      <div style={{ display:'flex', flexDirection:'column', gap:6, marginTop:4 }}>
+        <label style={{ display:'flex', alignItems:'flex-start', gap:10, cursor:'pointer', fontSize:13, color: errors.dpdpConsent ? '#e55' : 'var(--muted)', lineHeight:1.55 }}>
+          <input
+            type="checkbox"
+            checked={!!form.dpdpConsent}
+            onChange={(e) => set('dpdpConsent', e.target.checked)}
+            style={{ marginTop:3, width:16, height:16, accentColor:'var(--text)', cursor:'pointer', flexShrink:0 }}
+          />
+          <span>
+            I provide clear, affirmative consent under the <strong>Digital Personal Data Protection Act, 2023 (DPDP Act)</strong> for Varsaka Labs to collect and process my personal data for responding to my inquiry in accordance with the <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" style={{ color:'var(--text)', textDecoration:'underline' }}>Privacy Policy</a>.
+          </span>
+        </label>
+        {errors.dpdpConsent && (
+          <div style={{ fontFamily:'var(--mono)', fontSize:11, color:'#e55', paddingLeft:26 }}>
+            {errors.dpdpConsent}
+          </div>
+        )}
       </div>
 
       {submitError && <div style={{ fontFamily:'var(--mono)', fontSize:12, color:'#e55' }}>{submitError}</div>}

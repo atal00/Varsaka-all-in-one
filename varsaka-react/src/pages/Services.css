@@ -6,7 +6,7 @@
 /* HERO BANNER */
 .svc-hero {
   background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #3b82f6 100%);
-  padding: 6rem 5% 4rem;
+  padding: 4.8rem 5% 3rem;
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -17,16 +17,16 @@
   inset: 0;
   background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
 }
-.svc-hero-icon { font-size: 4rem; margin-bottom: 1rem; animation: iconFloat 3s ease-in-out infinite; }
+.svc-hero-icon { font-size: 3.5rem; margin-bottom: 0.75rem; animation: iconFloat 3s ease-in-out infinite; }
 @keyframes iconFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-.svc-hero h1 { font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 900; color: #fff; margin: 0 0 1rem; }
-.svc-hero-sub { font-size: 1.15rem; color: rgba(255,255,255,0.85); max-width: 650px; margin: 0 auto 2rem; line-height: 1.7; }
+.svc-hero h1 { font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 900; color: #fff; margin: 0 0 0.75rem; }
+.svc-hero-sub { font-size: 1.1rem; color: rgba(255,255,255,0.85); max-width: 650px; margin: 0 auto 1.5rem; line-height: 1.65; }
 .svc-hero-pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.6rem; }
 .svc-hero-pill {
   background: rgba(255,255,255,0.15);
   border: 1px solid rgba(255,255,255,0.3);
   color: #fff;
-  padding: 0.4rem 1rem;
+  padding: 0.35rem 0.9rem;
   border-radius: 100px;
   font-size: 0.8rem;
   font-weight: 700;
@@ -47,18 +47,18 @@
 .svc-breadcrumb span { color: rgba(255,255,255,0.4); }
 
 /* MAIN CONTENT */
-.svc-content { max-width: 1100px; margin: 0 auto; padding: 4rem 5%; }
+.svc-content { max-width: 1100px; margin: 0 auto; padding: 3rem 5%; }
 
 /* OVERVIEW */
 .svc-overview {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 3rem;
+  gap: 2.5rem;
   align-items: center;
-  margin-bottom: 5rem;
+  margin-bottom: 3.5rem;
 }
-.svc-overview-text h2 { font-size: 2rem; font-weight: 800; color: #0f172a; margin-bottom: 1rem; }
-.svc-overview-text p { color: #475569; line-height: 1.8; margin-bottom: 1rem; font-size: 1rem; }
+.svc-overview-text h2 { font-size: 1.85rem; font-weight: 800; color: #0f172a; margin-bottom: 0.75rem; }
+.svc-overview-text p { color: #475569; line-height: 1.68; margin-bottom: 0.85rem; font-size: 0.98rem; text-align: justify; text-justify: inter-word; }
 .svc-overview-visual {
   background: linear-gradient(135deg, #eff6ff, #dbeafe);
   border-radius: 20px;

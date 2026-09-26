@@ -1,6 +1,6 @@
 import SectionLabel from '../components/SectionLabel.jsx'
 
-// Section 3 — The Problem (prd.md §8.3). Confident, factual framing — not fear-mongering.
+// Section 3 - The Problem (prd.md §8.3). Confident, factual framing - not fear-mongering.
 // Earns the right to pitch the solution next. Dark for narrative weight.
 export default function ProblemSection() {
   return (
@@ -15,8 +15,8 @@ export default function ProblemSection() {
               Most teams find their worst bugs in production. That’s the most expensive place to find them.
             </h2>
             <p className="mt-8 max-w-2xl text-body-lg text-graphite-300">
-              Shipping fast is the right instinct. But when QA is an afterthought — a manual
-              pass the night before release, or nothing at all — the failures that slip through
+              Shipping fast is the right instinct. But when QA is an afterthought - a manual
+              pass the night before release, or nothing at all - the failures that slip through
               aren’t the obvious ones. They’re the edge cases: the payment flow that breaks for
               one card type, the regression a new feature quietly reintroduced, the load the
               infrastructure can’t take on launch day.

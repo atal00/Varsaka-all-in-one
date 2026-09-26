@@ -1,4 +1,4 @@
-// BlogEditor — full-page CMS editor for blog posts. Markdown body is the hero.
+// BlogEditor - full-page CMS editor for blog posts. Markdown body is the hero.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { marked } from 'marked'
@@ -102,7 +102,7 @@ export function Component() {
   const [slugEditing, setSlugEditing] = useState(false)
   const idRef = useRef(id || null)
 
-  // Hydrate edit mode — fetch post when no location.state passed (e.g. direct URL).
+  // Hydrate edit mode - fetch post when no location.state passed (e.g. direct URL).
   useEffect(() => {
     if (isNew || location.state?.item) return
     let alive = true
@@ -215,7 +215,7 @@ export function Component() {
         {form.status === 'scheduled' && (
           <Field label="Publish at" type="datetime-local" value={(form.publishAt || '').slice(0, 16)} onChange={(v) => set({ publishAt: v })} disabled={!canEdit} />
         )}
-        {/* Read time — computed automatically from content, not editable */}
+        {/* Read time - computed automatically from content, not editable */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <div style={{ fontFamily: 'var(--mono)', fontSize: 10.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--faint)' }}>Read time</div>
           <div style={{ fontFamily: 'var(--sans)', fontSize: 13.5, color: form.body ? 'var(--text)' : 'var(--faint)', display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -231,7 +231,7 @@ export function Component() {
         <TagsField label="Tags" value={form.tags} onChange={(v) => set({ tags: v })} disabled={!canEdit} />
       </SideSection>
 
-      {/* Attribution — auto-set from logged-in user, shown read-only */}
+      {/* Attribution - auto-set from logged-in user, shown read-only */}
       <SideSection title="Attribution">
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{
@@ -313,7 +313,7 @@ export function Component() {
           {/* Title */}
           <Field big value={form.title} onChange={(v) => set({ title: v })} placeholder="Post title" disabled={!canEdit} />
 
-          {/* Slug — auto-generated, shown inline; click Edit for manual override */}
+          {/* Slug - auto-generated, shown inline; click Edit for manual override */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {slugEditing ? (
               <div style={{ flex: 1 }}>
@@ -329,7 +329,7 @@ export function Component() {
             ) : (
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, flexWrap: 'wrap' }}>
                 <span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--faint)' }}>varsaka.com/blog/</span>
-                <span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--text)' }}>{form.slug || '—'}</span>
+                <span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--text)' }}>{form.slug || '-'}</span>
               </div>
             )}
             {canEdit && (
@@ -342,7 +342,7 @@ export function Component() {
             )}
           </div>
 
-          {/* Excerpt — with auto-generate button */}
+          {/* Excerpt - with auto-generate button */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ fontFamily: 'var(--mono)', fontSize: 10.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--faint)' }}>Excerpt</div>

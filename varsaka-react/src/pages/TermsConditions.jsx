@@ -40,7 +40,7 @@ const SECTIONS = [
     id: 'intellectual-property',
     heading: 'Intellectual Property',
     blocks: [
-      { p: `All content on this website — including text, graphics, logos, the ${SITE_NAME} name and brand, design, and code — is owned by or licensed to ${LEGAL_NAME} and is protected by intellectual property laws. You may not copy, reproduce, distribute or create derivative works from it without our prior written permission.` },
+      { p: `All content on this website - including text, graphics, logos, the ${SITE_NAME} name and brand, design, and code - is owned by or licensed to ${LEGAL_NAME} and is protected by intellectual property laws. You may not copy, reproduce, distribute or create derivative works from it without our prior written permission.` },
       { p: 'For client engagements, ownership of deliverables, test assets and pre-existing materials is set out in the relevant Engagement Agreement. Unless agreed otherwise in writing, we retain ownership of our pre-existing tools, methodologies, frameworks and general know-how, and you retain ownership of your systems and data.' },
     ],
   },
@@ -79,7 +79,7 @@ const SECTIONS = [
     heading: 'Termination',
     blocks: [
       { p: 'We may suspend or restrict access to our website at any time if we reasonably believe these Terms have been breached or to protect the integrity and security of our systems.' },
-      { p: 'Termination of a paid engagement — including notice periods, wind-down and payment for work performed — is governed by the applicable Engagement Agreement. Provisions that by their nature should survive termination, such as intellectual property, confidentiality and limitation of liability, will continue to apply.' },
+      { p: 'Termination of a paid engagement - including notice periods, wind-down and payment for work performed - is governed by the applicable Engagement Agreement. Provisions that by their nature should survive termination, such as intellectual property, confidentiality and limitation of liability, will continue to apply.' },
     ],
   },
   {
@@ -94,9 +94,9 @@ const SECTIONS = [
     id: 'contact',
     heading: 'Contact Information',
     blocks: [
-      { p: 'If you have any questions about these Terms, please get in touch — we are glad to clarify anything before you engage us.' },
+      { p: 'If you have any questions about these Terms, please get in touch - we are glad to clarify anything before you engage us.' },
       { p: <>Email: {email}</> },
-      { p: <>You can also reach the team through our <a href="/contact" style={{ color: 'var(--text)', textDecoration: 'underline', textUnderlineOffset: 3 }}>contact page</a>.</> },
+      { p: <>You can also reach the team through our <a href="/#contact" style={{ color: 'var(--text)', textDecoration: 'underline', textUnderlineOffset: 3 }}>contact section</a>.</> },
     ],
   },
 ]

@@ -1,4 +1,4 @@
-// CareerEditor — full-page CMS editor for job postings.
+// CareerEditor - full-page CMS editor for job postings.
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { api } from '../../../lib/api.js'

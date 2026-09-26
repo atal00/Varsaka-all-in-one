@@ -16,7 +16,7 @@ const KNOWLEDGE_BASE = [
   { keywords: ['location', 'where', 'office', 'headquarter'], reply: "We are headquartered in Hyderabad, India's tech hub, but we serve clients globally across the US, Europe, and Asia." },
   { keywords: ['tool', 'tech', 'stack', 'framework'], reply: "We work with modern tools like Selenium, Playwright, Cypress, JMeter, Appium, and Jenkins. We also build custom AI testing frameworks for our enterprise clients." },
   { keywords: ['time', 'duration', 'start', 'how long'], reply: "We can typically onboard a team and start testing within 3-5 business days of the initial discovery call." },
-  { keywords: ['careers', 'job', 'hiring', 'work at'], reply: "We are always looking for passionate QA engineers! Check out our Careers page or send your CV to careers@varsaka.com." },
+  { keywords: ['careers', 'job', 'hiring', 'work at'], reply: "We are always looking for passionate QA engineers! Check out our Careers page or send your resume to info@varsaka.com." },
   { keywords: ['about', 'company', 'varsaka', 'who is', 'background'], reply: "At Varsaka Labs, we don't just 'find bugs'-we solve the release-day anxiety that keeps CTOs up at night. 🌙 We noticed too many teams were slowing down due to manual bottlenecks or unstable automation, so we built a partnership-first model. We step into your workflow to ensure your software is resilient, your CI/CD is fast, and your users have a zero-glitch experience." },
   { keywords: ['who are you', 'your name', 'what are you'], reply: "I'm the Varsaka AI Assistant! I'm here to provide information about our services and help you connect with our human experts." },
   { keywords: ['human', 'person', 'real agent', 'speak to'], reply: "I can definitely get a human to help you! Would you like to leave your email so one of our consultants can reach out?" },
@@ -260,7 +260,7 @@ export default function Chatbot() {
             <line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
         ) : (
-          <div className="animated-bot">🤖</div>
+          <img src="/images/varsaka_ai_bot.png" alt="Varsaka AI Assistant" className="chatbot-trigger-img" />
         )}
       </button>
 
@@ -268,10 +268,15 @@ export default function Chatbot() {
         <div className="chatbot-window active">
           <div className="chat-header">
             <div className="header-info">
-              <div className="header-status" />
-              <span>Varsaka AI Assistant</span>
+              <img src="/images/varsaka_ai_bot.png" alt="Varsaka AI" className="chat-header-avatar" />
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span>Varsaka AI Assistant</span>
+                  <div className="header-status" />
+                </div>
+              </div>
             </div>
-            <button className="close-chat" onClick={() => setOpen(false)}>
+            <button className="close-chat" onClick={() => setOpen(false)} aria-label="Close Chat">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
                 <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -313,11 +318,12 @@ export default function Chatbot() {
               type="text"
               className="chat-input"
               placeholder="Type your question..."
+              aria-label="Type your message"
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyPress={e => e.key === 'Enter' && handleSend()}
             />
-            <button className="chat-send-btn" onClick={handleSend} disabled={sending || isTyping}>➤</button>
+            <button className="chat-send-btn" onClick={handleSend} disabled={sending || isTyping} aria-label="Send Message">➤</button>
           </div>
         </div>
       )}

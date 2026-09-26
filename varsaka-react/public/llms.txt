@@ -35,7 +35,7 @@
 - [Case Studies](https://varsaka.com/work): Real engagements with measurable outcomes.
 - [Insights (Blog)](https://varsaka.com/blog): Practical writing on testing, automation, performance, security and QA strategy.
 - [Careers](https://varsaka.com/careers): Open quality-engineering roles.
-- [Contact](https://varsaka.com/contact): Start with a free discovery call. Email: hello@varsaka.com
+- [Contact](https://varsaka.com/contact): Start with a free discovery call. Email: info@varsaka.com
 
 ## Frequently asked questions
 
@@ -45,6 +45,6 @@
 
 ## Contact
 
-- Email: hello@varsaka.com
+- Email: info@varsaka.com
 - Website: https://varsaka.com
 - Sitemap: https://varsaka.com/sitemap.xml

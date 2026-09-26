@@ -1,4 +1,4 @@
-// Varsaka Client Portal — self-contained area mounted at /portal/*.
+// Varsaka Client Portal - self-contained area mounted at /portal/*.
 // Auth gate → premium login → portal shell with Projects + per-project detail.
 // Clients (role === 'client') only; staff are redirected to the admin dashboard.
 import { Navigate, Route, Routes } from 'react-router-dom'
@@ -12,16 +12,16 @@ import ProjectDetail from './ProjectDetail.jsx'
 export default function PortalApp() {
   const { ready, user, isClient, isStaff, logout } = useAuth()
 
-  // 1. Restoring session — clean loading screen.
+  // 1. Restoring session - clean loading screen.
   if (!ready) return <Splash />
 
-  // 2. Not signed in — premium client login.
+  // 2. Not signed in - premium client login.
   if (!user) return <Login />
 
-  // 3. Signed in but not a client (staff) — direct them to admin.
+  // 3. Signed in but not a client (staff) - direct them to admin.
   if (!isClient) return <StaffNotice onSignOut={logout} isStaff={isStaff} />
 
-  // 4. Client — the portal.
+  // 4. Client - the portal.
   return (
     <Shell>
       <Routes>

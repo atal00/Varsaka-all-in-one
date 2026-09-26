@@ -1,4 +1,4 @@
-// design.md §5/§6 — a small numeric label ("02") + uppercase caption substitutes for
+// design.md §5/§6 - a small numeric label ("02") + uppercase caption substitutes for
 // decorative icons next to section titles. `dark` swaps muted color for dark sections.
 export default function SectionLabel({ number, children, dark = false }) {
   const muted = dark ? 'text-graphite-300' : 'text-graphite-500'

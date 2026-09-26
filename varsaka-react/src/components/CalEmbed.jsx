@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 
 // Cal.com inline embed (tech_stack.md §2). Loads the official embed loader once and mounts an
-// inline calendar. NOTE: `calLink` is a PLACEHOLDER — replace with Varsaka's real Cal.com
+// inline calendar. NOTE: `calLink` is a PLACEHOLDER - replace with Varsaka's real Cal.com
 // event link (e.g. "varsaka/qa-audit") before launch. Theme/colors aligned to design tokens.
 const CAL_LINK = 'varsaka/qa-audit' // TODO(client): set real Cal.com link
 

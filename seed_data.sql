@@ -56,7 +56,7 @@ INSERT INTO blogs (title, summary, content, author, status, views) VALUES
 
 -- 5. Insert Certificates (Dummy data)
 INSERT INTO certificates (full_name, internship_role, project_title, mentor_name, grade, location, start_date, end_date, issue_date, cert_year, cert_num, certificate_id) VALUES
-('Ramesh Kumar', 'QA Intern', 'E-commerce Platform Automation', 'Abhishek Sharma', 'A+', 'Remote, India', '2023-01-15', '2023-04-15', '2023-04-20', '2023', '001', 'VAR-INT-2023-001'),
+('Ramesh Kumar', 'QA Intern', 'E-commerce Platform Automation', 'Lead QA Mentor', 'A+', 'Remote, India', '2023-01-15', '2023-04-15', '2023-04-20', '2023', '001', 'VAR-INT-2023-001'),
 ('Sneha Gupta', 'Frontend Intern', 'Admin Dashboard Revamp', 'Priya Singh', 'A', 'Remote, India', '2023-05-10', '2023-08-10', '2023-08-15', '2023', '002', 'VAR-INT-2023-002');
 
 -- 6. Insert Leads (Dummy data)

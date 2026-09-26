@@ -1,7 +1,7 @@
 import SectionLabel from '../components/SectionLabel.jsx'
 import CountUpStat from '../components/CountUpStat.jsx'
 
-// Section 2 — Proof Bar (prd.md §8.2). Numbers only, no badges/logos; count-up on enter
+// Section 2 - Proof Bar (prd.md §8.2). Numbers only, no badges/logos; count-up on enter
 // (animation.md §5). NOTE: figures are placeholders pending real client data (prd.md §11 / §9).
 const stats = [
   { value: 25, suffix: '+', label: 'Product teams shipped with confidence' },

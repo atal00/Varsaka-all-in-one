@@ -1,7 +1,7 @@
 // JSON-LD schema builders (seo.md §3.3). Plain functions so any page can compose the
 // blocks it needs and pass them to <Seo jsonLd={...} />. Brand constants come from
 // src/lib/seo.js (single source of truth). NOTE: Review/AggregateRating is intentionally
-// NOT provided — seo.md §3.3 forbids fabricated ratings (spam-policy risk).
+// NOT provided - seo.md §3.3 forbids fabricated ratings (spam-policy risk).
 
 import { SITE_URL, SITE_NAME, LEGAL_NAME, DEFAULT_OG_IMAGE, SAME_AS, CONTACT_EMAIL, FOUNDING_YEAR, SITE_TAGLINE, ENTITY } from './seo.js'
 
@@ -40,7 +40,7 @@ export const organizationSchema = () => ({
   sameAs: SAME_AS,
 })
 
-// WebPage node — ties an individual page to the site/organization and (optionally) its
+// WebPage node - ties an individual page to the site/organization and (optionally) its
 // breadcrumb trail. Lightweight; pass the primary content type where useful.
 export const webPageSchema = ({ title, description, path = '/', type = 'WebPage', primaryImage }) => ({
   '@context': 'https://schema.org',
@@ -55,7 +55,7 @@ export const webPageSchema = ({ title, description, path = '/', type = 'WebPage'
   ...(primaryImage ? { primaryImageOfPage: abs(primaryImage) } : {}),
 })
 
-// WebSite node — helps search engines understand the site as a whole. No SearchAction
+// WebSite node - helps search engines understand the site as a whole. No SearchAction
 // (the site has no on-site search endpoint, so we don't claim one).
 export const websiteSchema = () => ({
   '@context': 'https://schema.org',
@@ -105,7 +105,7 @@ export const articleSchema = ({ title, description, slug, date, modified, image,
   mainEntityOfPage: `${SITE_URL}/blog/${slug}`,
 })
 
-// JobPosting — for careers detail pages. employmentType/location are derived from the
+// JobPosting - for careers detail pages. employmentType/location are derived from the
 // job document; we only emit fields we actually have.
 export const jobPostingSchema = ({ title, description, slug, datePosted, employmentType, location, department }) => {
   const map = { 'Full-time': 'FULL_TIME', 'Part-time': 'PART_TIME', 'Contract': 'CONTRACTOR', 'Internship': 'INTERN' }
@@ -128,7 +128,7 @@ export const jobPostingSchema = ({ title, description, slug, datePosted, employm
   }
 }
 
-// Case study — modelled as an Article/CreativeWork about a client engagement.
+// Case study - modelled as an Article/CreativeWork about a client engagement.
 export const caseStudySchema = ({ title, description, slug, sector, image, date, modified }) => ({
   '@context': 'https://schema.org',
   '@type': 'Article',

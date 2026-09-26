@@ -186,7 +186,7 @@ export const api = {
     submitRequest: (id, text) => rawRequest(`/portal/projects/${id}/requests`, { method: 'POST', authed: true, body: { text } }),
     activity: (id) => get(`/portal/projects/${id}/activity`, undefined, true),
   },
-  // Content modules (existing) — now permission-gated server-side.
+  // Content modules (existing) - now permission-gated server-side.
   blogs: {
     list: (query) => get('/blogs', query, true),
     getBySlug: (slug) => get(`/blogs/${slug}`),
@@ -222,7 +222,7 @@ export const api = {
     setStatus: (id, status) => rawRequest(`/contact/${id}`, { method: 'PUT', authed: true, body: { status } }),
   },
   leads: {
-    // Public submission (no auth) — from any website form.
+    // Public submission (no auth) - from any website form.
     create: (data) => rawRequest('/leads', { method: 'POST', body: data }),
     list: (query) => get('/leads', query, true),
     stats: () => get('/leads/stats', undefined, true),

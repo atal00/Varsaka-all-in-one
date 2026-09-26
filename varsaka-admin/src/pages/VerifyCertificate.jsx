@@ -165,7 +165,7 @@ export default function VerifyCertificate() {
 
                                 <div className="qr-code-wrap">
                                     <QRCodeCanvas 
-                                        value={window.location.href}
+                                        value={`https://varsaka.com/verify/${certificate.certificate_id}`}
                                         size={100}
                                         level={"H"}
                                         includeMargin={true}

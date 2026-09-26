@@ -1,4 +1,4 @@
-// MediaField — a Featured Image field. Shows the current image, supports
+// MediaField - a Featured Image field. Shows the current image, supports
 // click-to-upload AND drag-and-drop, an upload spinner, and a remove button.
 // On drop/select → FormData field `file` → api.media.upload → set returned url.
 import { useRef, useState } from 'react'

@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 // Count-up proof number (animation.md §5): tween 0 → target once on scroll-enter
 // (`once` semantics via disconnect). The final value is the default render state, so SSR /
 // no-JS / reduced-motion show the real number immediately (no flash of 0). Mechanism is
-// IntersectionObserver + rAF rather than GSAP — same trigger-once behavior, no bundle coupling.
+// IntersectionObserver + rAF rather than GSAP - same trigger-once behavior, no bundle coupling.
 export default function CountUpStat({ value, prefix = '', suffix = '', className = '' }) {
   const ref = useRef(null)
   const [display, setDisplay] = useState(value) // default = final (SSR-safe)

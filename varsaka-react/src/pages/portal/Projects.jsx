@@ -1,4 +1,4 @@
-// Projects list — premium cards with status, progress, due date, summary.
+// Projects list - premium cards with status, progress, due date, summary.
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '../../hooks/useApi.js'
 import { api } from '../../lib/api.js'
@@ -6,7 +6,7 @@ import { ErrorState, Empty } from '../../components/Async.jsx'
 import { Skeleton, SkText, SkBadge, SkLabel } from '../../components/Skeleton.jsx'
 import { Card, Pill, Progress, Eyebrow, projectStatusMeta, fmtDate } from './ui.jsx'
 
-/** Loading placeholder for the Projects list — mirrors the real card grid (vk-r2). */
+/** Loading placeholder for the Projects list - mirrors the real card grid (vk-r2). */
 function ProjectsSkeleton() {
   return (
     <div aria-hidden="true">

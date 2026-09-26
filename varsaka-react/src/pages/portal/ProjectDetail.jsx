@@ -1,4 +1,4 @@
-// Project detail — premium overview: header, timeline, deliverables, files,
+// Project detail - premium overview: header, timeline, deliverables, files,
 // invoices, activity, request form, reports. Scoped to this client by the API.
 import { useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
@@ -72,7 +72,7 @@ export default function ProjectDetail() {
           <Meta label="Start date" value={fmtDate(project.startDate)} />
           <Meta label="Due date" value={fmtDate(project.dueDate)} />
           <Meta label="Status" value={meta.label} />
-          <Meta label="Team" value={team.length ? `${team.length} ${team.length === 1 ? 'member' : 'members'}` : '—'} />
+          <Meta label="Team" value={team.length ? `${team.length} ${team.length === 1 ? 'member' : 'members'}` : '-'} />
         </div>
 
         {team.length > 0 && (
@@ -302,12 +302,12 @@ function Invoices({ items, loading }) {
                   const m = invoiceStatusMeta(inv.status)
                   return (
                     <tr key={i} style={{ borderTop: '1px solid var(--border)' }}>
-                      <td style={tdStyle}><span style={{ fontFamily: 'var(--mono)', fontSize: 13, color: 'var(--text)' }}>{inv.number || '—'}</span></td>
+                      <td style={tdStyle}><span style={{ fontFamily: 'var(--mono)', fontSize: 13, color: 'var(--text)' }}>{inv.number || '-'}</span></td>
                       <td style={tdStyle}><span style={{ fontFamily: 'var(--sans)', fontSize: 14, color: 'var(--text)' }}>{fmtMoney(inv.amount, inv.currency)}</span></td>
                       <td style={tdStyle}><Pill label={m.label} tone={m.tone} /></td>
                       <td style={{ ...tdStyle, fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--muted)' }}>{fmtDate(inv.issuedAt)}</td>
                       <td style={{ ...tdStyle, fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--muted)' }}>{fmtDate(inv.dueAt)}</td>
-                      <td style={{ ...tdStyle, textAlign: 'right' }}>{inv.fileUrl ? <DownloadLink url={inv.fileUrl} /> : <span style={{ color: 'var(--faint)' }}>—</span>}</td>
+                      <td style={{ ...tdStyle, textAlign: 'right' }}>{inv.fileUrl ? <DownloadLink url={inv.fileUrl} /> : <span style={{ color: 'var(--faint)' }}>-</span>}</td>
                     </tr>
                   )
                 })}
@@ -424,7 +424,7 @@ function SkRowList({ rows = 3 }) {
   )
 }
 
-/** Invoice table skeleton — mirrors the real columns. */
+/** Invoice table skeleton - mirrors the real columns. */
 function SkInvoiceTable({ rows = 3 }) {
   return (
     <div className="vk-scroll-x" aria-hidden="true">
@@ -470,7 +470,7 @@ function SkActivityRows({ rows = 4 }) {
   )
 }
 
-/** Timeline skeleton — vertical list of dot + two-line rows with connector. */
+/** Timeline skeleton - vertical list of dot + two-line rows with connector. */
 function SkTimeline({ rows = 4 }) {
   return (
     <section aria-hidden="true">
@@ -513,7 +513,7 @@ function SkReports({ rows = 2 }) {
   )
 }
 
-/** Full project-detail loading screen — mirrors the real two-column layout. */
+/** Full project-detail loading screen - mirrors the real two-column layout. */
 function ProjectDetailSkeleton({ onBack }) {
   return (
     <div style={{ maxWidth: 1080 }} aria-hidden="true">

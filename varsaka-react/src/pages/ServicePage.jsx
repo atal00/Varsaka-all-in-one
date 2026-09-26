@@ -114,7 +114,7 @@ export default function ServicePage({ data }) {
       <section className="bg-paper-0 text-ink-900">
         <div className="container-edge pb-section-mobile md:pb-section">
           <SectionLabel number="06">Questions</SectionLabel>
-          <h2 className="mt-4 font-display text-h2">{data.name} — FAQ</h2>
+          <h2 className="mt-4 font-display text-h2">{data.name} - FAQ</h2>
           <div className="mt-10"><FaqList faqs={data.faqs} /></div>
         </div>
       </section>

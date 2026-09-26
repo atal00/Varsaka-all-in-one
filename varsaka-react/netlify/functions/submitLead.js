@@ -93,22 +93,39 @@ exports.handler = async (event, context) => {
       console.warn('Supabase service role key not configured. Skipping DB insert.');
     }
 
-    // 6. Send Email via Resend
+    // 6. Send Email via Resend with strict HTML escaping
     const resendKey = process.env.RESEND_API_KEY;
     if (resendKey) {
+      const escapeHtml = (str) => {
+        if (!str) return '';
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      };
+
+      const safeName = escapeHtml(name);
+      const safeEmail = escapeHtml(email);
+      const safePhone = escapeHtml(phone || 'N/A');
+      const safeService = escapeHtml(service || 'General Inquiry');
+      const safeMessage = escapeHtml(message);
+      const safeSubject = `New Lead: ${safeService} from ${safeName}`.replace(/[\r\n]+/g, ' ').substring(0, 150);
+
       const resend = new Resend(resendKey);
       await resend.emails.send({
         from: 'Varsaka Labs Leads <leads@varsaka.com>', // MUST BE VERIFIED IN RESEND
-        to: ['abhishek@ai.varsaka.com'], 
-        subject: `New Lead: ${service || 'General Inquiry'} from ${name}`,
+        to: ['info@varsaka.com'], 
+        subject: safeSubject,
         html: `
           <h3>New Lead Received</h3>
-          <p><strong>Name:</strong> ${name}</p>
-          <p><strong>Email:</strong> ${email}</p>
-          <p><strong>Phone:</strong> ${phone || 'N/A'}</p>
-          <p><strong>Service:</strong> ${service}</p>
+          <p><strong>Name:</strong> ${safeName}</p>
+          <p><strong>Email:</strong> ${safeEmail}</p>
+          <p><strong>Phone:</strong> ${safePhone}</p>
+          <p><strong>Service:</strong> ${safeService}</p>
           <p><strong>Message:</strong></p>
-          <blockquote>${message}</blockquote>
+          <blockquote>${safeMessage}</blockquote>
         `
       });
     } else {

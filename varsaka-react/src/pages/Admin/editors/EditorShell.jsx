@@ -1,4 +1,4 @@
-// EditorShell — full-page CMS workspace chrome shared by all three editors.
+// EditorShell - full-page CMS workspace chrome shared by all three editors.
 // A sticky, blurred top action bar + a 70/30 body grid (main + sidebar) that
 // stacks on tablet/mobile. Distraction-free, premium, Notion/Ghost-grade.
 import { useNavigate } from 'react-router-dom'

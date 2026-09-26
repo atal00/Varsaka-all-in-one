@@ -37,12 +37,12 @@ export function Component() {
 
         <h2 className="mt-16 font-display text-h2">Type scale</h2>
         <div className="mt-6 space-y-4 border-t border-hairline pt-6">
-          <p className="font-display text-h1">H1 — Fraunces display</p>
-          <p className="font-display text-h2">H2 — Fraunces section title</p>
-          <p className="text-h3">H3 — Inter 600 subsection</p>
-          <p className="text-body-lg">Body large — Inter 400, 1.25rem, line-height 1.6.</p>
-          <p className="text-body">Body default — Inter 400, 1rem, line-height 1.65.</p>
-          <p className="text-caption uppercase text-graphite-500">Caption — 01 / Functional Testing</p>
+          <p className="font-display text-h1">H1 - Fraunces display</p>
+          <p className="font-display text-h2">H2 - Fraunces section title</p>
+          <p className="text-h3">H3 - Inter 600 subsection</p>
+          <p className="text-body-lg">Body large - Inter 400, 1.25rem, line-height 1.6.</p>
+          <p className="text-body">Body default - Inter 400, 1rem, line-height 1.65.</p>
+          <p className="text-caption uppercase text-graphite-500">Caption - 01 / Functional Testing</p>
         </div>
 
         <h2 className="mt-16 font-display text-h2">Buttons</h2>

@@ -247,7 +247,7 @@ function Sidebar({active, setActive, stats, user, open, onClose, onSignOut, them
           })}
         </div>
 
-        {/* Bottom — Account affordance */}
+        {/* Bottom - Account affordance */}
         <div style={{padding:'14px 16px',borderTop:'1px solid var(--border)'}}>
           <button onClick={()=>setAccountOpen(true)} title="Account settings" style={{
             display:'flex',alignItems:'center',gap:10,marginBottom:12,width:'100%',
@@ -303,9 +303,9 @@ function AccountModal({user, onClose}) {
         <div style={{padding:24,display:'flex',flexDirection:'column',gap:18}}>
           <div style={{display:'grid',gridTemplateColumns:'90px 1fr',rowGap:8,columnGap:12,fontFamily:'var(--sans)'}}>
             <span style={{fontSize:11,fontWeight:600,letterSpacing:'0.04em',color:'var(--faint)'}}>EMAIL</span>
-            <span style={{fontSize:13,color:'var(--text)',wordBreak:'break-word'}}>{user?.email||'—'}</span>
+            <span style={{fontSize:13,color:'var(--text)',wordBreak:'break-word'}}>{user?.email||'-'}</span>
             <span style={{fontSize:11,fontWeight:600,letterSpacing:'0.04em',color:'var(--faint)'}}>ROLE</span>
-            <span style={{fontSize:13,color:'var(--text)'}}>{ROLE_LABELS[user?.role]||titleCase(user?.role)||'—'}</span>
+            <span style={{fontSize:13,color:'var(--text)'}}>{ROLE_LABELS[user?.role]||titleCase(user?.role)||'-'}</span>
           </div>
           <div style={{borderTop:'1px solid var(--border)',paddingTop:18}}>
             <div style={{fontSize:13,fontWeight:700,color:'var(--text)',fontFamily:'var(--sans)',marginBottom:14}}>Change password</div>
@@ -559,8 +559,8 @@ function BlogSection({onStats}) {
                     <div style={{fontSize:13,fontWeight:500,color:'var(--text)',fontFamily:'var(--sans)',lineHeight:1.3}}>{p.title}</div>
                     <div style={{fontSize:11,color:'var(--faint)',fontFamily:'var(--sans)',marginTop:2}}>{fmtPosted(p.publishAt||p.createdAt)} · {p.views||0} views</div>
                   </td>
-                  <td style={{padding:'12px 16px',fontSize:13,color:'var(--muted)',fontFamily:'var(--sans)'}}>{p.category||'—'}</td>
-                  <td style={{padding:'12px 16px',fontSize:13,color:'var(--muted)',fontFamily:'var(--sans)'}}>{p.author||'—'}</td>
+                  <td style={{padding:'12px 16px',fontSize:13,color:'var(--muted)',fontFamily:'var(--sans)'}}>{p.category||'-'}</td>
+                  <td style={{padding:'12px 16px',fontSize:13,color:'var(--muted)',fontFamily:'var(--sans)'}}>{p.author||'-'}</td>
                   <td style={{padding:'12px 16px'}}>{can('blogs.publish') ? <Pill status={p.status} onClick={()=>toggle(p)} style={{cursor:'pointer'}}/> : <Pill status={p.status}/>}</td>
                   <td style={{padding:'12px 16px'}}>
                     <div style={{display:'flex',gap:6,justifyContent:'flex-end'}}>
@@ -611,7 +611,7 @@ function CasesSection({onStats}) {
             <div key={c._id} style={{background:'var(--surface)',borderRadius:10,border:'1px solid var(--border)',overflow:'hidden'}}>
               <div style={{height:130,background:`repeating-linear-gradient(45deg,var(--surface2) 0,var(--surface2) 10px,var(--border) 10px,var(--border) 11px)`,position:'relative'}}>
                 <div style={{position:'absolute',top:10,left:10,display:'flex',gap:6}}>
-                  <span style={{fontSize:11,background:'var(--surface)',color:'var(--muted)',padding:'3px 8px',borderRadius:4,fontFamily:'var(--sans)',fontWeight:600}}>{c.sector||'—'}</span>
+                  <span style={{fontSize:11,background:'var(--surface)',color:'var(--muted)',padding:'3px 8px',borderRadius:4,fontFamily:'var(--sans)',fontWeight:600}}>{c.sector||'-'}</span>
                 </div>
                 <div style={{position:'absolute',top:10,right:10}}>
                   <Pill status={c.status}/>
@@ -647,9 +647,9 @@ function ApplicationDetail({app, onClose, onStatus, canStatus=true}) {
   if(!app) return null
   const href = resumeHref(app.resumeUrl)
   const rows = [
-    ['Email', app.email], ['Phone', app.phone||'—'],
-    ['LinkedIn', app.linkedin||'—'], ['Portfolio', app.portfolio||'—'],
-    ['Applied for', app.role||'—'], ['Date', fmtPosted(app.createdAt)],
+    ['Email', app.email], ['Phone', app.phone||'-'],
+    ['LinkedIn', app.linkedin||'-'], ['Portfolio', app.portfolio||'-'],
+    ['Applied for', app.role||'-'], ['Date', fmtPosted(app.createdAt)],
   ]
   return (
     <>
@@ -788,9 +788,9 @@ function CareersSection({onStats}) {
                     <div style={{fontSize:13,fontWeight:500,color:'var(--text)',fontFamily:'var(--sans)'}}>{j.title}</div>
                     <div style={{fontSize:11,color:'var(--faint)',fontFamily:'var(--sans)'}}>{countFor(j.slug)} applicants</div>
                   </td>
-                  <td style={{padding:'12px 16px',fontSize:13,color:'var(--muted)',fontFamily:'var(--sans)'}}>{j.department||'—'}</td>
-                  <td style={{padding:'12px 16px',fontSize:13,color:'var(--muted)',fontFamily:'var(--sans)'}}>{j.location||'—'}</td>
-                  <td style={{padding:'12px 16px',fontSize:13,color:'var(--muted)',fontFamily:'var(--sans)'}}>{j.type||'—'}</td>
+                  <td style={{padding:'12px 16px',fontSize:13,color:'var(--muted)',fontFamily:'var(--sans)'}}>{j.department||'-'}</td>
+                  <td style={{padding:'12px 16px',fontSize:13,color:'var(--muted)',fontFamily:'var(--sans)'}}>{j.location||'-'}</td>
+                  <td style={{padding:'12px 16px',fontSize:13,color:'var(--muted)',fontFamily:'var(--sans)'}}>{j.type||'-'}</td>
                   <td style={{padding:'12px 16px'}}><Pill status={j.status}/></td>
                   <td style={{padding:'12px 16px'}}>
                     <div style={{display:'flex',gap:6,justifyContent:'flex-end'}}>
@@ -863,13 +863,13 @@ function CareersSection({onStats}) {
                       <div style={{fontSize:13,fontWeight:500,color:'var(--text)',fontFamily:'var(--sans)'}}>{a.name}</div>
                       <div style={{fontSize:11,color:'var(--faint)',fontFamily:'var(--sans)',maxWidth:220,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{a.email}</div>
                     </td>
-                    <td style={{padding:'12px 16px',fontSize:13,color:'var(--muted)',fontFamily:'var(--sans)'}}>{a.role||'—'}</td>
+                    <td style={{padding:'12px 16px',fontSize:13,color:'var(--muted)',fontFamily:'var(--sans)'}}>{a.role||'-'}</td>
                     <td style={{padding:'12px 16px',fontSize:12,color:'var(--faint)',fontFamily:'var(--sans)'}}>{fmtPosted(a.createdAt)}</td>
                     <td style={{padding:'12px 16px'}}><Pill status={a.status}/></td>
                     <td style={{padding:'12px 16px'}}>
                       {href
                         ? <a href={href} target="_blank" rel="noreferrer" onClick={e=>e.stopPropagation()} style={{textDecoration:'none',background:'none',border:'1px solid var(--border)',borderRadius:6,padding:'4px 10px',fontSize:12,cursor:'pointer',color:'var(--muted)',fontFamily:'var(--sans)'}}>↓ CV</a>
-                        : <span style={{fontSize:11,color:'var(--faint)',fontFamily:'var(--sans)'}}>—</span>}
+                        : <span style={{fontSize:11,color:'var(--faint)',fontFamily:'var(--sans)'}}>-</span>}
                     </td>
                   </tr>
                   )
@@ -888,7 +888,7 @@ function CareersSection({onStats}) {
 
 /* ── MediaSection ─────────────────────────────────────────────────────────── */
 const fmtSize = (bytes) => {
-  if (!bytes && bytes !== 0) return '—'
+  if (!bytes && bytes !== 0) return '-'
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024*1024) return `${(bytes/1024).toFixed(0)} KB`
   return `${(bytes/1024/1024).toFixed(1)} MB`
@@ -1001,7 +1001,7 @@ function MediaSection() {
 }
 
 /* ── SettingsSection ──────────────────────────────────────────────────────── */
-// SEO + Open Graph are intentionally NOT manually managed here — metadata, OG/Twitter
+// SEO + Open Graph are intentionally NOT manually managed here - metadata, OG/Twitter
 // cards, canonical URLs, structured data, robots and the sitemap are all generated
 // automatically from page content (see src/lib/seo.js + src/components/Seo.jsx).
 const SETTINGS_TABS = ['Website','Social','Analytics','Footer','Account']
@@ -1131,7 +1131,7 @@ function SettingsSection() {
 }
 
 /* ── Client gate ──────────────────────────────────────────────────────────────
-   Clients never see the admin shell — they belong in the portal. */
+   Clients never see the admin shell - they belong in the portal. */
 function ClientGate({ onSignOut }) {
   return (
     <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:'var(--bg)',padding:24,fontFamily:'var(--sans)'}}>
@@ -1185,7 +1185,7 @@ export default function Admin() {
     }
   }, [isStaff, activeSection, sectionSlug, navigate])
 
-  // Dashboard query at the shell level — drives stat cards and sidebar badges.
+  // Dashboard query at the shell level - drives stat cards and sidebar badges.
   const dashboard = useQuery(()=>api.dashboard.get(), [], { enabled: isStaff && auth.can('analytics.view') })
   const stats = dashboard.data?.stats
 
@@ -1225,12 +1225,12 @@ export default function Admin() {
       </div>
     )
   }
-  // 2. Not signed in — route protection: send to the dedicated /login entry,
+  // 2. Not signed in - route protection: send to the dedicated /login entry,
   //    remembering where they were headed so we can return them after sign-in.
   if (!user) return <Navigate to="/login" state={{ from: location.pathname }} replace />
-  // 3. Signed in as a client — clients belong in the portal, not the admin.
+  // 3. Signed in as a client - clients belong in the portal, not the admin.
   if (isClient) return <Navigate to="/portal" replace />
-  // Logged-in but not staff (edge case) — show the access notice.
+  // Logged-in but not staff (edge case) - show the access notice.
   if (!isStaff) return <ClientGate onSignOut={handleSignOut} />
 
   // A staff member opened (via stale state) a section they lack permission for.

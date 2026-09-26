@@ -55,12 +55,12 @@ img, svg, video, canvas { max-width: 100%; }
   .vk-rfooter { grid-template-columns: 1fr !important; }
 }
 
-/* Large asymmetric split layouts (hero / two-column sections) — stack earlier,
+/* Large asymmetric split layouts (hero / two-column sections) - stack earlier,
    and reset any sticky positioning so a sticky column doesn't strand on mobile. */
 @media (max-width: 900px) {
   .vk-rsplit { grid-template-columns: 1fr !important; gap: clamp(28px,6vw,48px) !important; }
   .vk-rsplit > * { min-width: 0; position: static !important; }
-  /* A 1:1 hero panel becomes a huge empty square when full-width — give it a sane height. */
+  /* A 1:1 hero panel becomes a huge empty square when full-width - give it a sane height. */
   #vk-hero-panel { aspect-ratio: auto !important; min-height: 280px; }
 }
 
@@ -115,7 +115,7 @@ img, svg, video, canvas { max-width: 100%; }
    Editorial article system (blog detail page). Scoped to .vk-* classes.
    ───────────────────────────────────────────────────────────────────────── */
 
-/* Reading-progress bar — thin, over the nav */
+/* Reading-progress bar - thin, over the nav */
 .vk-progress {
   position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 250;
   background: var(--text); transform-origin: 0 50%; transform: scaleX(0);
@@ -154,7 +154,7 @@ img, svg, video, canvas { max-width: 100%; }
 }
 @media (max-width: 560px) { .vk-grid { padding: 0 20px; } }
 
-/* ── Article body — long-form typography ── */
+/* ── Article body - long-form typography ── */
 .vk-article {
   font-family: var(--sans);
   font-size: 18px; line-height: 1.75;
@@ -164,7 +164,7 @@ img, svg, video, canvas { max-width: 100%; }
 .vk-article > * + * { margin-top: 1.5em; }
 
 .vk-article p { font-size: 18px; line-height: 1.78; }
-/* Standfirst — the opening paragraph reads a touch larger */
+/* Standfirst - the opening paragraph reads a touch larger */
 .vk-article > p:first-of-type { font-size: 20px; line-height: 1.7; color: var(--text); }
 
 .vk-article h2 {

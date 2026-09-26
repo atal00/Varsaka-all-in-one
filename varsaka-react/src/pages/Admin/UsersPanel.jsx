@@ -1,4 +1,4 @@
-// USER MANAGEMENT — enterprise user manager in the Varsaka design.
+// USER MANAGEMENT - enterprise user manager in the Varsaka design.
 // Table + filters, create/edit drawers with hierarchy-constrained role selection and
 // a permission-assignment matrix (only perms the creator holds may be granted),
 // and row actions (suspend / activate / delete) gated by capability AND role level.
@@ -17,7 +17,7 @@ import { PermissionMatrix } from './PermissionMatrix.jsx'
 const relTime = (iso) => {
   if (!iso) return 'Never'
   const d = new Date(iso); const diff = Date.now() - d.getTime()
-  if (Number.isNaN(diff)) return '—'
+  if (Number.isNaN(diff)) return '-'
   const m = Math.floor(diff/60000)
   if (m < 1) return 'just now'
   if (m < 60) return `${m}m ago`
@@ -26,9 +26,9 @@ const relTime = (iso) => {
   return d.toLocaleDateString('en-US',{ month:'short', day:'numeric', year:'numeric' })
 }
 const fmtDate = (iso) => {
-  if (!iso) return '—'
+  if (!iso) return '-'
   const d = new Date(iso)
-  return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })
+  return Number.isNaN(d.getTime()) ? '-' : d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })
 }
 
 function RolePill({ role }) {
@@ -224,7 +224,7 @@ export default function UsersPanel() {
                     <div style={{ display:'flex', alignItems:'center', gap:10 }}>
                       <Avatar initial={(u.name||u.email||'?').charAt(0).toUpperCase()} />
                       <div style={{ minWidth:0 }}>
-                        <div style={{ fontSize:13, fontWeight:500, color:'var(--text)', fontFamily:'var(--sans)' }}>{u.name||'—'}</div>
+                        <div style={{ fontSize:13, fontWeight:500, color:'var(--text)', fontFamily:'var(--sans)' }}>{u.name||'-'}</div>
                         <div style={{ fontSize:11, color:'var(--faint)', fontFamily:'var(--sans)', maxWidth:240, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{u.email}</div>
                       </div>
                     </div>

@@ -1,14 +1,14 @@
 import SectionLabel from '../components/SectionLabel.jsx'
 import Reveal from '../components/Reveal.jsx'
 
-// Section 7 — Proof / Case highlights (prd.md §8.7). Specific mini case studies with
+// Section 7 - Proof / Case highlights (prd.md §8.7). Specific mini case studies with
 // before/after numbers, company-type labels (no avatar photos). Anonymized until client
 // permission is secured (prd.md §11 / Phase 3 Step 1). Built from the three real raw cases.
 const cases = [
   {
     tag: 'Series A Fintech · India',
     title: 'A payment edge case caught before release',
-    body: 'Pre-release functional testing surfaced a checkout failure that only triggered on one card network — invisible in the team’s own QA pass.',
+    body: 'Pre-release functional testing surfaced a checkout failure that only triggered on one card network - invisible in the team’s own QA pass.',
     metric: '1 release-blocking bug',
     metricLabel: 'caught before it reached production',
   },
@@ -22,7 +22,7 @@ const cases = [
   {
     tag: 'Healthcare platform',
     title: 'VAPT ahead of an ISO audit',
-    body: 'A full vulnerability assessment and penetration test with CVSS-scored, audit-ready reporting — delivered before the compliance deadline.',
+    body: 'A full vulnerability assessment and penetration test with CVSS-scored, audit-ready reporting - delivered before the compliance deadline.',
     metric: 'Audit-ready',
     metricLabel: 'CVSS-scored VAPT report',
   },

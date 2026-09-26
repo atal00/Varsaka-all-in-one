@@ -1,4 +1,4 @@
-// CaseStudyEditor — full-page CMS editor for case studies.
+// CaseStudyEditor - full-page CMS editor for case studies.
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { api } from '../../../lib/api.js'

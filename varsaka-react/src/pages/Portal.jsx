@@ -406,7 +406,7 @@ export default function Portal() {
 
   const fetchStaff = async () => {
     try {
-      const { data: profiles, error: pError } = await supabase.from('profiles').select('*');
+      const { data: profiles, error: pError } = await supabase.from('staff_directory').select('id, full_name, email');
       if (pError) throw pError;
       setStaffList(profiles.map(p => ({ id: p.id, name: p.full_name, email: p.email })));
     } catch (e) {
@@ -1482,7 +1482,7 @@ export default function Portal() {
                   </div>
                   <div className="form-group">
                     <label>Mentor / Guided By</label>
-                    <input type="text" placeholder="e.g. Atal Pandey" value={newIntern.mentor_name} onChange={e => setNewIntern({...newIntern, mentor_name: e.target.value})} />
+                    <input type="text" placeholder="e.g. Lead QA Mentor" value={newIntern.mentor_name} onChange={e => setNewIntern({...newIntern, mentor_name: e.target.value})} />
                   </div>
                   <div className="form-group">
                     <label>Performance Grade</label>
@@ -1537,8 +1537,20 @@ export default function Portal() {
                       <td><span className="role-badge employee" style={{background:'#f3e8ff', color:'#7e22ce'}}>{intern.internship_role}</span></td>
                       <td>{new Date(intern.start_date).toLocaleDateString()} - {new Date(intern.end_date).toLocaleDateString()}</td>
                       <td>
-                        <div style={{display:'flex', gap:'10px'}}>
+                        <div style={{display:'flex', gap:'8px', alignItems:'center'}}>
                           <button className="btn-refresh" onClick={() => window.open(`/verify/${intern.certificate_id}`, '_blank')} style={{padding:'4px 8px', fontSize:'0.75rem'}}>View</button>
+                          <button 
+                            className="btn-refresh" 
+                            onClick={() => {
+                              const verifyUrl = `https://varsaka.com/verify/${intern.certificate_id}`;
+                              navigator.clipboard.writeText(verifyUrl);
+                              triggerInfo(`Verification link copied to clipboard!\n${verifyUrl}`);
+                            }} 
+                            style={{padding:'4px 8px', fontSize:'0.75rem', background: '#0284c7', borderColor: '#0284c7', color: '#fff'}}
+                            title="Copy public verification link"
+                          >
+                            Copy Link
+                          </button>
                           <button className="btn-del-staff" onClick={() => deleteIntern(intern.id)} style={{position:'static'}}>✕</button>
                         </div>
                       </td>

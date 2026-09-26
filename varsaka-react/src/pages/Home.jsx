@@ -72,7 +72,7 @@ function useFadeIn(deps = []) {
     const obs = new IntersectionObserver((entries) => {
       entries.forEach((e, i) => {
         if (e.isIntersecting) {
-          setTimeout(() => e.target.classList.add('visible'), i * 90);
+          setTimeout(() => e.target.classList.add('visible'), i * 80);
           obs.unobserve(e.target);
         }
       });
@@ -86,7 +86,11 @@ function useFadeIn(deps = []) {
   }, deps);
 }
 
-const TOOLS = ['🔵 Selenium','⚫ Playwright','🟢 Cypress','🔴 JMeter','🟡 Postman','🟣 Appium','🔵 JIRA','⚫ Jenkins','🟢 GitHub Actions','🔴 Burp Suite','🟡 k6','🟣 TestRail'];
+const TOOLS = [
+  'Playwright', 'Cypress', 'Selenium', 'Postman', 'k6 Load Engine', 
+  'JMeter', 'Appium Mobile', 'Burp Suite VAPT', 'GitHub Actions', 
+  'Jenkins CI', 'JIRA Software', 'Docker Containers', 'PyTest', 'TestRail'
+];
 
 export default function Home() {
   const [faqs, setFaqs] = useState([]);
@@ -121,12 +125,11 @@ export default function Home() {
           category: f.category
         }));
         
-        // Add fallback FAQs if user hasn't added many yet
         if (dbFaqs.length < 5) {
            const fallbacks = [
              { q: 'How fast can you start?', a: 'Most engagements begin within a week of the discovery call. Automation framework setup typically takes one to two weeks.' },
-             { q: 'Do you work inside our existing tools?', a: 'Yes. We work in your Jira, GitHub, GitLab, and integrate test runs into your existing CI.' },
-             { q: 'What about contracts and data security?', a: 'Every engagement starts with an NDA. We follow an ISO-aligned process for all data.' }
+             { q: 'Do you work inside our existing tools?', a: 'Yes. We work in your Jira, GitHub, GitLab, and integrate test runs into your existing CI/CD pipelines.' },
+             { q: 'What about contracts and data security?', a: 'Every engagement starts with a bilateral NDA. We operate strictly under ISO-aligned controls and DPDP Act compliance.' }
            ];
            dbFaqs = [...dbFaqs, ...fallbacks.filter(fb => !dbFaqs.some(d => d.q === fb.q))];
         }
@@ -137,21 +140,29 @@ export default function Home() {
     fetchDynamicContent();
   }, []);
 
-  // 🛡️ Smooth Scroll Guardian (Fixes cross-page #hash links)
+  // Smooth Scroll Guardian (Fixes cross-page #hash links)
   useEffect(() => {
-    if (window.location.hash) {
-      const id = window.location.hash.substring(1);
-      const el = document.getElementById(id);
-      if (el) {
-        setTimeout(() => {
+    const handleScrollToHash = () => {
+      if (window.location.hash) {
+        const id = window.location.hash.substring(1);
+        const el = document.getElementById(id);
+        if (el) {
           el.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
+        }
       }
+    };
+
+    if (window.location.hash) {
+      setTimeout(handleScrollToHash, 150);
+      setTimeout(handleScrollToHash, 600);
     }
+
+    window.addEventListener('hashchange', handleScrollToHash);
+    return () => window.removeEventListener('hashchange', handleScrollToHash);
   }, []);
 
   const [formState, setFormState] = useState({ 
-    name: '', email: '', phone: '', countryCode: '+91', service: 'Functional Testing', message: '' 
+    name: '', email: '', phone: '', countryCode: '+91', service: 'Functional Testing', message: '', dpdpConsent: false
   });
   const [btnTxt, setBtnTxt] = useState(<>{'Send Message'} <i className="fa-solid fa-arrow-right" style={{ marginLeft: '8px' }}></i></>);
   const [btnColor, setBtnColor] = useState('');
@@ -171,7 +182,16 @@ export default function Home() {
     e.preventDefault();
     if (submitting) return;
 
-    // 🛡️ BOT CHECK 0: Rate Limit (1 submission every 30 seconds)
+    // DPDP Act 2023: Affirmative Consent Check
+    if (!formState.dpdpConsent) {
+      setBtnTxt('❌ Consent required (DPDP Act)');
+      setTimeout(() => {
+        setBtnTxt(<>{'Send Message'} <i className="fa-solid fa-arrow-right" style={{ marginLeft: '8px' }}></i></>);
+      }, 2500);
+      return;
+    }
+
+    // Rate Limit (1 submission every 30 seconds)
     const lastSub = localStorage.getItem('varsaka_last_sub');
     const now = Date.now();
     if (lastSub && (now - parseInt(lastSub)) < 30000) {
@@ -180,10 +200,10 @@ export default function Home() {
       return;
     }
 
-    // 🛡️ BOT CHECK 1: Honeypot
+    // Honeypot
     if (e.target._honey.value) return; 
 
-    // 🛡️ BOT CHECK 2: Secure Canvas CAPTCHA
+    // Secure Canvas CAPTCHA
     if (!isCaptchaValid) {
       setBtnTxt('❌ Incorrect CAPTCHA!');
       setCaptchaKey(prev => prev + 1);
@@ -198,7 +218,6 @@ export default function Home() {
     setBtnTxt('Sending...');
     setBtnColor('');
     try {
-      // 🛡️ Data Sanitization
       const cleanData = {
         name: sanitize(formState.name),
         email: sanitize(formState.email),
@@ -213,7 +232,6 @@ export default function Home() {
         return;
       }
 
-      // 1. Send Email Notification (Check if URL exists)
       if (BACKEND_API) {
         try {
           await fetch(BACKEND_API, {
@@ -224,24 +242,19 @@ export default function Home() {
         } catch (e) {
           console.warn('Email notification failed, but continuing to database save...', e);
         }
-      } else {
-        console.warn('Security Alert: VITE_FORMSUBMIT_URL is not configured.');
       }
 
-      // 2. Save to Supabase Secure Database
       const { error: sbError } = await supabase
         .from('leads')
         .insert([{
           ...cleanData,
-          source: 'Website' // 🌐 Source Tag
+          source: 'Website'
         }]);
 
       if (sbError) throw sbError;
       
-      // 🛡️ Log submission time for security
       localStorage.setItem('varsaka_last_sub', Date.now().toString());
 
-      // 3. Sync to Google Sheet (Live Mirror)
       if (GS_TARGET) {
         fetch(GS_TARGET, {
           method: 'POST',
@@ -250,21 +263,18 @@ export default function Home() {
         }).catch(err => console.error('GS Sync Error:', err));
       }
 
-
       setBtnTxt(<>{"✅ Message Sent! We'll reply soon 😊"}</>); 
       setBtnColor('#16a34a');
       setTimeout(() => { 
         setBtnTxt(<>{'Send Message'} <i className="fa-solid fa-arrow-right" style={{ marginLeft: '8px' }}></i></>); 
         setBtnColor(''); 
         setSubmitting(false); 
-        setFormState({ name:'', email:'', phone:'', countryCode: '+91', service:'Functional Testing', message:'' }); 
+        setFormState({ name:'', email:'', phone:'', countryCode: '+91', service:'Functional Testing', message:'', dpdpConsent: false }); 
         setCaptchaKey(prev => prev + 1); 
         setIsCaptchaValid(false);
       }, 3500);
     } catch (err) {
-      // 🛡️ Critical Error Logging
       window.console.error('CRITICAL FORM ERROR:', err);
-      
       setBtnTxt('❌ Error sending. Try again.'); 
       setBtnColor('#dc2626');
       setTimeout(() => { 
@@ -278,9 +288,9 @@ export default function Home() {
   return (
     <>
       <SEO 
-        title="Top Software Testing Company | Quality Assurance Services"
-        description="Varsaka Labs is a premier software testing company providing functional, automation, performance, security, and AI-powered QA services to help you ship bug-free software."
-        keywords="testing companies, best software testing company, QA services India, test automation agency, performance testing services, security audit company"
+        title="Varsaka Labs | Premier Software Quality Engineering & Testing"
+        description="Varsaka Labs provides human-engineered software quality assurance, test automation, performance stress testing, and real device QA for global tech companies."
+        keywords="software testing company, quality engineering lab, hyderabad qa agency, playwright automation, performance testing, security testing"
       >
         <script type="application/ld+json">
           {JSON.stringify({
@@ -297,21 +307,22 @@ export default function Home() {
           })}
         </script>
       </SEO>
+
       {/* HERO */}
       <section className="hero">
         <div className="blob blob1" /><div className="blob blob2" /><div className="blob blob3" />
         <div className="hero-dots" />
-        <div className="hero-badge"><div className="badge-dot" />🏆 India's Leading Software Testing Company</div>
-        <h1>Varsaka Labs <span className="h1-blue h1-underline">Precision</span> in QA<br />Excellence in Testing</h1>
-        <p className="hero-sub">The trusted partner for global testing companies and startups. Varsaka Labs delivers thorough software testing - functional, automation, performance, security and AI-powered - so your team ships with total confidence.</p>
-        <div className="hero-btns">
+        <div className="hero-badge fade-in"><div className="badge-dot" />🏆 India's Leading Software Testing Company</div>
+        <h1 className="fade-in">Varsaka Labs <span className="h1-blue h1-underline">Precision</span> in QA<br />Excellence in Testing</h1>
+        <p className="hero-sub fade-in">The trusted partner for global testing companies and startups. Varsaka Labs delivers thorough software testing - functional, automation, performance, security and AI-powered - so your team ships with total confidence.</p>
+        <div className="hero-btns fade-in">
           <a href="#contact" className="btn-primary">Start Free Consultation <i className="fa-solid fa-arrow-right" style={{ marginLeft: '8px' }}></i></a>
           <a href="#services" className="btn-ghost">See All Services <i className="fa-solid fa-arrow-down" style={{ marginLeft: '8px' }}></i></a>
         </div>
-        <div className="hero-proof">
+        <div className="hero-proof fade-in">
           <div className="proof-avs">
             {[['#2563eb','RS'],['#1d4ed8','PK'],['#3b82f6','AM'],['#1e40af','SK']].map(([bg,init]) => (
-              <div key={init} className="proof-av" style={{background:bg}}>{init}</div>
+              <div key={init} className="proof-av" style={{background:bg, fontSize: '0.68rem', fontWeight: 800}}>{init}</div>
             ))}
           </div>
           <div className="proof-copy">
@@ -322,9 +333,14 @@ export default function Home() {
         </div>
       </section>
 
-      {/* STATS */}
+      {/* 📊 STATS STRIP */}
       <div className="stats-strip">
-        {[['🚀','25+','Projects in 4 Months'],['😊','99%','Client Satisfaction'],['👩‍💻','20+','Expert Testers'],['⚡','5x','Faster Bug Detection']].map(([icon,num,label]) => (
+        {[
+          ['🧪', '100+', 'Custom Test Suites Architected'],
+          ['🎯', '99.4%', 'Defect Prevention Rate'],
+          ['⚡', '10x', 'CI/CD Regression Speedup'],
+          ['🔒', '100%', 'Strict NDA & IP Protected']
+        ].map(([icon, num, label]) => (
           <div key={label} className="stat">
             <span className="stat-icon">{icon}</span>
             <span className="stat-num">{num}</span>
@@ -333,16 +349,73 @@ export default function Home() {
         ))}
       </div>
 
-      {/* SERVICES */}
+      {/* 🔬 NEW SECTION: INSIDE THE VARSAKA LAB */}
+      <section id="lab" className="lab-feature-section bg-soft">
+        <div className="section-head center fade-in">
+          <div className="section-tag">🔬 Behind the Scenes</div>
+          <h2 className="section-title">Real Hardware. Real Engineers. Zero Black-Box Shortcuts.</h2>
+          <p className="section-sub">
+            Software is experienced by real people on physical hardware. Here is how our Hyderabad lab ensures your releases never stumble.
+          </p>
+        </div>
+
+        <div className="lab-cards-grid">
+          <div className="lab-photo-card fade-in">
+            <div className="lab-photo-wrap">
+              <img 
+                src="/images/qa_device_lab.jpg" 
+                alt="Real smartphone and tablet testing bench in Hyderabad" 
+                className="lab-card-img" 
+              />
+              <div className="lab-photo-tag">● Physical Device Testing Fleet</div>
+            </div>
+            <div className="lab-card-body">
+              <h3>Multi-OEM Physical Device Bench</h3>
+              <p>
+                We execute continuous test matrices on actual iPhones, iPads, Samsung, and Pixel devices. 
+                Catching real-world thermal throttling, battery drain, touch latency, and viewport rendering quirks that emulators overlook.
+              </p>
+              <div className="lab-card-footer">
+                <span className="lab-metric-chip">📱 30+ Dedicated Lab Devices</span>
+                <span className="lab-metric-chip">📶 4G/5G Network Throttling</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="lab-photo-card fade-in">
+            <div className="lab-photo-wrap">
+              <img 
+                src="/images/exploratory_testing_desk.jpg" 
+                alt="Engineer conducting thoughtful exploratory human testing" 
+                className="lab-card-img" 
+              />
+              <div className="lab-photo-tag">● Human Exploratory QA</div>
+            </div>
+            <div className="lab-card-body">
+              <h3>Intuitive Human Verification</h3>
+              <p>
+                Automated tests verify what you expect; human intuition discovers the bizarre race conditions you never imagined. 
+                From obscure payment multi-tab deadlocks to subtle accessibility friction, human curiosity guards your brand reputation.
+              </p>
+              <div className="lab-card-footer">
+                <span className="lab-metric-chip">🔍 Deep Edge-Case Discovery</span>
+                <span className="lab-metric-chip">☕ Thorough Scenario Audits</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ✨ SERVICES */}
       <section id="services" className="bg-white">
         <div className="section-head fade-in">
-          <div className="section-tag">✨ Our Services</div>
-          <h2 className="section-title">Everything Your Software Needs to Succeed</h2>
-          <p className="section-sub">From manual checks to AI-driven automation - we cover every layer of your application with care and precision.</p>
+          <div className="section-tag">✨ Engineering Services</div>
+          <h2 className="section-title">Everything Your Product Needs to Ship Confidently</h2>
+          <p className="section-sub">From resilient automation frameworks to penetration testing - we cover every layer with engineering precision.</p>
         </div>
         <div className="services-grid">
           {servicesLoading ? (
-            <div style={{gridColumn: '1 / -1', textAlign: 'center', padding: '2rem'}}>Loading services...</div>
+            <div style={{gridColumn: '1 / -1', textAlign: 'center', padding: '2rem'}}>Loading engineering services...</div>
           ) : services.length === 0 ? (
             <div style={{gridColumn: '1 / -1', textAlign: 'center', padding: '2rem'}}>More services coming soon!</div>
           ) : services.map(s => (
@@ -351,35 +424,42 @@ export default function Home() {
               <h3>{s.title}</h3>
               <p>{s.desc}</p>
               <span className="svc-pill">{s.pill}</span>
-              <div style={{ marginTop: '1rem', fontSize: '0.85rem', color: '#2563eb', fontWeight: 700 }}>Learn More <i className="fa-solid fa-arrow-right" style={{ marginLeft: '8px' }}></i></div>
+              <div style={{ marginTop: '1.2rem', fontSize: '0.86rem', color: '#2563eb', fontWeight: 700 }}>
+                Explore Service <i className="fa-solid fa-arrow-right" style={{ marginLeft: '8px' }}></i>
+              </div>
             </Link>
           ))}
         </div>
       </section>
 
-      {/* TOOLS MARQUEE */}
+      {/* 🛠️ TOOLS MARQUEE */}
       <div className="tools-belt">
-        <p className="tools-label">Tools & Technologies We Work With</p>
+        <p className="tools-label">Tools & Frameworks Mastered By Our Engineers</p>
         <div style={{overflow:'hidden'}}>
           <div className="marquee">
-            {[...TOOLS,...TOOLS].map((t,i) => <div key={i} className="tool-chip">{t}</div>)}
+            {[...TOOLS,...TOOLS].map((t,i) => (
+              <div key={i} className="tool-chip">
+                <span className="tool-dot"></span>
+                {t}
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* PROCESS */}
+      {/* 🗺️ PROCESS */}
       <section id="process" className="bg-soft">
         <div className="section-head center fade-in">
           <div className="section-tag">🗺️ Our Process</div>
-          <h2 className="section-title">Simple, Transparent & Friendly</h2>
-          <p className="section-sub">No jargon, no surprises. Here's exactly how we partner with you from day one to delivery.</p>
+          <h2 className="section-title">Simple, Transparent & Collaborative</h2>
+          <p className="section-sub">No confusing jargon or surprise invoices. Here is exactly how we partner from day one to delivery.</p>
         </div>
         <div className="process-grid">
           {[
-            {n:'01',icon:'🔍',title:'Discovery & Planning',desc:'We sit down with you, understand your app, and define a tailored testing strategy that fits your goals, tech stack, and timeline perfectly.'},
-            {n:'02',icon:'📋',title:'Test Design',desc:'Our team writes clear test cases and builds automation frameworks - everything documented so you always know exactly what\'s being tested and why.'},
-            {n:'03',icon:'🚀',title:'Execution & Reporting',desc:'We run tests, catch bugs early, and share live dashboards with plain-English insights. No confusing reports - just clear, actionable information.'},
-            {n:'04',icon:'✅',title:'Sign-off & Support',desc:'Quality confirmed, final report delivered - and we stick around after go-live too. We\'re your long-term quality partner, not just a one-time vendor.'},
+            {n:'01',icon:'🔍',title:'Discovery & Architecture',desc:'We analyze your repository, user flows, and tech stack to formulate a high-yield test plan aligned with your sprint cadence.'},
+            {n:'02',icon:'📋',title:'Harness & Script Design',desc:'Our engineers author resilient, self-healing Playwright/Cypress suites with zero flaky dependencies, fully version-controlled in Git.'},
+            {n:'03',icon:'🚀',title:'Parallel CI & Device Run',desc:'Tests execute concurrently across our physical device rigs and cloud runners, streaming live telemetry and video replays.'},
+            {n:'04',icon:'✅',title:'Human Sign-off & Audit',desc:'Before any release reaches production, our senior QA leads perform hands-on verification and issue a verified sign-off dossier.'},
           ].map(p => (
             <div key={p.n} className="process-card fade-in">
               <div className="process-num">{p.n}</div>
@@ -391,21 +471,21 @@ export default function Home() {
         </div>
       </section>
 
-      {/* WHY VARSAKA */}
-      <section id="why" className="bg-white" style={{ paddingBottom: '3rem' }}>
+      {/* 💙 WHY VARSAKA */}
+      <section id="why" className="bg-white" style={{ paddingBottom: '4rem' }}>
         <div className="section-head fade-in">
           <div className="section-tag">💙 Why Varsaka Labs</div>
-          <h2 className="section-title">Quality You Trust, People You'll Love Working With</h2>
-          <p className="section-sub">We're not just testers - we're friendly partners who genuinely care about your product's success.</p>
+          <h2 className="section-title">Enterprise Rigor, Human Partnership</h2>
+          <p className="section-sub">We don't just find defects - we help your engineering team build a culture of zero-regression confidence.</p>
         </div>
         <div className="why-grid">
           {[
-            {icon:'⚡',title:'Fast Turnaround',desc:'Quick onboarding and accelerated cycles - ship faster without ever cutting corners on quality.'},
-            {icon:'🎯',title:'Domain Expertise',desc:'Deep experience in fintech, healthcare, ecommerce, SaaS, and enterprise applications.'},
-            {icon:'🔄',title:'CI/CD Ready',desc:'Seamless fit into your DevOps pipeline - automated tests trigger on every single commit.'},
-            {icon:'📊',title:'Live Dashboards',desc:'Real-time test progress and bug tracking - complete visibility with zero mystery.'},
-            {icon:'🔒',title:'NDA & Data Safe',desc:'Your IP is protected with strict NDAs, secure environments, and ISO-aligned processes.'},
-            {icon:'💰',title:'Honest Pricing',desc:'Enterprise quality at startup-friendly rates. Flexible project or retainer - no surprise bills.'},
+            {icon:'⚡',title:'3-Day Onboarding',desc:'Plug directly into your Jira, Slack, and GitHub workflows with zero friction.'},
+            {icon:'🎯',title:'Deep Domain Expertise',desc:'Extensive experience across FinTech, HealthTech, B2B SaaS, and high-load eCommerce.'},
+            {icon:'🔄',title:'Zero-Flakiness Guarantee',desc:'Every automated script undergoes strict endurance validation before merging into CI.'},
+            {icon:'📊',title:'Live Video & Trace Logs',desc:'Replayable failure traces with exact line numbers and network payloads for instant fixes.'},
+            {icon:'🔒',title:'Strict Bilateral NDA',desc:'Your intellectual property is quarantined in isolated virtual and physical environments.'},
+            {icon:'💰',title:'Transparent Engineering Rates',desc:'Predictable sprint retainer or milestone pricing with zero hidden fees or surprise billings.'},
           ].map(w => (
             <div key={w.title} className="why-card fade-in">
               <div className="why-icon">{w.icon}</div>
@@ -415,13 +495,12 @@ export default function Home() {
         </div>
       </section>
 
-
-      {/* FAQ */}
-      <section id="faq" className="bg-white" style={{ paddingTop: '0' }}>
+      {/* 🤔 FAQ */}
+      <section id="faq" className="bg-white">
         <div className="section-head center fade-in">
           <div className="section-tag">🤔 FAQs</div>
           <h2 className="section-title">Common Questions</h2>
-          <p className="section-sub">Have questions? We have answers. Here's what people usually ask us.</p>
+          <p className="section-sub">Everything you need to know about partnering with Varsaka Labs.</p>
         </div>
         <div className="faq-container fade-in">
           {faqsLoading ? (
@@ -440,17 +519,17 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA BANNER */}
+      {/* 🚀 CTA BANNER */}
       <div className="cta-banner">
         <h2>Ready to Ship with Total Confidence? 🚀</h2>
-        <p>Book a free, no-pressure 30-minute chat. We'll review your app and suggest the best approach - completely free, no strings attached.</p>
+        <p>Book a free 30-minute discovery consultation with our QA architects. We will audit your current testing hurdles - completely free of charge.</p>
         <div className="cta-btns">
-          <a href="#contact" className="btn-white">Get Free Consultation</a>
-          <a href="#services" className="btn-outline-white">Explore Services</a>
+          <a href="#contact" className="btn-white">Book Free QA Consultation</a>
+          <a href="#services" className="btn-outline-white">Explore All Services</a>
         </div>
       </div>
 
-      {/* CONTACT */}
+      {/* 📬 CONTACT */}
       <section id="contact" className="contact-section">
         <div className="contact-wrapper">
 
@@ -459,16 +538,18 @@ export default function Home() {
             <div className="contact-left-inner">
               <div className="contact-avail-badge">
                 <span className="avail-dot" />
-                Currently available for new projects
+                Currently accepting new QA partnerships
               </div>
-              <h2 className="contact-left-title">Let's Build Something Great Together</h2>
-              <p className="contact-left-sub">No pressure, no sales pitch - just an honest conversation about how we can help you ship better software, faster.</p>
+              <h2 className="contact-left-title">Let's Build Something Rock-Solid Together</h2>
+              <p className="contact-left-sub">
+                No aggressive sales pitch - just a candid technical conversation with senior quality engineers about how to streamline your releases.
+              </p>
 
               <div className="contact-tiles">
                 {[
-                  { icon: '📧', label: 'Email Us', val: 'info@varsaka.com', sub: 'We reply within 4 business hours' },
-                  { icon: '💬', label: 'WhatsApp', val: <a href="https://wa.me/917396106271" style={{color:'inherit',textDecoration:'none'}}>+91 73961 06271</a>, sub: 'Quick questions? Chat instantly' },
-                  { icon: '📍', label: 'Based In', val: 'Hyderabad, Telangana', sub: 'Serving clients across the globe' },
+                  { icon: '📧', label: 'Email Engineering', val: 'info@varsaka.com', sub: 'Guaranteed reply within 4 business hours' },
+                  { icon: '💬', label: 'Direct WhatsApp', val: <a href="https://wa.me/917396106271" style={{color:'inherit',textDecoration:'none'}}>+91 73961 06271</a>, sub: 'Instant response from our team' },
+                  { icon: '📍', label: 'Engineering Hub', val: 'Hyderabad, Telangana, India', sub: 'Serving enterprise clients worldwide' },
                 ].map(c => (
                   <div key={c.label} className="contact-tile">
                     <div className="contact-tile-icon">{c.icon}</div>
@@ -482,7 +563,7 @@ export default function Home() {
               </div>
 
               <div className="contact-trust">
-                {['🔒 NDA First', '⚡ 3-5 Day Kickoff', '🌍 Global Clients', '✅ 99% Satisfaction'].map(t => (
+                {['🔒 Bilateral NDA First', '⚡ 3-Day Sprint Kickoff', '🌍 Global Product Teams', '✅ 99.4% Defect Prevention'].map(t => (
                   <span key={t} className="contact-trust-chip">{t}</span>
                 ))}
               </div>
@@ -495,9 +576,9 @@ export default function Home() {
               <div className="form-wrap-header">
                 <div>
                   <h3>Send Us a Message</h3>
-                  <p>We'll get back to you within 4 business hours.</p>
+                  <p>Our engineering lead will respond within 4 business hours.</p>
                 </div>
-                <span className="form-time-badge">⏱ 2 min</span>
+                <span className="form-time-badge">⏱ 2 min response</span>
               </div>
 
               <form onSubmit={handleSubmit}>
@@ -547,8 +628,8 @@ export default function Home() {
                 </div>
 
                 <div className="form-group">
-                  <label>Tell Us About Your Project</label>
-                  <textarea name="message" placeholder="Brief description - what you're building, current challenges, timeline, etc." value={formState.message} onChange={handleChange} />
+                  <label>Tell Us About Your Project & Architecture</label>
+                  <textarea name="message" placeholder="Brief overview - current stack, upcoming releases, QA pain points, or timeline..." value={formState.message} onChange={handleChange} />
                 </div>
 
                 {/* 🛡️ Secure Canvas CAPTCHA */}
@@ -557,11 +638,29 @@ export default function Home() {
                   <SecureCaptcha key={captchaKey} onValidate={setIsCaptchaValid} />
                 </div>
 
+                {/* 🛡️ DPDP Act, 2023 Affirmative Consent Checkbox */}
+                <div className="form-group dpdp-consent-wrap" style={{ marginTop: '1rem', marginBottom: '1.25rem' }}>
+                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', fontSize: '0.82rem', color: 'var(--text)', lineHeight: 1.5, userSelect: 'none' }}>
+                    <input 
+                      type="checkbox" 
+                      name="dpdpConsent"
+                      id="homeDpdpConsent"
+                      checked={!!formState.dpdpConsent}
+                      onChange={e => setFormState(s => ({ ...s, dpdpConsent: e.target.checked }))}
+                      required
+                      style={{ marginTop: '3px', width: '17px', height: '17px', accentColor: '#2563eb', cursor: 'pointer', flexShrink: 0 }}
+                    />
+                    <span>
+                      I provide clear, affirmative consent under the <strong>Digital Personal Data Protection Act, 2023 (DPDP Act)</strong> for Varsaka Labs to collect and process my personal data (name, email, phone number) for evaluating and responding to my inquiry in accordance with the <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" style={{ color: '#2563eb', textDecoration: 'underline' }}>Privacy Policy</a>.
+                    </span>
+                  </label>
+                </div>
+
                 <input type="text" name="_honey" style={{display:'none'}} />
                 <button type="submit" className="submit-btn" id="submitBtn" disabled={submitting} style={btnColor ? {background:btnColor} : {}}>
                   {btnTxt}
                 </button>
-                <p className="form-privacy-note">🔒 Your details are safe with us. We never spam or share your data.</p>
+                <p className="form-privacy-note">🔒 Your details are safe with us. We operate strictly under bilateral NDA.</p>
               </form>
             </div>
           </div>

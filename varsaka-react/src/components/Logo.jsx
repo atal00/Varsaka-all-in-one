@@ -1,5 +1,5 @@
 // Single source of truth for the Varsaka brand lockup. Uses the official
-// /public/logo.png (square, full-colour — reads on light and dark surfaces, so no
+// /public/logo.png (square, full-colour - reads on light and dark surfaces, so no
 // recolouring). Intrinsic 675×675 downscaled to small display sizes → crisp on
 // Retina/Hi-DPI. width/height are set to reserve space (no layout shift); the nav
 // instance loads eagerly, everything else lazily. Pair with the serif wordmark.

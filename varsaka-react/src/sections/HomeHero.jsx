@@ -3,7 +3,7 @@ import { PrimaryCTA } from '../components/Button.jsx'
 import usePrefersReducedMotion from '../hooks/usePrefersReducedMotion.js'
 import { generateNodeGrid, VIEWBOX } from '../animations/nodeGrid.js'
 
-// Section 1 — "The Quality Gate" (prd.md §8.1, animation.md §2).
+// Section 1 - "The Quality Gate" (prd.md §8.1, animation.md §2).
 // The SVG node-grid + H1 render in their FINAL (verified/green, full-text) resting state so
 // no-JS, reduced-motion, SEO crawlers, and LCP all get a complete hero immediately
 // (tech_stack.md §4.2 / animation.md §6). GSAP is lazy-imported AFTER paint and only then
@@ -46,7 +46,7 @@ export default function HomeHero() {
 
   return (
     <section ref={rootRef} className="relative overflow-hidden bg-ink-900 text-paper-0">
-      {/* Node-grid visual layer — decorative, behind text, CLIENT-ONLY (keeps prerendered
+      {/* Node-grid visual layer - decorative, behind text, CLIENT-ONLY (keeps prerendered
           HTML lean for LCP). Final/green state by default; GSAP drives red→green on attach. */}
       {mounted && (
       <svg
@@ -71,9 +71,9 @@ export default function HomeHero() {
           })}
           {nodes.map((n) => (
             <g key={n.id}>
-              {/* verified (green) — beneath */}
+              {/* verified (green) - beneath */}
               <circle cx={n.x} cy={n.y} r="3" fill="#2F6F4E" />
-              {/* unverified (red/amber) — on top, hidden by default, shown by GSAP on attach */}
+              {/* unverified (red/amber) - on top, hidden by default, shown by GSAP on attach */}
               <circle
                 data-red
                 data-x={n.x}
@@ -88,7 +88,7 @@ export default function HomeHero() {
       </svg>
       )}
 
-      {/* Content layer — real DOM, visible from first paint */}
+      {/* Content layer - real DOM, visible from first paint */}
       <div className="container-edge relative z-10 flex min-h-[88vh] flex-col justify-center py-section-mobile md:py-section">
         <p className="text-caption uppercase text-graphite-300">The Quality Gate</p>
         <h1 className="mt-6 max-w-[16ch] font-display text-h1">
@@ -96,7 +96,7 @@ export default function HomeHero() {
           <span data-line2 className="block text-signal-300">We make sure yours doesn’t.</span>
         </h1>
         <p data-reveal className="mt-7 max-w-xl text-body-lg text-graphite-300">
-          Varsaka is the QA layer between your code and your users — catching the
+          Varsaka is the QA layer between your code and your users - catching the
           functional, performance, and security failures that would otherwise reach production.
         </p>
         <div data-reveal className="mt-10 flex flex-wrap items-center gap-6">

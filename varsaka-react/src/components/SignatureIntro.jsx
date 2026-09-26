@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { SIG_PATH, SIG_VIEWBOX, SIG_REVEAL_X0, SIG_REVEAL_X1, SIG_FLOURISH } from './varsakaSignaturePath.js'
 
-/* Varsaka — a crafted, multi-phase intro sequence (once per session).
+/* Varsaka - a crafted, multi-phase intro sequence (once per session).
 
    1. Blank.                          (bg only)
    2. A precise point fades in.
-   3. The point sweeps a datum line into being — plotting anchor nodes, trailing ink,
+   3. The point sweeps a datum line into being - plotting anchor nodes, trailing ink,
       framed by a measurement ring. Engineering precision, constructing intentionally.
    4. It repositions to the start with a motion trail.
    5. The fountain pen writes the cursive "Varsaka" along the line it just built.
@@ -234,7 +234,7 @@ export default function SignatureIntro({ onDone, onHandoff }) {
     }
     raf = requestAnimationFrame(tick)
 
-    // Let an impatient visitor settle it early — jump to the wordmark, then dissolve.
+    // Let an impatient visitor settle it early - jump to the wordmark, then dissolve.
     const skip = () => {
       if (finished || fadeTriggered) return
       cancelAnimationFrame(raf)
@@ -294,7 +294,7 @@ export default function SignatureIntro({ onDone, onHandoff }) {
           />
         ))}
 
-        {/* The datum line — drawn first, then becomes the signature's underline */}
+        {/* The datum line - drawn first, then becomes the signature's underline */}
         <path
           ref={flourRef} d={SIG_FLOURISH}
           fill="none" stroke="currentColor"
@@ -321,7 +321,7 @@ export default function SignatureIntro({ onDone, onHandoff }) {
         <circle ref={nibRef} r="6" cx={SIG_REVEAL_X0} cy={NIB_BASE} fill="currentColor" style={{ opacity: 0 }} />
       </svg>
 
-      {/* Morph target — the Varsaka brand lockup (serif wordmark + mark) */}
+      {/* Morph target - the Varsaka brand lockup (serif wordmark + mark) */}
       <div
         ref={wordmarkRef}
         style={{

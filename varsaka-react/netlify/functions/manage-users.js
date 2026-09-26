@@ -24,6 +24,12 @@ exports.handler = async (event, context) => {
     return { statusCode: 405, headers, body: 'Method Not Allowed' };
   }
 
+  const authHeader = event.headers.authorization || event.headers.Authorization;
+  if (!authHeader) {
+    return { statusCode: 401, headers, body: JSON.stringify({ error: 'Unauthorized: Missing token' }) };
+  }
+  const token = authHeader.replace(/^Bearer\s+/i, '');
+
   const supabaseUrl = process.env.VITE_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -34,12 +40,6 @@ exports.handler = async (event, context) => {
       body: JSON.stringify({ error: 'Server misconfiguration: Missing Supabase credentials in environment.' }) 
     };
   }
-
-  const authHeader = event.headers.authorization;
-  if (!authHeader) {
-    return { statusCode: 401, headers, body: JSON.stringify({ error: 'Unauthorized: Missing token' }) };
-  }
-  const token = authHeader.replace('Bearer ', '');
 
   const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
     auth: {
@@ -76,12 +76,16 @@ exports.handler = async (event, context) => {
       if (role && !allowedRoles.includes(role)) {
         return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid role specified' }) };
       }
+
+      if (!password || typeof password !== 'string' || password.length < 8) {
+        return { statusCode: 400, headers, body: JSON.stringify({ error: 'Password must be at least 8 characters long' }) };
+      }
       
       const { data: authData, error: createError } = await supabaseAdmin.auth.admin.createUser({
         email,
         password,
         email_confirm: true,
-        user_metadata: { full_name }
+        user_metadata: { full_name: full_name ? String(full_name).substring(0, 100) : '' }
       });
       if (createError) throw createError;
 
@@ -131,6 +135,7 @@ exports.handler = async (event, context) => {
     }
   } catch (error) {
     console.error('Manage Users Error:', error);
-    return { statusCode: 500, headers, body: JSON.stringify({ error: error.message }) };
+    const safeMsg = process.env.NODE_ENV === 'production' ? 'An unexpected error occurred' : (error.message || 'Error processing request');
+    return { statusCode: 500, headers, body: JSON.stringify({ error: safeMsg }) };
   }
 };

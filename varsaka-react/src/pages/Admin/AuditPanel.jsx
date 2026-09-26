@@ -1,4 +1,4 @@
-// AUDIT LOG — read-only stream of actions, newest first, with filters
+// AUDIT LOG - read-only stream of actions, newest first, with filters
 // (module / action / actor search + date range) and pagination.
 import { useMemo, useState } from 'react'
 import { api } from '../../lib/api.js'
@@ -13,9 +13,9 @@ import {
 const PAGE_SIZE = 25
 
 const fmtWhen = (iso) => {
-  if (!iso) return '—'
+  if (!iso) return '-'
   const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return '—'
+  if (Number.isNaN(d.getTime())) return '-'
   return d.toLocaleString('en-US', { month:'short', day:'numeric', year:'numeric', hour:'2-digit', minute:'2-digit' })
 }
 
@@ -107,15 +107,15 @@ export default function AuditPanel() {
                     onMouseEnter={e=>e.currentTarget.style.background='var(--surface2)'}
                     onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
                     <td style={{ padding:'12px 16px', fontSize:12, color:'var(--faint)', fontFamily:'var(--sans)', whiteSpace:'nowrap' }}>{fmtWhen(a.createdAt)}</td>
-                    <td style={{ padding:'12px 16px', fontSize:13, color:'var(--text)', fontFamily:'var(--sans)', maxWidth:220, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{a.actorEmail||'—'}</td>
+                    <td style={{ padding:'12px 16px', fontSize:13, color:'var(--text)', fontFamily:'var(--sans)', maxWidth:220, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{a.actorEmail||'-'}</td>
                     <td style={{ padding:'12px 16px' }}>
-                      <span style={{ fontSize:12, fontFamily:'var(--mono)', color:'var(--text)', background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:5, padding:'2px 7px' }}>{a.action||'—'}</span>
+                      <span style={{ fontSize:12, fontFamily:'var(--mono)', color:'var(--text)', background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:5, padding:'2px 7px' }}>{a.action||'-'}</span>
                     </td>
-                    <td style={{ padding:'12px 16px' }}>{a.module ? <Pill label={a.module} tone={{ fg:'var(--muted)', border:'var(--border)', bg:'transparent' }} /> : '—'}</td>
+                    <td style={{ padding:'12px 16px' }}>{a.module ? <Pill label={a.module} tone={{ fg:'var(--muted)', border:'var(--border)', bg:'transparent' }} /> : '-'}</td>
                     <td style={{ padding:'12px 16px', fontSize:12, color:'var(--muted)', fontFamily:'var(--mono)', maxWidth:220, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-                      {a.targetType ? `${a.targetType}${a.targetId?` · ${a.targetId}`:''}` : '—'}
+                      {a.targetType ? `${a.targetType}${a.targetId?` · ${a.targetId}`:''}` : '-'}
                     </td>
-                    <td style={{ padding:'12px 16px', fontSize:12, color:'var(--faint)', fontFamily:'var(--mono)' }}>{a.ip||'—'}</td>
+                    <td style={{ padding:'12px 16px', fontSize:12, color:'var(--faint)', fontFamily:'var(--mono)' }}>{a.ip||'-'}</td>
                   </tr>
                 ))}
               </tbody>

@@ -36,15 +36,15 @@ export const routes = [
       { path: 'privacy-policy', lazy: () => import('./pages/PrivacyPolicy.jsx') },
       { path: 'terms-and-conditions', lazy: () => import('./pages/TermsConditions.jsx') },
 
-      // Careers — list + dynamic per-role detail (data from MongoDB).
+      // Careers - list + dynamic per-role detail (data from MongoDB).
       { path: 'careers', lazy: () => import('./pages/Careers.jsx') },
       { path: 'careers/:slug', lazy: () => import('./pages/CareerDetail.jsx') },
 
-      // Work / case studies — list + dynamic per-study detail (data from MongoDB).
+      // Work / case studies - list + dynamic per-study detail (data from MongoDB).
       { path: 'work', lazy: () => import('./pages/Work.jsx') },
       { path: 'work/:slug', lazy: () => import('./pages/CaseStudyDetail.jsx') },
 
-      // Blog — list + dynamic per-post detail (data from MongoDB).
+      // Blog - list + dynamic per-post detail (data from MongoDB).
       { path: 'blog', lazy: () => import('./pages/Blog.jsx') },
       { path: 'blog/:slug', lazy: () => import('./pages/BlogPost.jsx') },
 
@@ -88,7 +88,7 @@ export const routes = [
   { path: '/admin/careers/new', element: gated(<CareerEditor />) },
   { path: '/admin/careers/:id/edit', element: gated(<CareerEditor />) },
   {
-    // Client portal — separate auth context; clients never reach the admin dashboard.
+    // Client portal - separate auth context; clients never reach the admin dashboard.
     path: '/portal/*',
     element: (
       <AuthProvider>

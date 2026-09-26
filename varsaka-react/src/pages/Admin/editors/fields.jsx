@@ -143,7 +143,7 @@ const addBtn = () => ({ alignSelf: 'flex-start', border: '1px dashed var(--borde
 export function ReadOnlyNotice() {
   return (
     <div style={{ border: '1px solid var(--border)', background: 'var(--surface2)', borderRadius: 10, padding: '12px 16px', fontFamily: 'var(--sans)', fontSize: 13, color: 'var(--muted)' }}>
-      You have read-only access — changes can't be saved.
+      You have read-only access - changes can't be saved.
     </div>
   )
 }

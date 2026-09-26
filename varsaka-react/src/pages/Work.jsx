@@ -68,7 +68,7 @@ export function Component() {
       <section style={{padding:'80px 0',borderBottom:'1px solid var(--border)'}}>
         <div className="vk-pad" style={{maxWidth:1280,margin:'0 auto',padding:'0 32px'}}>
           <RevealEl>
-            <div style={{fontFamily:'var(--mono)',fontSize:11,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--faint)',marginBottom:32}}>Featured — {code(0)}</div>
+            <div style={{fontFamily:'var(--mono)',fontSize:11,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--faint)',marginBottom:32}}>Featured - {code(0)}</div>
           </RevealEl>
           <div className="vk-rsplit" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:56,alignItems:'start'}}>
             <RevealEl>

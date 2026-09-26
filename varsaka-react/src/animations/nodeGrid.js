@@ -1,11 +1,11 @@
 // Deterministic node-grid generator for the hero "Quality Gate" (animation.md §2.1).
 // MUST be deterministic (seeded, no Math.random) so the SSG-prerendered SVG matches the
-// client render exactly — otherwise React hydration mismatches on the hero.
+// client render exactly - otherwise React hydration mismatches on the hero.
 //
 // Organic (not rigid-grid) scatter: jittered grid cells. Each node links to its nearest
 // 1–2 neighbours (cheap SVG, animation.md §2.3 node-count budget: ≤180 desktop / ≤70 mobile).
 
-// mulberry32 — tiny seeded PRNG.
+// mulberry32 - tiny seeded PRNG.
 function mulberry32(seed) {
   let a = seed >>> 0
   return function () {
@@ -35,7 +35,7 @@ export function generateNodeGrid({ target = 140, seed = 20260618 } = {}) {
       const jy = (rng() - 0.5) * cellH * 0.7
       const x = +(cellW * (c + 0.5) + jx).toFixed(2)
       const y = +(cellH * (r + 0.5) + jy).toFixed(2)
-      // ~8% of nodes are the "last edge cases" — flipped in a late cluster (§2.2 0.7–0.85)
+      // ~8% of nodes are the "last edge cases" - flipped in a late cluster (§2.2 0.7–0.85)
       const lateEdge = rng() < 0.08
       nodes.push({ id: nodes.length, x, y, lateEdge })
     }

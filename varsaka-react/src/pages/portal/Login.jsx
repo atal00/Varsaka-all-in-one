@@ -1,4 +1,4 @@
-// Premium client login — left brand panel + right form. Cream/ink, serif headings.
+// Premium client login - left brand panel + right form. Cream/ink, serif headings.
 import { useState } from 'react'
 import { useAuth } from '../../lib/rbac.jsx'
 import { Mark, Button } from './ui.jsx'
@@ -40,7 +40,7 @@ export default function Login() {
         <div style={{ maxWidth: 460 }}>
           <div style={{ fontFamily: 'var(--mono)', fontSize: 11, letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--inv-muted)', marginBottom: 20 }}>Client Portal</div>
           <h1 style={{ fontFamily: 'var(--serif)', fontWeight: 400, fontSize: 'clamp(30px, 4vw, 46px)', lineHeight: 1.12, margin: 0, color: 'var(--inv-text)' }}>
-            Your projects, files, and invoices — in one calm place.
+            Your projects, files, and invoices - in one calm place.
           </h1>
           <p style={{ fontFamily: 'var(--sans)', fontSize: 15, lineHeight: 1.6, color: 'var(--inv-muted)', marginTop: 22 }}>
             Track progress, review deliverables, settle invoices, and talk to your team. Built for clients of Varsaka.

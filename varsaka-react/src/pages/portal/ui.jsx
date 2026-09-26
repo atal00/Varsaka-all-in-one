@@ -14,16 +14,16 @@ export function resolveUrl(url) {
 }
 
 export function fmtDate(value, opts) {
-  if (!value) return '—'
+  if (!value) return '-'
   const d = new Date(value)
-  if (Number.isNaN(d.getTime())) return '—'
+  if (Number.isNaN(d.getTime())) return '-'
   return d.toLocaleDateString(undefined, opts || { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
 export function fmtDateTime(value) {
-  if (!value) return '—'
+  if (!value) return '-'
   const d = new Date(value)
-  if (Number.isNaN(d.getTime())) return '—'
+  if (Number.isNaN(d.getTime())) return '-'
   return d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
 }
 
@@ -54,7 +54,7 @@ export function fmtBytes(n) {
 }
 
 export function fmtMoney(amount, currency) {
-  if (amount == null) return '—'
+  if (amount == null) return '-'
   try {
     return new Intl.NumberFormat(undefined, { style: 'currency', currency: currency || 'USD', maximumFractionDigits: 2 }).format(Number(amount))
   } catch (e) {
@@ -86,7 +86,7 @@ const INVOICE_STATUS = {
   overdue: { label: 'Overdue', tone: 'danger' },
 }
 export function invoiceStatusMeta(status) {
-  return INVOICE_STATUS[status] || { label: status || '—', tone: 'neutral' }
+  return INVOICE_STATUS[status] || { label: status || '-', tone: 'neutral' }
 }
 
 const TONE_STYLES = {
@@ -195,7 +195,7 @@ export function Avatar({ name, size = 32 }) {
   )
 }
 
-/** Official Varsaka brand mark (/public/logo.png). `color` is ignored — the logo is a
+/** Official Varsaka brand mark (/public/logo.png). `color` is ignored - the logo is a
  *  full-colour asset that reads on both light and dark surfaces. */
 export function Mark({ size = 24 }) {
   return (
@@ -234,7 +234,7 @@ export function Toast({ message, tone = 'pass', onDone, duration = 3200 }) {
 
 export function DownloadLink({ url, children = 'Download', style = {} }) {
   const href = resolveUrl(url)
-  if (!href) return <span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--faint)' }}>—</span>
+  if (!href) return <span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--faint)' }}>-</span>
   return (
     <a href={href} target="_blank" rel="noopener noreferrer" download
       style={{

@@ -3,10 +3,10 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 /* The hero headline's branded arrival.
 
    Layout-stable by construction: the REAL <h1> (exact final markup) is rendered from the
-   first paint and never changes structure, font metrics, tracking, or size — it alone owns
+   first paint and never changes structure, font metrics, tracking, or size - it alone owns
    the layout. The glitch runs on an ABSOLUTELY-POSITIONED overlay stacked on top, so the
    animated layer is out of flow and can never move, resize, reflow, or rewrap the hero.
-   At the end the overlay cross-fades out and the base <h1> fades in — seamlessly, in place.
+   At the end the overlay cross-fades out and the base <h1> fades in - seamlessly, in place.
    Monochrome and controlled: no RGB, no flashing. On return visits / reduced-motion it
    simply reveals. Result: a premium typography transition with zero CLS. */
 
@@ -37,7 +37,7 @@ const clamp01 = (x) => Math.min(1, Math.max(0, x))
 const easeOutCubic = (x) => 1 - Math.pow(1 - clamp01(x), 3)
 const lerp = (a, b, t) => a + (b - a) * t
 
-// Stable per-character displacement directions (mostly horizontal — micro displacement).
+// Stable per-character displacement directions (mostly horizontal - micro displacement).
 const DIRS = FLATC.map((_, i) => {
   const a = Math.sin(i * 12.9898) * 43758.5453
   const b = Math.sin(i * 78.233) * 12543.123
@@ -48,7 +48,7 @@ const RESOLVE_T = FLATC.map((_, i) => lerp(RES_FROM, RES_TO, N > 1 ? i / (N - 1)
 export default function GlitchHeadline({ gate, fire }) {
   const [mode, setMode] = useState('hidden') // hidden | glitch | reveal | final
   const ranRef = useRef(false)
-  const baseRef = useRef(null)     // the real <h1> — owns layout
+  const baseRef = useRef(null)     // the real <h1> - owns layout
   const overlayRef = useRef(null)  // absolutely-positioned glitch layer
   const charRefs = useRef([])
   const scanRefs = useRef([])
@@ -81,7 +81,7 @@ export default function GlitchHeadline({ gate, fire }) {
     return () => cancelAnimationFrame(raf)
   }, [mode])
 
-  // The glitch — runs entirely on the overlay. The base only cross-fades opacity.
+  // The glitch - runs entirely on the overlay. The base only cross-fades opacity.
   useLayoutEffect(() => {
     if (mode !== 'glitch') return
     const base = baseRef.current
@@ -94,7 +94,7 @@ export default function GlitchHeadline({ gate, fire }) {
 
     // Lock each character box to its natural width so scramble glyphs (different advances)
     // can never change the overlay's line width. letterSpacing stays fixed at the final
-    // value the whole time — no tracking animation, so nothing reflows.
+    // value the whole time - no tracking animation, so nothing reflows.
     for (let i = 0; i < N; i++) {
       const el = chars[i]
       if (!el) continue
@@ -149,7 +149,7 @@ export default function GlitchHeadline({ gate, fire }) {
         }
       }
 
-      // Line interference — two faint sweeping rules over the overlay.
+      // Line interference - two faint sweeping rules over the overlay.
       scanRefs.current.forEach((s, idx) => {
         if (!s) return
         const start = 120 + idx * 180
@@ -159,7 +159,7 @@ export default function GlitchHeadline({ gate, fire }) {
         s.style.transform = `translateY(${lerp(-12, 112, clamp01(sp)).toFixed(1)}%)`
       })
 
-      // Cross-fade: real headline in, overlay out — both show resolved text, so it's seamless.
+      // Cross-fade: real headline in, overlay out - both show resolved text, so it's seamless.
       if (t >= CF_START) {
         const cf = easeOutCubic((t - CF_START) / (DUR - CF_START))
         base.style.opacity = String(cf)
@@ -181,13 +181,13 @@ export default function GlitchHeadline({ gate, fire }) {
   let gi = -1
   return (
     <div style={{ position: 'relative' }}>
-      {/* REAL headline — always rendered, owns the layout, never restructured */}
+      {/* REAL headline - always rendered, owns the layout, never restructured */}
       <h1 ref={baseRef} style={{ ...H1_STYLE, opacity: baseOpacity, willChange: 'opacity, transform' }}>
         <span style={{ display: 'block' }}>Confidence,</span>
         <span style={{ display: 'block' }}>before you <span style={{ fontStyle: 'italic', fontWeight: 300 }}>ship.</span></span>
       </h1>
 
-      {/* Glitch overlay — absolute, out of flow, purely visual */}
+      {/* Glitch overlay - absolute, out of flow, purely visual */}
       {mode === 'glitch' && (
         <div
           ref={overlayRef}

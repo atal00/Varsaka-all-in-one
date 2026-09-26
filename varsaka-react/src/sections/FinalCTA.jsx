@@ -1,6 +1,6 @@
 import { PrimaryCTA } from '../components/Button.jsx'
 
-// Section 9 — Final CTA (prd.md §8.9). Single, unambiguous conversion. The inline Cal.com
+// Section 9 - Final CTA (prd.md §8.9). Single, unambiguous conversion. The inline Cal.com
 // embed lives on the Contact page (Phase 1 Step 7); here we drive to it.
 export default function FinalCTA() {
   return (
@@ -11,7 +11,7 @@ export default function FinalCTA() {
         </h2>
         <p className="mx-auto mt-6 max-w-xl text-body-lg text-graphite-300">
           Bring your product and your current QA setup. You’ll leave with a concrete view of
-          where the risk is — whether or not you work with us.
+          where the risk is - whether or not you work with us.
         </p>
         <div className="mt-10">
           <PrimaryCTA to="/contact">Book a Free QA Audit</PrimaryCTA>

@@ -1,4 +1,4 @@
-// LEADS / INQUIRIES — the lead management console.
+// LEADS / INQUIRIES - the lead management console.
 // Captures every public-form submission (Contact, Start Project, Get Quote,
 // Consultation, Discovery Call, …). Counters, filters, search, pagination, sorting,
 // a read/unread system (unread rows highlighted), status workflow, assignment and a
@@ -30,14 +30,14 @@ const STATUS_TONES = {
 const PAGE_SIZE = 25
 
 const fmtDate = (iso) => {
-  if (!iso) return '—'
+  if (!iso) return '-'
   const d = new Date(iso)
-  return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  return Number.isNaN(d.getTime()) ? '-' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 const fmtDateTime = (iso) => {
-  if (!iso) return '—'
+  if (!iso) return '-'
   const d = new Date(iso)
-  return Number.isNaN(d.getTime()) ? '—'
+  return Number.isNaN(d.getTime()) ? '-'
     : d.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
 }
 const firstChar = (s) => (s || '?').trim().charAt(0).toUpperCase()
@@ -56,7 +56,7 @@ function Counters({ stats, loading }) {
         <div key={c.label} style={{ background:'var(--surface)', borderRadius:10, padding:'16px 18px', border:'1px solid var(--border)' }}>
           <div style={{ fontSize:11, fontWeight:600, color:'var(--muted)', fontFamily:'var(--sans)', letterSpacing:'0.04em', marginBottom:6 }}>{c.label.toUpperCase()}</div>
           <div style={{ fontSize:26, fontWeight:700, color:'var(--text)', fontFamily:'var(--serif)', lineHeight:1, marginBottom:4 }}>
-            {loading ? '—' : (c.value ?? 0)}
+            {loading ? '-' : (c.value ?? 0)}
           </div>
           <div style={{ fontSize:12, color:'var(--faint)', fontFamily:'var(--sans)' }}>{c.sub}</div>
         </div>
@@ -95,11 +95,11 @@ function LeadDrawer({ id, onClose, onChanged, showToast, canAssign, canDelete, c
 
   const rows = lead ? [
     ['Email', lead.email],
-    ['Phone', lead.phone || '—'],
-    ['Company', lead.company || '—'],
-    ['Service', lead.serviceInterested || '—'],
-    ['Budget', lead.projectBudget || '—'],
-    ['Source', lead.sourcePage || '—'],
+    ['Phone', lead.phone || '-'],
+    ['Company', lead.company || '-'],
+    ['Service', lead.serviceInterested || '-'],
+    ['Budget', lead.projectBudget || '-'],
+    ['Source', lead.sourcePage || '-'],
     ['Submitted', fmtDateTime(lead.createdAt)],
   ] : []
 
@@ -148,7 +148,7 @@ function LeadDrawer({ id, onClose, onChanged, showToast, canAssign, canDelete, c
           <div>
             <div style={{ fontSize:11, fontWeight:600, letterSpacing:'0.04em', color:'var(--faint)', fontFamily:'var(--sans)', marginBottom:8 }}>MESSAGE</div>
             <p style={{ margin:0, fontSize:14, lineHeight:1.6, color:'var(--text)', fontFamily:'var(--sans)', background:'var(--surface)', border:'1px solid var(--border)', borderRadius:8, padding:14, whiteSpace:'pre-wrap' }}>
-              {lead.message || '— No message —'}
+              {lead.message || '- No message -'}
             </p>
           </div>
 
@@ -235,7 +235,7 @@ export default function LeadsPanel() {
   }), [status, readFilter, assignFilter, search, sort, page])
 
   const statsQ = useQuery(() => api.leads.stats(), [])
-  // Staff list for the assignment dropdown — only fetched if the user may assign.
+  // Staff list for the assignment dropdown - only fetched if the user may assign.
   const staffQ = useQuery(() => api.users.list({ status: 'active', limit: 200 }), [], { enabled: canAssign })
 
   const items = listQ.data?.items || []
@@ -360,7 +360,7 @@ export default function LeadsPanel() {
                       </div>
                     </td>
                     <td style={{ padding:'12px 16px', fontSize:13, color:'var(--muted)', fontFamily:'var(--sans)', maxWidth:200, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{c.email}</td>
-                    <td style={{ padding:'12px 16px', fontSize:13, color:'var(--muted)', fontFamily:'var(--sans)' }}>{c.serviceInterested || '—'}</td>
+                    <td style={{ padding:'12px 16px', fontSize:13, color:'var(--muted)', fontFamily:'var(--sans)' }}>{c.serviceInterested || '-'}</td>
                     <td style={{ padding:'12px 16px' }}><Pill status={c.status} tone={STATUS_TONES[c.status]} /></td>
                     <td style={{ padding:'12px 16px' }}>
                       {c.assignedTo ? (
@@ -368,7 +368,7 @@ export default function LeadsPanel() {
                           <Avatar initial={firstChar(c.assignedTo.name || c.assignedTo.email)} size={24} />
                           <span style={{ fontSize:12, color:'var(--muted)', fontFamily:'var(--sans)', maxWidth:110, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{c.assignedTo.name || c.assignedTo.email}</span>
                         </div>
-                      ) : <span style={{ fontSize:12, color:'var(--faint)', fontFamily:'var(--sans)' }}>—</span>}
+                      ) : <span style={{ fontSize:12, color:'var(--faint)', fontFamily:'var(--sans)' }}>-</span>}
                     </td>
                     <td style={{ padding:'12px 16px', fontSize:12, color:'var(--faint)', fontFamily:'var(--sans)', whiteSpace:'nowrap' }}>{fmtDate(c.createdAt)}</td>
                   </tr>

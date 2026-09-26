@@ -1,4 +1,12 @@
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /admin/
+Disallow: /portal
+Disallow: /portal/
+Disallow: /login
+Disallow: /404
+Disallow: /verify/
 
 Sitemap: https://varsaka.com/sitemap.xml
+

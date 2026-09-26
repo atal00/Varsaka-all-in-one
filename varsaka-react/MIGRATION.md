@@ -1,4 +1,4 @@
-# Varsaka — Mock-data → production data migration
+# Varsaka - Mock-data → production data migration
 
 This converts the site from hardcoded/mock content into a real, database-driven application:
 
@@ -23,7 +23,7 @@ Every content surface now reads/writes through the API instead of static arrays.
 | Admin demo auth ("any email + password") | `Admin.jsx` `AuthScreen` | `POST /auth/login` (JWT + bcrypt) |
 | Admin seed arrays | `Admin.jsx` `INIT_POSTS/INIT_CASES/INIT_APPS/INIT_CONTACTS/INIT_MEDIA/ACTIVITY/CHART_DATA` | live API calls per section + `GET /dashboard` |
 
-> The MDX files and `careersStore.js` are intentionally **kept** — they are now used *only* as the
+> The MDX files and `careersStore.js` are intentionally **kept** - they are now used *only* as the
 > one-time **seed source** (`server/src/seed/seed.js` migrates them into MongoDB). The running
 > frontend no longer imports them.
 
@@ -31,18 +31,18 @@ Every content surface now reads/writes through the API instead of static arrays.
 
 ## New code
 
-**Backend (`server/`)** — Express + Mongoose, ESM. 10 collections with validation + indexes,
+**Backend (`server/`)** - Express + Mongoose, ESM. 10 collections with validation + indexes,
 JWT auth, Multer uploads, zod validation, central error handling, a seed/migration script, and a
 `GET /health` check. See `server/README.md` for the full endpoint list and run instructions.
 
 Collections: `User, Blog, Category, Tag, Job, Application, CaseStudy, ContactSubmission, Media, Settings`.
 
 **Frontend API layer**
-- `src/lib/api.js` — typed fetch client: base URL from `VITE_API_BASE`, bearer-token auth,
+- `src/lib/api.js` - typed fetch client: base URL from `VITE_API_BASE`, bearer-token auth,
   timeouts, retry/backoff on network/5xx, normalised `ApiError`, and per-resource methods.
-- `src/hooks/useApi.js` — `useQuery` (loading/error/refetch) and `useMutation`.
-- `src/components/Async.jsx` — on-brand `Loading` / `ErrorState` / `Empty` states.
-- `src/lib/careersContent.js` — static Careers *page copy* + enums (separated from DB records).
+- `src/hooks/useApi.js` - `useQuery` (loading/error/refetch) and `useMutation`.
+- `src/components/Async.jsx` - on-brand `Loading` / `ErrorState` / `Empty` states.
+- `src/lib/careersContent.js` - static Careers *page copy* + enums (separated from DB records).
 
 **Pages wired to the API:** `Blog`, `BlogPost` (markdown rendered with `marked`), `Careers`,
 `CareerDetail` (résumé upload via `FormData`), `Work` (case studies), `Contact`, and the full
@@ -88,5 +88,5 @@ in the frontend build env, and provide the real `MONGODB_URI` to the server's en
   data path could not be exercised here. Once you supply a `MONGODB_URI`, run `npm run seed` and
   start both servers to exercise it fully.
 
-Nothing in the running app falls back to mock data — with no backend reachable, pages show real
+Nothing in the running app falls back to mock data - with no backend reachable, pages show real
 loading / empty / error states (correct production behaviour), not fabricated content.

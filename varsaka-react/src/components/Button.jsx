@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 
 // design.md §8. Primary CTA: signal-500, sharp 4px radius (institutional, not pill), no
 // glow/pulse. Hover DARKENS to signal-700 (not the spec's signal-300) so white label stays
-// ≥ WCAG AA — documented accessibility override of design.md §8. Renders <Link> when `to` set.
+// ≥ WCAG AA - documented accessibility override of design.md §8. Renders <Link> when `to` set.
 export function PrimaryCTA({ to, href, children, className = '', ...rest }) {
   const cls =
     'inline-block rounded-cta bg-signal-500 px-7 py-3.5 font-sans text-[15px] font-semibold ' +

@@ -44,7 +44,7 @@ export async function buildHeroTimeline(root) {
     // 0 – 0.15 : hold red, line 1 present (start state already set by caller)
     tl.to({}, { duration: 0.15 })
 
-    // 0.15 – 0.45 : L→R verify wave — red fades to reveal green; links draw; headline swaps
+    // 0.15 – 0.45 : L→R verify wave - red fades to reveal green; links draw; headline swaps
     tl.to(mainReds, { opacity: 0, stagger: { each: 0.3 / Math.max(mainReds.length, 1), from: 'start' }, duration: 0.0 }, 0.15)
     tl.to(lines, { opacity: 0.22, stagger: { each: 0.3 / Math.max(lines.length, 1) }, duration: 0.0 }, 0.15)
     tl.to(line1, { opacity: 0, y: -16, duration: 0.12 }, 0.15)
@@ -60,7 +60,7 @@ export async function buildHeroTimeline(root) {
     tl.fromTo(reveal, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.15, stagger: 0.04 }, 0.85)
   }, root)
 
-  // Ambient idle pulse (animation.md §2.2 step 0.85–1.0) — decorative, paused off-screen
+  // Ambient idle pulse (animation.md §2.2 step 0.85–1.0) - decorative, paused off-screen
   // via IntersectionObserver so it never runs when the hero isn't visible (§6).
   const greenGroup = root.querySelector('[data-grid-group]')
   const pulse = gsap.to(greenGroup, {

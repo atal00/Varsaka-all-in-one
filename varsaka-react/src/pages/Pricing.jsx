@@ -5,36 +5,36 @@ import { PrimaryCTA } from '../components/Button.jsx'
 import { faqPageSchema } from '../lib/schema.js'
 
 // Pricing (workflow.md P2 S4, prd.md §9). Transparent engagement models with starting-from
-// ranges — a real differentiator vs competitors who show none. NOTE: figures are PLACEHOLDERS;
+// ranges - a real differentiator vs competitors who show none. NOTE: figures are PLACEHOLDERS;
 // confirm real ranges with client before launch.
 const models = [
   {
     n: '01',
     name: 'Fixed-price cycle',
     from: 'from ₹1,25,000 / cycle',
-    body: 'A scoped test cycle per release — defined deliverables, defined cost. Best for teams who want predictable QA tied to their release calendar.',
+    body: 'A scoped test cycle per release - defined deliverables, defined cost. Best for teams who want predictable QA tied to their release calendar.',
     best: 'Predictable, per-release coverage',
   },
   {
     n: '02',
     name: 'Monthly retainer',
     from: 'from ₹2,00,000 / month',
-    body: 'A dedicated block of senior QA capacity each month — automation upkeep, ongoing regression, and exploratory testing. Best for teams shipping continuously.',
+    body: 'A dedicated block of senior QA capacity each month - automation upkeep, ongoing regression, and exploratory testing. Best for teams shipping continuously.',
     best: 'Continuous delivery teams',
   },
   {
     n: '03',
     name: 'Time & materials',
     from: 'project-based',
-    body: 'For one-off or hard-to-scope work — a VAPT engagement, a performance investigation, a framework build. Estimated up front after a scoping call.',
+    body: 'For one-off or hard-to-scope work - a VAPT engagement, a performance investigation, a framework build. Estimated up front after a scoping call.',
     best: 'One-off / specialist projects',
   },
 ]
 
 const pricingFaqs = [
-  { q: 'Why show prices when competitors don’t?', a: 'Because hiding them wastes everyone’s time. These starting points let you sanity-check fit before a call. Your real number comes after a free discovery call — but you won’t be guessing in the dark to get there.' },
-  { q: 'What changes the final price?', a: 'Scope of coverage, your stack, how much exists already, and turnaround. We give a concrete estimate after discovery — no open-ended hourly surprises.' },
-  { q: 'Do you offer a trial?', a: 'The discovery call is free and includes a concrete audit of where your quality risk is. That’s the trial — you see how we think before committing.' },
+  { q: 'Why show prices when competitors don’t?', a: 'Because hiding them wastes everyone’s time. These starting points let you sanity-check fit before a call. Your real number comes after a free discovery call - but you won’t be guessing in the dark to get there.' },
+  { q: 'What changes the final price?', a: 'Scope of coverage, your stack, how much exists already, and turnaround. We give a concrete estimate after discovery - no open-ended hourly surprises.' },
+  { q: 'Do you offer a trial?', a: 'The discovery call is free and includes a concrete audit of where your quality risk is. That’s the trial - you see how we think before committing.' },
 ]
 
 export function Component() {
@@ -42,7 +42,7 @@ export function Component() {
     <>
       <Seo
         title="Pricing | Varsaka"
-        description="Transparent QA pricing: fixed-price cycles, monthly retainers, or time & materials. Starting ranges up front — your real estimate after a free discovery call."
+        description="Transparent QA pricing: fixed-price cycles, monthly retainers, or time & materials. Starting ranges up front - your real estimate after a free discovery call."
         path="/pricing"
         jsonLd={faqPageSchema(pricingFaqs)}
       />
@@ -53,7 +53,7 @@ export function Component() {
           <h1 className="mt-4 max-w-[20ch] font-display text-h1">Three ways to engage. Zero hidden numbers.</h1>
           <p className="mt-7 max-w-2xl text-body-lg text-graphite-300">
             Most QA sites make you book a call just to learn a ballpark. Here are real starting
-            points — your exact estimate comes after a free discovery call, with no obligation.
+            points - your exact estimate comes after a free discovery call, with no obligation.
           </p>
         </div>
       </section>
@@ -80,7 +80,7 @@ export function Component() {
       <section className="bg-paper-0 text-ink-900">
         <div className="container-edge pb-section-mobile md:pb-section">
           <SectionLabel number="04">Questions</SectionLabel>
-          <h2 className="mt-4 font-display text-h2">Pricing — FAQ</h2>
+          <h2 className="mt-4 font-display text-h2">Pricing - FAQ</h2>
           <div className="mt-10"><FaqList faqs={pricingFaqs} /></div>
         </div>
       </section>

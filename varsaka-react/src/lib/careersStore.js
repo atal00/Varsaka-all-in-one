@@ -1,4 +1,4 @@
-// Careers — single source of truth shared by the public Careers pages and the Admin panel.
+// Careers - single source of truth shared by the public Careers pages and the Admin panel.
 // Jobs and applications persist to localStorage so a submission from the public form shows
 // up in Admin. SSR-safe: every read guards `window` and falls back to the seed data, and
 // pages hydrate from the store inside an effect (never during render) to avoid mismatches.
@@ -15,7 +15,7 @@ export const APP_STATUSES = ['New', 'Reviewing', 'Interview', 'Shortlisted', 'Re
 // Shared editorial content (used across the Careers page and each job detail).
 export const HIRING_STEPS = [
   { n: '01', title: 'Application', desc: 'You send us your story. A short note on why this work matters to you tells us more than a CV ever will.' },
-  { n: '02', title: 'Review', desc: 'A senior engineer — not an algorithm — reads every application within five business days and replies either way.' },
+  { n: '02', title: 'Review', desc: 'A senior engineer - not an algorithm - reads every application within five business days and replies either way.' },
   { n: '03', title: 'Conversation', desc: 'A relaxed call about your work, how you think about quality, and what you want to build next.' },
   { n: '04', title: 'Assessment', desc: 'A paid, realistic exercise drawn from work we actually do. No whiteboard puzzles, no trick questions.' },
   { n: '05', title: 'Offer', desc: 'We move fast. A clear offer, transparent compensation, and the space to ask anything before you decide.' },
@@ -28,7 +28,7 @@ export const BENEFITS = [
   { title: 'Annual learning budget', desc: 'A generous yearly allowance for courses, conferences, certifications, and the books that keep you sharp.' },
   { title: 'Modern equipment', desc: 'A workstation of your choosing and whatever tooling helps you move fast without fighting your setup.' },
   { title: 'Career development', desc: 'Clear growth paths, quarterly craft reviews, and mentorship from engineers who have built quality at scale.' },
-  { title: 'Health & wellbeing', desc: 'Comprehensive health cover, wellness support, and genuine, unmonitored time off — taken, not just offered.' },
+  { title: 'Health & wellbeing', desc: 'Comprehensive health cover, wellness support, and genuine, unmonitored time off - taken, not just offered.' },
 ]
 
 const SEED_JOBS = [
@@ -43,12 +43,12 @@ const SEED_JOBS = [
     posted: '2026-06-02',
     tags: ['Playwright', 'CI/CD', 'TypeScript'],
     summary: 'Design resilient automation frameworks that turn testing from a final checkpoint into continuous confidence.',
-    overview: 'You will own the automation strategy for several client products — architecting test suites that engineers trust, wiring them into CI/CD, and making fast, reliable feedback the default. This is senior, hands-on work with real influence over how teams ship.',
+    overview: 'You will own the automation strategy for several client products - architecting test suites that engineers trust, wiring them into CI/CD, and making fast, reliable feedback the default. This is senior, hands-on work with real influence over how teams ship.',
     responsibilities: [
       'Architect and maintain end-to-end automation frameworks across web and API surfaces.',
       'Embed suites into client CI/CD pipelines with parallelism, sharding, and clear reporting.',
       'Diagnose flakiness at the root rather than masking it with retries.',
-      'Set automation standards and mentor engineers — internal and client-side — on the craft.',
+      'Set automation standards and mentor engineers - internal and client-side - on the craft.',
       'Translate product risk into the coverage that actually de-risks each release.',
     ],
     requirements: [
@@ -56,7 +56,7 @@ const SEED_JOBS = [
       'Deep experience with Playwright, Cypress, or Selenium in TypeScript or JavaScript.',
       'Fluency wiring tests into GitHub Actions, GitLab CI, or similar.',
       'A track record of making suites fast, deterministic, and genuinely maintainable.',
-      'Clear written communication — you can explain a trade-off to an engineer and a CTO alike.',
+      'Clear written communication - you can explain a trade-off to an engineer and a CTO alike.',
     ],
     preferred: [
       'Experience with visual or contract testing.',
@@ -74,7 +74,7 @@ const SEED_JOBS = [
     status: 'Published',
     posted: '2026-05-20',
     tags: ['k6', 'Grafana', 'Load Testing'],
-    summary: 'Find the breaking point before real users do — model real traffic and turn red graphs into clear remediation.',
+    summary: 'Find the breaking point before real users do - model real traffic and turn red graphs into clear remediation.',
     overview: 'You will design load, stress, and soak tests that mirror real-world usage, profile the bottlenecks they expose, and hand teams a precise path to resilience. Your work is the difference between a calm launch and a 2 a.m. incident.',
     responsibilities: [
       'Model realistic traffic and build load, stress, and soak test suites.',
@@ -107,7 +107,7 @@ const SEED_JOBS = [
     posted: '2026-05-08',
     tags: ['OWASP', 'Burp Suite', 'Pen Testing'],
     summary: 'Harden applications against real-world threats with proactive testing mapped to business risk.',
-    overview: 'You will lead security validation engagements — penetration testing, audits, and OWASP-aligned reviews — and map every finding to severity and business impact so the right things get fixed first. This is a contract role with scope to extend.',
+    overview: 'You will lead security validation engagements - penetration testing, audits, and OWASP-aligned reviews - and map every finding to severity and business impact so the right things get fixed first. This is a contract role with scope to extend.',
     responsibilities: [
       'Run penetration tests and security audits across web and API surfaces.',
       'Map findings to OWASP categories, severity, and concrete business risk.',
@@ -139,7 +139,7 @@ const SEED_JOBS = [
     posted: '2026-04-26',
     tags: ['Strategy', 'Team Lead', 'Process Design'],
     summary: 'Shape quality strategy across client engagements and grow the engineers who deliver it.',
-    overview: 'You will set the quality direction for multiple engagements, design the processes that make confidence repeatable, and lead a small team of senior engineers. Part strategist, part mentor, part hands-on practitioner — you keep the bar high and the people growing.',
+    overview: 'You will set the quality direction for multiple engagements, design the processes that make confidence repeatable, and lead a small team of senior engineers. Part strategist, part mentor, part hands-on practitioner - you keep the bar high and the people growing.',
     responsibilities: [
       'Own quality strategy across several concurrent client engagements.',
       'Design testing processes that scale from startup to enterprise.',
@@ -151,7 +151,7 @@ const SEED_JOBS = [
       '7+ years in quality engineering with 2+ leading teams.',
       'Proven design of testing strategy across the full lifecycle.',
       'Strong stakeholder communication at the leadership level.',
-      'Hands-on credibility — you can still review a test suite and mean it.',
+      'Hands-on credibility - you can still review a test suite and mean it.',
       'A coaching instinct and a high, kind bar.',
     ],
     preferred: [
@@ -170,7 +170,7 @@ const SEED_JOBS = [
     status: 'Published',
     posted: '2026-04-12',
     tags: ['Exploratory', 'User Flows', 'Detail'],
-    summary: 'Be the user’s advocate — explore products deeply and catch the edge cases nobody else thought of.',
+    summary: 'Be the user’s advocate - explore products deeply and catch the edge cases nobody else thought of.',
     overview: 'You will own exploratory and functional testing for client products, mapping real user journeys and surfacing the subtle issues automation misses. If you find genuine satisfaction in the edge case nobody anticipated, you will fit right in.',
     responsibilities: [
       'Design and run exploratory and functional test passes across product flows.',
@@ -195,11 +195,11 @@ const SEED_JOBS = [
 ]
 
 const SEED_APPS = [
-  { id: 'a1', name: 'Jordan Avery', email: 'jordan.avery@mail.com', phone: '+1 415 555 0132', linkedin: 'linkedin.com/in/jordanavery', portfolio: '', cover: 'I have spent six years making flaky suites fast and trustworthy — exactly the work you describe.', role: 'Senior Automation Engineer', slug: 'senior-automation-engineer', status: 'Reviewing', date: '2026-06-18', resumeName: 'jordan-avery-cv.pdf', resume: '' },
+  { id: 'a1', name: 'Jordan Avery', email: 'jordan.avery@mail.com', phone: '+1 415 555 0132', linkedin: 'linkedin.com/in/jordanavery', portfolio: '', cover: 'I have spent six years making flaky suites fast and trustworthy - exactly the work you describe.', role: 'Senior Automation Engineer', slug: 'senior-automation-engineer', status: 'Reviewing', date: '2026-06-18', resumeName: 'jordan-avery-cv.pdf', resume: '' },
   { id: 'a2', name: 'Riya Kapoor', email: 'riya.k@mail.com', phone: '+91 98765 43210', linkedin: 'linkedin.com/in/riyakapoor', portfolio: 'riya.dev', cover: 'Performance testing is where I do my best thinking. Would love to model real traffic for your clients.', role: 'Performance Test Engineer', slug: 'performance-test-engineer', status: 'Interview', date: '2026-06-16', resumeName: 'riya-kapoor-resume.pdf', resume: '' },
   { id: 'a3', name: 'Tom Becker', email: 'tbecker@mail.com', phone: '+49 151 23456789', linkedin: 'linkedin.com/in/tombecker', portfolio: '', cover: 'OSCP-certified, EU-based, and I write reports auditors actually thank me for.', role: 'Security QA Specialist', slug: 'security-qa-specialist', status: 'Shortlisted', date: '2026-06-14', resumeName: 'tom-becker-cv.pdf', resume: '' },
   { id: 'a4', name: 'Lena Fischer', email: 'lena.f@mail.com', phone: '+49 170 9988776', linkedin: '', portfolio: '', cover: 'Strong on fundamentals, still growing into senior automation work.', role: 'Senior Automation Engineer', slug: 'senior-automation-engineer', status: 'Rejected', date: '2026-06-11', resumeName: 'lena-fischer.pdf', resume: '' },
-  { id: 'a5', name: 'Omar Haddad', email: 'omar.h@mail.com', phone: '+971 50 123 4567', linkedin: 'linkedin.com/in/omarhaddad', portfolio: '', cover: 'Seven years leading quality teams in fintech — I keep the bar high and the people growing.', role: 'Quality Engineering Lead', slug: 'quality-engineering-lead', status: 'New', date: '2026-06-09', resumeName: 'omar-haddad-cv.pdf', resume: '' },
+  { id: 'a5', name: 'Omar Haddad', email: 'omar.h@mail.com', phone: '+971 50 123 4567', linkedin: 'linkedin.com/in/omarhaddad', portfolio: '', cover: 'Seven years leading quality teams in fintech - I keep the bar high and the people growing.', role: 'Quality Engineering Lead', slug: 'quality-engineering-lead', status: 'New', date: '2026-06-09', resumeName: 'omar-haddad-cv.pdf', resume: '' },
   { id: 'a6', name: 'Sara Lindholm', email: 'sara.l@mail.com', phone: '+46 70 123 45 67', linkedin: 'linkedin.com/in/saralindholm', portfolio: 'sara.design', cover: 'I live for the edge case nobody anticipated. Product QA is my craft.', role: 'Product QA Analyst', slug: 'product-qa-analyst', status: 'Hired', date: '2026-05-30', resumeName: 'sara-lindholm.pdf', resume: '' },
 ]
 

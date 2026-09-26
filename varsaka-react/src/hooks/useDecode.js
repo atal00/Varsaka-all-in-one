@@ -19,7 +19,7 @@ export function useDecode() {
         let out = ''
         for (let k = 0; k < n; k++) {
           const ch = final[k]
-          if (ch === ' ' || ch === '—' || ch === '-') { out += ch; continue }
+          if (ch === ' ' || ch === '-' || ch === '-') { out += ch; continue }
           out += (k < (frame / total) * n) ? ch : GLYPHS[Math.floor(Math.random() * GLYPHS.length)]
         }
         el.textContent = out

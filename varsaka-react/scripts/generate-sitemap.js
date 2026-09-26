@@ -1,7 +1,7 @@
 // Build-time sitemap.xml generator. Runs after `vite-react-ssg build` and writes
 // dist/sitemap.xml. Static marketing routes are always included; dynamic content
 // (published blog posts, jobs and case studies) is pulled live from the API so the
-// sitemap reflects the real database — no manual lists, no stale filesystem reads.
+// sitemap reflects the real database - no manual lists, no stale filesystem reads.
 // If the API is unreachable at build time, we still emit a valid static sitemap.
 import { writeFileSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
@@ -38,7 +38,7 @@ async function fetchItems(path) {
     const data = await res.json()
     return Array.isArray(data) ? data : (data.items || [])
   } catch (err) {
-    console.warn(`  [sitemap] could not fetch ${path} (${err.message}) — skipping those URLs`)
+    console.warn(`  [sitemap] could not fetch ${path} (${err.message}) - skipping those URLs`)
     return []
   }
 }
@@ -79,7 +79,7 @@ async function main() {
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`
   writeFileSync(resolve(root, 'dist', 'sitemap.xml'), xml)
-  console.log(`sitemap.xml written — ${staticRoutes.length} static + ${dynamic.length} dynamic = ${all.length} URLs`)
+  console.log(`sitemap.xml written - ${staticRoutes.length} static + ${dynamic.length} dynamic = ${all.length} URLs`)
 }
 
 main().catch((err) => {

@@ -1,4 +1,4 @@
-// RichText — a wide, full-height markdown writing surface with a live preview
+// RichText - a wide, full-height markdown writing surface with a live preview
 // toggle (rendered via `marked`). The body is stored as markdown. This is the
 // hero of the blog editor: calm, comfortable, distraction-free.
 import { useState } from 'react'

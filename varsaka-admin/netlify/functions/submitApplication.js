@@ -3,12 +3,26 @@ const { Resend } = require('resend');
 const ipCache = new Map();
 
 exports.handler = async (event, context) => {
+  // Strict CORS checking
+  const allowedOrigins = (process.env.ALLOWED_ORIGIN || 'https://varsaka.com,https://admin.varsaka.com').split(',').map(o => o.trim());
+  const requestOrigin = event.headers.origin;
+  
+  let corsOrigin = allowedOrigins[0];
+  if (requestOrigin && (allowedOrigins.includes(requestOrigin) || requestOrigin.includes('localhost') || requestOrigin.includes('127.0.0.1'))) {
+    corsOrigin = requestOrigin;
+  }
+
+  const headers = {
+    'Access-Control-Allow-Origin': corsOrigin,
+    'Access-Control-Allow-Headers': 'Content-Type'
+  };
+
   if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'Content-Type' } };
+    return { statusCode: 200, headers };
   }
   
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
+    return { statusCode: 405, headers, body: 'Method Not Allowed' };
   }
 
   // Rate Limiting (5 requests per hour)
@@ -25,39 +39,68 @@ exports.handler = async (event, context) => {
   ipCache.set(ip, requestInfo);
 
   if (requestInfo.count > 5) {
-    return { statusCode: 429, body: JSON.stringify({ error: 'Too many requests. Please try again later.' }) };
+    return { statusCode: 429, headers, body: JSON.stringify({ error: 'Too many requests. Please try again later.' }) };
   }
 
   try {
     const data = JSON.parse(event.body);
 
     if (data._honey) {
-      return { statusCode: 200, body: JSON.stringify({ success: true, message: 'Application submitted successfully' }) };
+      return { statusCode: 200, headers, body: JSON.stringify({ success: true, message: 'Application submitted successfully' }) };
     }
 
     const { name, email, phone, role, experience, resumeLink, coverLetter } = data;
 
     if (!name || !email || !role || !resumeLink) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'Missing required fields' }) };
+      return { statusCode: 400, headers, body: JSON.stringify({ error: 'Missing required fields' }) };
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid email format' }) };
+    }
+
+    // Strict URL validation for resume link (https or http only)
+    if (!/^https?:\/\/[^\s$.?#].[^\s]*$/i.test(resumeLink)) {
+      return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid resume link URL. Must start with http:// or https://' }) };
     }
 
     const resendKey = process.env.RESEND_API_KEY;
     if (resendKey) {
+      const escapeHtml = (str) => {
+        if (!str) return '';
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      };
+
+      const safeName = escapeHtml(name);
+      const safeEmail = escapeHtml(email);
+      const safePhone = escapeHtml(phone || 'N/A');
+      const safeRole = escapeHtml(role);
+      const safeExp = escapeHtml(experience || 'N/A');
+      const safeResume = escapeHtml(resumeLink);
+      const safeLetter = escapeHtml(coverLetter || 'None');
+      const safeSubject = `New Job Application: ${safeRole} - ${safeName}`.replace(/[\r\n]+/g, ' ').substring(0, 150);
+
       const resend = new Resend(resendKey);
       await resend.emails.send({
-        from: 'Varsaka Labs Careers <careers@varsaka.com>', // MUST BE VERIFIED IN RESEND
+        from: 'Varsaka Labs Careers <careers@varsaka.com>',
         to: ['career@in.varsaka.com'], 
-        subject: `New Job Application: ${role} - ${name}`,
+        subject: safeSubject,
         html: `
           <h3>New Career Application</h3>
-          <p><strong>Name:</strong> ${name}</p>
-          <p><strong>Email:</strong> ${email}</p>
-          <p><strong>Phone:</strong> ${phone || 'N/A'}</p>
-          <p><strong>Role:</strong> ${role}</p>
-          <p><strong>Experience:</strong> ${experience || 'N/A'}</p>
-          <p><strong>Resume Link:</strong> <a href="${resumeLink}">${resumeLink}</a></p>
+          <p><strong>Name:</strong> ${safeName}</p>
+          <p><strong>Email:</strong> ${safeEmail}</p>
+          <p><strong>Phone:</strong> ${safePhone}</p>
+          <p><strong>Role:</strong> ${safeRole}</p>
+          <p><strong>Experience:</strong> ${safeExp}</p>
+          <p><strong>Resume Link:</strong> <a href="${safeResume}" target="_blank" rel="noopener noreferrer">${safeResume}</a></p>
           <p><strong>Cover Letter / Notes:</strong></p>
-          <blockquote>${coverLetter || 'None'}</blockquote>
+          <blockquote>${safeLetter}</blockquote>
         `
       });
     } else {
@@ -66,7 +109,7 @@ exports.handler = async (event, context) => {
 
     return {
       statusCode: 200,
-      headers: { 'Access-Control-Allow-Origin': '*' },
+      headers,
       body: JSON.stringify({ success: true, message: 'Application submitted successfully' })
     };
 
@@ -74,6 +117,7 @@ exports.handler = async (event, context) => {
     console.error('Function Error:', error);
     return {
       statusCode: 500,
+      headers,
       body: JSON.stringify({ error: 'Internal server error' })
     };
   }

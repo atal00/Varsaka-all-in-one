@@ -35,7 +35,7 @@ const INQUIRY_TYPES = ['New project','Consulting','Partnership','Press','Other']
 const BUDGET_RANGES = ['< ₹5 Lakh','₹5–15 Lakh','₹15–50 Lakh','₹50 Lakh+','Not sure yet']
 
 const INFO = [
-  { label:'Email', value:'hello@varsaka.com' },
+  { label:'Email', value:'info@varsaka.com' },
   { label:'Response time', value:'Within 1 business day' },
   { label:'Location', value:'Remote-first · Global' },
   { label:'Availability', value:'Accepting clients Q3 2026' }
@@ -77,7 +77,7 @@ export function Component() {
                   <div style={{display:'flex',flexDirection:'column',gap:14}}>
                     {[
                       'A personal reply within one business day.',
-                      'A 30-minute scoping call — no slides, no pressure.',
+                      'A 30-minute scoping call - no slides, no pressure.',
                       'A clear view of where quality will move the needle.',
                     ].map((line,i) => (
                       <div key={i} style={{display:'grid',gridTemplateColumns:'22px 1fr',gap:12,alignItems:'baseline'}}>

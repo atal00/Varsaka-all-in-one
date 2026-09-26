@@ -25,7 +25,7 @@ export default function Nav({ theme, onToggleTheme }) {
   }, [open])
 
   const Logo = ({ onClick }) => (
-    <Link data-magnetic to="/" onClick={onClick} aria-label="Varsaka — home" style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', textDecoration: 'none', color: 'inherit' }}>
+    <Link data-magnetic to="/" onClick={onClick} aria-label="Varsaka - home" style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', textDecoration: 'none', color: 'inherit' }}>
       <BrandLogo eager size={30} wordmarkSize={21} />
     </Link>
   )

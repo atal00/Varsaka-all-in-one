@@ -69,9 +69,7 @@ export default function Login() {
       return;
     }
 
-    // In Supabase, we use email for login. 
-    // If the user enters 'atal', we can assume 'atal@varsaka.com' or just require email.
-    // For now, let's assume they enter their email.
+    // In Supabase, we use email for login.
     const loginEmail = user.includes('@') ? user.trim() : `${user.trim()}@varsaka.com`;
 
     // Record explicit login time BEFORE signIn to prevent race condition with onAuthStateChange

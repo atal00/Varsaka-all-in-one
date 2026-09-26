@@ -16,7 +16,7 @@ export default {
         hairline: { DEFAULT: '#D8D5CC', dark: '#2A303C' },
       },
       fontFamily: {
-        // design.md §4 — two typefaces only
+        // design.md §4 - two typefaces only
         display: ['Fraunces', 'Georgia', 'serif'],
         sans: ['Inter', '-apple-system', 'Segoe UI', 'sans-serif'],
       },
@@ -31,14 +31,14 @@ export default {
       },
       maxWidth: { content: '1280px' },
       spacing: {
-        // design.md §5 — section rhythm + outer margins
+        // design.md §5 - section rhythm + outer margins
         'section': '120px',
         'section-mobile': '64px',
         'gutter': '64px',
         'gutter-mobile': '24px',
       },
       transitionTimingFunction: {
-        // design.md §9 — calm ease-out-expo, nothing bouncy
+        // design.md §9 - calm ease-out-expo, nothing bouncy
         calm: 'cubic-bezier(0.22, 1, 0.36, 1)',
       },
       borderRadius: { cta: '4px' },

@@ -1,7 +1,7 @@
 // Enterprise permission matrix editor. Grouped by module (one section per module),
 // with action checkboxes and a "select all in module" toggle. Visual language takes
-// cues from Linear / Notion settings — clean grouped rows, subtle checkboxes, module
-// headers — built entirely from the Varsaka design tokens.
+// cues from Linear / Notion settings - clean grouped rows, subtle checkboxes, module
+// headers - built entirely from the Varsaka design tokens.
 import { useMemo } from 'react'
 
 /* A subtle, premium checkbox. */
@@ -39,7 +39,7 @@ function Check({ checked, indeterminate = false, onChange, disabled = false, siz
  * @param {(next:string[])=>void} props.onChange
  * @param {boolean} [props.readOnly] render-only (system / full-access roles)
  * @param {boolean} [props.fullAccess] show everything checked + read only ('*')
- * @param {(perm:string)=>boolean} [props.allow]  filter — only show/allow perms the caller may grant
+ * @param {(perm:string)=>boolean} [props.allow]  filter - only show/allow perms the caller may grant
  */
 export function PermissionMatrix({ catalog, value, onChange, readOnly = false, fullAccess = false, allow }) {
   const selected = useMemo(() => new Set(value || []), [value])

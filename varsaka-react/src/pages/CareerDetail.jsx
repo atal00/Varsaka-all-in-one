@@ -57,6 +57,7 @@ function ListBlock({ heading, items, marker = 'dot' }) {
 function ApplicationForm({ job }) {
   const [form, setForm] = useState({ name: '', email: '', phone: '', linkedin: '', portfolio: '', cover: '' })
   const [resume, setResume] = useState(null) // { name, dataUrl }
+  const [dpdpConsent, setDpdpConsent] = useState(false)
   const [error, setError] = useState('')
   const [sent, setSent] = useState(false)
   const [sending, setSending] = useState(false)
@@ -71,6 +72,7 @@ function ApplicationForm({ job }) {
   const submit = async (e) => {
     e.preventDefault()
     if (!form.name.trim() || !/.+@.+\..+/.test(form.email)) { setError('Please add your name and a valid email.'); return }
+    if (!dpdpConsent) { setError('Consent is required under the DPDP Act, 2023 to submit your application.'); return }
     const fd = new FormData()
     fd.append('jobSlug', job.slug)
     fd.append('role', job.title)
@@ -92,7 +94,7 @@ function ApplicationForm({ job }) {
       <div style={{ border: '1px solid var(--border)', borderRadius: 6, padding: 'clamp(36px,5vw,56px)', background: 'var(--surface)', textAlign: 'center' }}>
         <div style={{ width: 54, height: 54, border: '1.5px solid var(--text)', borderRadius: '50%', margin: '0 auto 22px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--mono)', fontSize: 20 }}>✓</div>
         <h3 style={{ fontFamily: 'var(--serif)', fontWeight: 400, fontSize: 30, letterSpacing: '-.01em', margin: 0 }}>Application received.</h3>
-        <p style={{ margin: '14px auto 0', maxWidth: 420, color: 'var(--muted)', fontSize: 15, lineHeight: 1.6 }}>A senior engineer reviews every application personally. You’ll hear from us within five business days — either way.</p>
+        <p style={{ margin: '14px auto 0', maxWidth: 420, color: 'var(--muted)', fontSize: 15, lineHeight: 1.6 }}>A senior engineer reviews every application personally. You’ll hear from us within five business days - either way.</p>
         <Link to="/careers" style={{ display: 'inline-block', marginTop: 26, fontFamily: 'var(--mono)', fontSize: 12, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--text)', textDecoration: 'none', borderBottom: '1px solid var(--line)', paddingBottom: 3 }}>← Back to all roles</Link>
       </div>
     )
@@ -119,6 +121,19 @@ function ApplicationForm({ job }) {
         <div style={{ gridColumn: '1 / -1' }}>
           <div style={labelStyle}>Cover letter</div>
           <textarea value={form.cover} onChange={set('cover')} onFocus={focusOn} onBlur={focusOff} rows={5} style={{ ...inputStyle, resize: 'vertical' }} placeholder="Why this role, and why Varsaka?" />
+        </div>
+        <div style={{ gridColumn: '1 / -1', marginTop: 8 }}>
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', fontSize: 13, color: 'var(--muted)', lineHeight: 1.55 }}>
+            <input 
+              type="checkbox"
+              checked={dpdpConsent}
+              onChange={(e) => { setDpdpConsent(e.target.checked); setError(''); }}
+              style={{ marginTop: 2, width: 16, height: 16, accentColor: 'var(--text)', cursor: 'pointer', flexShrink: 0 }}
+            />
+            <span>
+              I provide clear, affirmative consent under the <strong>Digital Personal Data Protection Act, 2023 (DPDP Act)</strong> for Varsaka Labs to collect and process my personal data and resume for recruitment purposes in accordance with the <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text)', textDecoration: 'underline' }}>Privacy Policy</a>.
+            </span>
+          </label>
         </div>
       </div>
       {error && <div style={{ marginTop: 14, fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--text)' }}>{error}</div>}

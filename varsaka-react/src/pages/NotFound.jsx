@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import Seo from '../components/Seo.jsx'
 
-// Custom 404 — a centered, premium "route validation failed" experience.
+// Custom 404 - a centered, premium "route validation failed" experience.
 // A precision grid, a slow radar sweep behind the numerals, drifting geometric
 // marks and a quality-check status strip frame the error in Varsaka's quality-
 // engineering language: we ran the checks, the route didn't pass. Subtle cursor
@@ -106,7 +106,7 @@ export function Component() {
             ))}
           </div>
 
-          {/* Quality-check status strip — fails gracefully on the route check */}
+          {/* Quality-check status strip - fails gracefully on the route check */}
           <div className="vk-404-rise" style={{ animationDelay: '520ms', display: 'inline-flex', flexWrap: 'wrap', justifyContent: 'center', gap: 'clamp(10px,2.4vw,22px)', margin: 'clamp(22px,4vh,38px) 0', fontFamily: 'var(--mono)', fontSize: 11.5, letterSpacing: '.08em', textTransform: 'uppercase' }}>
             <span style={{ color: 'var(--muted)' }}><span style={{ color: '#2f7d57' }}>✓</span> Connection</span>
             <span style={{ color: 'var(--muted)' }}><span style={{ color: '#2f7d57' }}>✓</span> Server</span>

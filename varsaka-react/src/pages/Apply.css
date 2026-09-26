@@ -248,7 +248,7 @@
     grid-column: 1 / -1;
 }
 
-/* Custom role text input — slides in when Other is selected */
+/* Custom role text input - slides in when Other is selected */
 .apply-page-wrapper .custom-role-input-wrapper {
     margin-top: 0.75rem;
     animation: slideDown 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;

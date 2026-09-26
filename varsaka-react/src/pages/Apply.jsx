@@ -11,7 +11,7 @@ const ROLE_CONFIG = {
     icon: '🎓',
     heading: '2026 Cohort Internship Program',
     tagline: 'Apply for our 12-week intensive internship and launch your career with Varsaka Labs.',
-    about: 'Our 2026 Cohort is open to ambitious students and recent graduates across all disciplines — Technical, Human Resources, Finance, Design, Marketing, and Operations. You will work on real client projects, receive 1-on-1 mentorship, and gain critical experience inside a fast-growing quality engineering company.',
+    about: 'Our 2026 Cohort is open to ambitious students and recent graduates across all disciplines - Technical, Human Resources, Finance, Design, Marketing, and Operations. You will work on real client projects, receive 1-on-1 mentorship, and gain critical experience inside a fast-growing quality engineering company.',
     details: [
       '📍 Location: Remote (Global) or Hybrid (Hyderabad / Bangalore)',
       '📅 Application Deadline: 30 Jun 2026',
@@ -47,7 +47,7 @@ const ROLE_CONFIG = {
     icon: '👥',
     heading: 'HR Generalist / Talent Acquisition',
     tagline: 'Help us find and nurture the talent that powers Varsaka Labs.',
-    about: 'We are growing and need an HR Generalist who can lead our recruitment efforts and build a world-class team culture. You will manage the full-cycle hiring process — from sourcing and screening candidates to onboarding new team members — while supporting day-to-day HR operations.',
+    about: 'We are growing and need an HR Generalist who can lead our recruitment efforts and build a world-class team culture. You will manage the full-cycle hiring process - from sourcing and screening candidates to onboarding new team members - while supporting day-to-day HR operations.',
     details: [
       '📍 Location: Hyderabad',
       '🕒 Type: Full-Time',
@@ -57,7 +57,7 @@ const ROLE_CONFIG = {
   },
   'QA Engineer Manual': {
     icon: '🧪',
-    heading: 'QA Engineer — Manual & Exploratory',
+    heading: 'QA Engineer - Manual & Exploratory',
     tagline: 'Your eye for detail will keep our products rock-solid.',
     about: 'Join our QA team as a Manual & Exploratory Testing specialist. You will write thorough test cases, perform exploratory testing sessions, file detailed bug reports, and help maintain quality across multiple client projects. This is a great entry point for freshers passionate about software quality.',
     details: [
@@ -71,11 +71,11 @@ const ROLE_CONFIG = {
     icon: '💼',
     heading: 'Other / Not Listed',
     tagline: "Can't find your role? We'd still love to hear from you.",
-    about: "If the role you're looking for isn't listed, please go ahead and apply anyway. Tell us about your background, skills, and what you're looking for. Our team reviews every application and will reach out if there's a good fit — now or in the future.",
+    about: "If the role you're looking for isn't listed, please go ahead and apply anyway. Tell us about your background, skills, and what you're looking for. Our team reviews every application and will reach out if there's a good fit - now or in the future.",
     details: [
       '📍 Location: Varies by role',
       '🕒 Type: Open to Full-Time, Part-Time & Internship',
-      '📅 Rolling applications — reviewed continuously',
+      '📅 Rolling applications - reviewed continuously',
       '💡 Tip: Use the essay section to tell us exactly what you bring to the table.',
     ],
   },
@@ -123,7 +123,8 @@ export default function Apply() {
     gradYear: '',
     roleTrack: '',
     essayWhy: '',
-    essayProject: ''
+    essayProject: '',
+    dpdpConsent: false
   });
 
   const [selectedSkills, setSelectedSkills] = useState(new Set());
@@ -154,7 +155,8 @@ export default function Apply() {
     resume: false,
     essayWhy: false,
     essayProject: false,
-    captcha: false
+    captcha: false,
+    dpdpConsent: false
   });
 
   const [dragActive, setDragActive] = useState(false);
@@ -210,7 +212,7 @@ export default function Apply() {
         formState,
         skills: Array.from(selectedSkills),
         customSkills,
-        // Only save metadata — File objects cannot be JSON serialised
+        // Only save metadata - File objects cannot be JSON serialised
         uploadedFile: uploadedFile ? { name: uploadedFile.name, size: uploadedFile.size } : null
       };
       localStorage.setItem('application_draft', JSON.stringify(draft));
@@ -277,7 +279,7 @@ export default function Apply() {
       newErrors.resume = !isResumeValid;
 
       isValid = isSkillsValid && isResumeValid;
-    } else if (stepIndex === 4) { // Motivation & Captcha
+    } else if (stepIndex === 4) { // Motivation & Captcha & Consent
       const isWhyValid = formState.essayWhy.trim().length >= 20;
       newErrors.essayWhy = !isWhyValid;
 
@@ -287,7 +289,10 @@ export default function Apply() {
       newErrors.captcha = !isCaptchaValid;
       setCaptchaError(!isCaptchaValid);
 
-      isValid = isWhyValid && isProjectValid && isCaptchaValid;
+      const isConsentValid = Boolean(formState.dpdpConsent);
+      newErrors.dpdpConsent = !isConsentValid;
+
+      isValid = isWhyValid && isProjectValid && isCaptchaValid && isConsentValid;
     }
 
     setErrors(newErrors);
@@ -362,7 +367,7 @@ export default function Apply() {
 
       // ── Step 2: Send email via FormSubmit (JSON, with resume link) ─────────
       const payload = {
-        _subject:  `New Application — ${roleLabel} | Varsaka Labs`,
+        _subject:  `New Application - ${roleLabel} | Varsaka Labs`,
         _template: 'table',
         _captcha:  'false',
 
@@ -384,7 +389,7 @@ export default function Apply() {
       };
 
       const BACKEND_API = 'https://formsubmit.co/ajax/career@in.varsaka.com';
-      await fetch(BACKEND_API, {
+      const res = await fetch(BACKEND_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(payload),
@@ -576,7 +581,7 @@ export default function Apply() {
         {/* Form Content */}
         <div className="form-steps-wrapper">
           
-          {/* STEP 0: WELCOME SCREEN — role-specific */}
+          {/* STEP 0: WELCOME SCREEN - role-specific */}
           {(() => {
             const rc = getRoleConfig(queryRole);
             return (
@@ -794,7 +799,7 @@ export default function Apply() {
                   Please select an application track or job role
                 </div>
 
-                {/* Custom role input — shown only when Other is selected */}
+                {/* Custom role input - shown only when Other is selected */}
                 {formState.roleTrack === 'Other' && (
                   <div className="custom-role-input-wrapper">
                     <input
@@ -985,6 +990,30 @@ export default function Apply() {
                 <p style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '6px', fontWeight: 600 }}>
                   ❌ Incorrect CAPTCHA answer. Please try again.
                 </p>
+              )}
+            </div>
+
+            {/* 🛡️ DPDP Act 2023 Affirmative Consent Checkbox */}
+            <div className="form-group full-width dpdp-consent-group" style={{ marginTop: '1.5rem', borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer', fontSize: '0.85rem', color: 'var(--text-primary)', lineHeight: 1.5, userSelect: 'none' }}>
+                <input 
+                  type="checkbox"
+                  id="applyDpdpConsent"
+                  checked={!!formState.dpdpConsent}
+                  onChange={(e) => {
+                    handleInputChange('dpdpConsent', e.target.checked);
+                    if (e.target.checked) setErrors(prev => ({ ...prev, dpdpConsent: false }));
+                  }}
+                  style={{ marginTop: '3px', width: '18px', height: '18px', accentColor: '#2563eb', cursor: 'pointer', flexShrink: 0 }}
+                />
+                <span>
+                  I provide clear, affirmative consent under the <strong>Digital Personal Data Protection Act, 2023 (DPDP Act)</strong> for Varsaka Labs to collect, process, and securely store my personal details, resume, and educational credentials for internship evaluation, recruitment, and related communication in accordance with the <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" style={{ color: '#2563eb', textDecoration: 'underline' }}>Privacy Policy</a>.
+                </span>
+              </label>
+              {errors.dpdpConsent && (
+                <div className="error-msg visible" id="err-dpdpConsent" style={{ marginTop: '8px', color: '#ef4444', fontSize: '0.75rem', fontWeight: 600 }}>
+                  ❌ Affirmative consent under the DPDP Act, 2023 is required to submit your application.
+                </div>
               )}
             </div>
           </div>

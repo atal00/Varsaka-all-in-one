@@ -41,11 +41,22 @@ export default function Footer() {
         </div>
 
         <div className="footer-col">
-          <h5>Legal</h5>
+          <h5>Legal & Compliance</h5>
           <ul>
             <li><Link to="/privacy-policy">Privacy Policy</Link></li>
             <li><Link to="/terms-of-service">Terms of Service</Link></li>
-            <li><Link to="/nda-template">NDA Template</Link></li>
+            <li><Link to="/cookies-policy">Cookies Policy</Link></li>
+            <li><Link to="/refund-policy">Refund Policy</Link></li>
+            <li>
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new CustomEvent('varsaka-open-cookie-preferences'))}
+                className="footer-cookie-pref-btn"
+                aria-label="Open Cookie and Data Protection Preferences"
+              >
+                Cookie Preferences
+              </button>
+            </li>
           </ul>
         </div>
       </div>

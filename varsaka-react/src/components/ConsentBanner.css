@@ -1,0 +1,490 @@
+/* ==========================================================================
+   🛡️ Varsaka Labs - Data Protection & Cookie Consent Banner Styles
+   Compliant with DPDP Act, 2023 & Global Accessibility Standards (WCAG 2.1 AA)
+   ========================================================================== */
+
+/* Main Banner Floating Container */
+.varsaka-consent-banner {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  max-width: 480px;
+  width: calc(100vw - 48px);
+  z-index: 9998;
+  background: #0f172a;
+  color: #f8fafc;
+  border-radius: 16px;
+  padding: 22px 24px;
+  box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  font-family: 'Figtree', 'Outfit', var(--sans, system-ui, -apple-system, sans-serif);
+  font-size: 0.875rem;
+  line-height: 1.55;
+  animation: slideUpConsent 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUpConsent {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Banner Header */
+.varsaka-consent-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.varsaka-consent-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.varsaka-consent-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #ffffff;
+  margin: 0;
+}
+
+/* Banner Description Text */
+.varsaka-consent-desc {
+  margin: 0 0 16px;
+  color: #cbd5e1;
+  font-size: 0.835rem;
+  line-height: 1.55;
+}
+
+.varsaka-consent-desc a {
+  color: #38bdf8;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-weight: 500;
+  transition: color 0.15s ease;
+}
+
+.varsaka-consent-desc a:hover,
+.varsaka-consent-desc a:focus-visible {
+  color: #7dd3fc;
+  outline: 2px solid #38bdf8;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Banner Buttons Group (Non-Dark Pattern, Balanced Visibility) */
+.varsaka-consent-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+
+.varsaka-consent-btn {
+  flex: 1 1 calc(33.333% - 8px);
+  min-width: 110px;
+  padding: 10px 14px;
+  font-size: 0.825rem;
+  font-weight: 600;
+  font-family: inherit;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.varsaka-consent-btn:active {
+  transform: scale(0.98);
+}
+
+.varsaka-consent-btn:focus-visible {
+  outline: 2px solid #38bdf8;
+  outline-offset: 2px;
+}
+
+/* Accept All Button */
+.varsaka-consent-btn-accept {
+  background: #2563eb;
+  color: #ffffff;
+  border: 1px solid #3b82f6;
+}
+
+.varsaka-consent-btn-accept:hover {
+  background: #1d4ed8;
+  border-color: #2563eb;
+}
+
+/* Reject Optional Button */
+.varsaka-consent-btn-reject {
+  background: #334155;
+  color: #f8fafc;
+  border: 1px solid #475569;
+}
+
+.varsaka-consent-btn-reject:hover {
+  background: #475569;
+  border-color: #64748b;
+  color: #ffffff;
+}
+
+/* Customize Button */
+.varsaka-consent-btn-customize {
+  background: #1e293b;
+  color: #e2e8f0;
+  border: 1px solid #475569;
+}
+
+.varsaka-consent-btn-customize:hover {
+  background: #334155;
+  border-color: #64748b;
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   🛠️ Customize Preferences Modal / Overlay
+   ========================================================================== */
+
+.varsaka-pref-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeInBackdrop 0.25s ease-out;
+}
+
+@keyframes fadeInBackdrop {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.varsaka-pref-modal {
+  background: #0f172a;
+  color: #f8fafc;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7);
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: 'Figtree', 'Outfit', var(--sans, system-ui, -apple-system, sans-serif);
+  animation: scaleUpModal 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes scaleUpModal {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Modal Header */
+.varsaka-pref-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.varsaka-pref-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.varsaka-pref-header h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #ffffff;
+}
+
+.varsaka-pref-close-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #94a3b8;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: all 0.15s ease;
+}
+
+.varsaka-pref-close-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.varsaka-pref-close-btn:focus-visible {
+  outline: 2px solid #38bdf8;
+  outline-offset: 2px;
+}
+
+/* Modal Scrollable Body */
+.varsaka-pref-body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1 1 auto;
+}
+
+.varsaka-pref-intro {
+  margin: 0 0 18px;
+  color: #94a3b8;
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+/* Category Cards */
+.varsaka-pref-category-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.varsaka-pref-category {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 14px 16px;
+  transition: border-color 0.15s ease;
+}
+
+.varsaka-pref-category:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.varsaka-pref-cat-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.varsaka-pref-cat-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.varsaka-pref-cat-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0;
+}
+
+/* Badges */
+.varsaka-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.varsaka-badge-essential {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.varsaka-badge-optional {
+  background: rgba(148, 163, 184, 0.15);
+  color: #cbd5e1;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+/* Accessible Toggle Switch */
+.varsaka-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.varsaka-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.varsaka-switch-slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: #334155;
+  border-radius: 24px;
+  transition: 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.varsaka-switch-slider::before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 2px;
+  bottom: 2px;
+  background-color: #cbd5e1;
+  border-radius: 50%;
+  transition: 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.varsaka-switch input:checked + .varsaka-switch-slider {
+  background-color: #2563eb;
+  border-color: #3b82f6;
+}
+
+.varsaka-switch input:checked + .varsaka-switch-slider::before {
+  transform: translateX(20px);
+  background-color: #ffffff;
+}
+
+.varsaka-switch input:focus-visible + .varsaka-switch-slider {
+  outline: 2px solid #38bdf8;
+  outline-offset: 2px;
+}
+
+.varsaka-switch input:disabled + .varsaka-switch-slider {
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+
+/* Category Description */
+.varsaka-pref-cat-desc {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+/* Genuine Notice Banner (No Marketing Cookies Deployed) */
+.varsaka-pref-notice {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.785rem;
+  color: #93c5fd;
+  line-height: 1.45;
+}
+
+.varsaka-pref-notice-icon {
+  font-size: 1rem;
+  line-height: 1;
+  margin-top: 1px;
+}
+
+/* Modal Footer Actions */
+.varsaka-pref-footer {
+  padding: 16px 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.varsaka-pref-footer-left {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.varsaka-pref-footer-right {
+  display: flex;
+  gap: 8px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .varsaka-consent-banner {
+    bottom: 12px;
+    right: 12px;
+    left: 12px;
+    width: auto;
+    max-width: none;
+    padding: 18px 20px;
+  }
+
+  .varsaka-consent-actions {
+    flex-direction: column;
+  }
+
+  .varsaka-consent-btn {
+    width: 100%;
+    flex: 1 1 100%;
+    min-height: 42px;
+  }
+
+  .varsaka-pref-modal {
+    max-height: 92vh;
+    border-radius: 14px;
+  }
+
+  .varsaka-pref-header,
+  .varsaka-pref-body,
+  .varsaka-pref-footer {
+    padding: 16px 18px;
+  }
+
+  .varsaka-pref-footer {
+    flex-direction: column-reverse;
+  }
+
+  .varsaka-pref-footer-left,
+  .varsaka-pref-footer-right {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .varsaka-pref-footer .varsaka-consent-btn {
+    width: 100%;
+  }
+}

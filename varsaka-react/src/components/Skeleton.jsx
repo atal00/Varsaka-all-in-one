@@ -30,7 +30,7 @@ export function SkButton({ width = 80, height = 32, style = {} }) {
 
 /* ── Composed pieces (Varsaka admin styling) ─────────────────────────────── */
 
-/** Loading screen reader hint — paired with any skeleton group. */
+/** Loading screen reader hint - paired with any skeleton group. */
 export function SkLabel({ label = 'Loading' }) {
   return <span style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }} role="status">{label}…</span>
 }

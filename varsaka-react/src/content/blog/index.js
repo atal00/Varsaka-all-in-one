@@ -1,4 +1,4 @@
-// Blog manifest — eager-glob all MDX posts so frontmatter + content component are available
+// Blog manifest - eager-glob all MDX posts so frontmatter + content component are available
 // synchronously for the index list and for per-post routes (SSG needs concrete paths).
 // Post count is small; eager import is acceptable.
 const mods = import.meta.glob('./*.mdx', { eager: true })

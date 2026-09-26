@@ -1,6 +1,5 @@
-import { useEffect, useState, lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
-import { supabase } from './supabaseClient';
+import { useEffect, lazy, Suspense } from 'react';
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { HelmetProvider } from 'react-helmet-async';
 import Navbar from './components/Navbar';
@@ -9,6 +8,7 @@ import Chatbot from './components/Chatbot';
 import ScrollTop from './components/ScrollTop';
 import Home from './pages/Home';
 import Preloader from './components/Preloader';
+import ConsentBanner from './components/ConsentBanner';
 
 // 🚀 Performance: Lazy Load non-critical pages
 const About = lazy(() => import('./pages/About'));
@@ -17,7 +17,8 @@ const Careers = lazy(() => import('./pages/Careers'));
 const CaseStudies = lazy(() => import('./pages/CaseStudies'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 const TermsOfService = lazy(() => import('./pages/TermsOfService'));
-const NdaTemplate = lazy(() => import('./pages/NdaTemplate'));
+const CookiesPolicy = lazy(() => import('./pages/CookiesPolicy'));
+const RefundPolicy = lazy(() => import('./pages/RefundPolicy'));
 const Portal = lazy(() => import('./pages/Portal'));
 const FunctionalTesting = lazy(() => import('./pages/FunctionalTesting'));
 const AutomationTesting = lazy(() => import('./pages/AutomationTesting'));
@@ -94,6 +95,7 @@ function RequireAuth({ children, allowedRoles }) {
         <Preloader />
         <AnimationTrigger />
         <ScrollTop />
+        <ConsentBanner />
 
         <Suspense fallback={<div style={{height: '100vh', background: 'var(--bg-white)'}} />}>
           <Routes>
@@ -108,8 +110,12 @@ function RequireAuth({ children, allowedRoles }) {
             <Route path="/case-studies/:id" element={<><Navbar /><CaseStudyDetail /><Footer /></>} />
             <Route path="/privacy-policy" element={<><Navbar /><PrivacyPolicy /><Footer /></>} />
             <Route path="/terms-of-service" element={<><Navbar /><TermsOfService /><Footer /></>} />
-            <Route path="/nda-template" element={<><Navbar /><NdaTemplate /><Footer /></>} />
+            <Route path="/terms-and-conditions" element={<><Navbar /><TermsOfService /><Footer /></>} />
+            <Route path="/cookies-policy" element={<><Navbar /><CookiesPolicy /><Footer /></>} />
+            <Route path="/cookie-policy" element={<><Navbar /><CookiesPolicy /><Footer /></>} />
+            <Route path="/refund-policy" element={<><Navbar /><RefundPolicy /><Footer /></>} />
             <Route path="/verify/:id" element={<VerifyCertificate />} />
+            <Route path="/contact" element={<Navigate to="/#contact" replace />} />
             
             {/* Portal Pages (Protected) */}
             <Route path="/portal" element={<RequireAuth allowedRoles={['admin', 'employee', 'blogger']}><Portal /></RequireAuth>} />

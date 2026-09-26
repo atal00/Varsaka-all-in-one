@@ -27,7 +27,7 @@ export function friendlyError(error, resource) {
   if (status === 403) return "You don't have permission to view this."
   if (status === 404) return 'We couldn’t find what you were looking for.'
   if (status === 429) return 'Too many requests. Please wait a moment and try again.'
-  if (status === 400 || code === 'VALIDATION') return `Unable to ${what}. The request was rejected — please retry.`
+  if (status === 400 || code === 'VALIDATION') return `Unable to ${what}. The request was rejected - please retry.`
   if (status >= 500) return 'Something went wrong on our end. Please try again shortly.'
   return `Unable to ${what}. Please try again.`
 }
@@ -35,7 +35,7 @@ export function friendlyError(error, resource) {
 export function ErrorState({ error, onRetry, resource, style = {} }) {
   const msg = friendlyError(error, resource)
   // Keep the technical reason available (muted) for admins/debugging without
-  // making it the headline — the error is surfaced, not hidden.
+  // making it the headline - the error is surfaced, not hidden.
   const detail = error && error.message && error.message !== msg ? error.message : null
   return (
     <div style={{ padding: '40px 0', ...style }}>
