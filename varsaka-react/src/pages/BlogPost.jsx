@@ -225,16 +225,12 @@ export function Component() {
           </div>
         )}
 
-        {related.length > 0 && (
-          <div className="vk-grid" style={{ marginTop: 'clamp(48px,6vw,72px)' }}>
-            <div>
-              <div style={{ fontFamily: 'var(--mono)', fontSize: 12, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 28 }}>Keep reading</div>
-              <div className="vk-r2" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 32 }}>
-                {related.map((p) => <ArticleCard key={p.slug} post={p} />)}
-              </div>
-            </div>
-          </div>
-        )}
+        <div className="back-btn-container" style={{ marginTop: 'clamp(48px,6vw,72px)' }}>
+          <Link to="/blog" className="back-to-listing-btn" aria-label="Back to All Blogs">
+            <i className="fa-solid fa-arrow-left back-arrow-icon" aria-hidden="true"></i>
+            <span>Back to All Blogs</span>
+          </Link>
+        </div>
 
         <div className="vk-grid" style={{ margin: 'clamp(64px,8vw,104px) auto clamp(72px,9vw,120px)' }}>
           <div style={{ border: '1px solid var(--border)', borderRadius: 8, padding: 'clamp(32px,5vw,52px)', background: 'var(--surface)', textAlign: 'center' }}>

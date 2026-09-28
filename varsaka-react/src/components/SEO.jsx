@@ -7,10 +7,14 @@ export default function SEO({
   type = 'website',
   keywords = 'software testing company, quality assurance services, functional testing, automation testing, performance testing, security testing, AI testing, mobile app testing',
   image = 'https://varsaka.com/og-image.png', // Fallback image
-  url = window.location.href,
+  url,
+  author,
+  publishedTime,
+  modifiedTime,
   children
 }) {
   const siteTitle = `${title} | ${name}`;
+  const currentUrl = url || (typeof window !== 'undefined' ? window.location.href : 'https://varsaka.com');
 
   // JSON-LD Schema for a Professional Software Testing Company
   const schemaOrgJSONLD = {
@@ -60,20 +64,46 @@ export default function SEO({
     "priceRange": "$$"
   };
 
+  const articleJSONLD = type === 'article' ? {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": title,
+    "description": description,
+    "image": image,
+    "datePublished": publishedTime || new Date().toISOString(),
+    "dateModified": modifiedTime || publishedTime || new Date().toISOString(),
+    "author": {
+      "@type": "Organization",
+      "name": author || "Varsaka Labs Engineering Team"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Varsaka Labs",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://varsaka.com/logo.png"
+      }
+    },
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": currentUrl
+    }
+  } : null;
+
   return (
     <Helmet>
       {/* Standard metadata tags */}
       <title>{siteTitle}</title>
       <meta name='description' content={description} />
       <meta name='keywords' content={keywords} />
-      <link rel="canonical" href={url} />
+      <link rel="canonical" href={currentUrl} />
 
       {/* Open Graph / Facebook */}
       <meta property="og:type" content={type} />
       <meta property="og:title" content={siteTitle} />
       <meta property="og:description" content={description} />
       <meta property="og:image" content={image} />
-      <meta property="og:url" content={url} />
+      <meta property="og:url" content={currentUrl} />
       <meta property="og:site_name" content={name} />
 
       {/* Twitter */}
@@ -86,7 +116,7 @@ export default function SEO({
 
       {/* JSON-LD Schema */}
       <script type="application/ld+json">
-        {JSON.stringify(schemaOrgJSONLD)}
+        {JSON.stringify(articleJSONLD || schemaOrgJSONLD)}
       </script>
 
       {children}

@@ -5,11 +5,9 @@ node_modules/
 
 # Environment and Secrets
 .env
-.env*.local
-.env.development
-.env.test
-.env.production
+.env.*
 !.env.example
+!.env.*.example
 *.pem
 *.key
 *.cert

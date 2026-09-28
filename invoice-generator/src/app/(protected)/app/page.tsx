@@ -7,8 +7,6 @@ import { Button } from '@/components/ui/Button';
 import { Download, Save } from 'lucide-react';
 import { useInvoiceStore } from '@/store/invoiceStore';
 import { useProfileStore } from '@/store/profileStore';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 import { saveInvoiceToDb } from '@/actions/invoice';
 import toast from 'react-hot-toast';
 
@@ -40,6 +38,10 @@ export default function CoreGeneratorApp() {
     
     setIsExporting(true);
     try {
+      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+        import('html2canvas'),
+        import('jspdf')
+      ]);
       const canvas = await html2canvas(element, { scale: 2, useCORS: true, logging: false });
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });

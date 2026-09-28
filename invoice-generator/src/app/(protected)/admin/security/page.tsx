@@ -2,7 +2,7 @@ import React from 'react';
 import { getBlockedIps } from '@/actions/security';
 import SecurityList from './SecurityList';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 
 export default async function AdminSecurityPage() {

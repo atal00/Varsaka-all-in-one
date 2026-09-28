@@ -1,7 +1,7 @@
 -- Seed Data for Varsaka Labs Supabase Tables (Humanized Version)
 
 -- Clear existing data to avoid duplicates when running this script multiple times
-TRUNCATE TABLE services, testimonials, faqs, blogs, certificates, leads;
+TRUNCATE TABLE services, testimonials, faqs, blogs, certificates, leads, case_studies, jobs;
 
 -- 1. Insert Services
 INSERT INTO services (name, description, category, icon, status) VALUES
@@ -55,11 +55,33 @@ INSERT INTO blogs (title, summary, content, author, status, views) VALUES
 ('The Top 10 Security Mistakes Startups Make', 'A friendly guide to making sure your app isn''t accidentally leaving the front door wide open for hackers.', '<p>Building an app is hard enough without worrying about security breaches. But honestly, most hacks happen because of simple, preventable mistakes. Today, we''re going over the OWASP Top 10 vulnerabilities in plain English—what they are, why they happen, and how you can lock them down before launch day.</p>', 'Varsaka Security', 'published', 840);
 
 -- 5. Insert Certificates (Dummy data)
-INSERT INTO certificates (full_name, internship_role, project_title, mentor_name, grade, location, start_date, end_date, issue_date, cert_year, cert_num, certificate_id) VALUES
-('Ramesh Kumar', 'QA Intern', 'E-commerce Platform Automation', 'Lead QA Mentor', 'A+', 'Remote, India', '2023-01-15', '2023-04-15', '2023-04-20', '2023', '001', 'VAR-INT-2023-001'),
-('Sneha Gupta', 'Frontend Intern', 'Admin Dashboard Revamp', 'Priya Singh', 'A', 'Remote, India', '2023-05-10', '2023-08-10', '2023-08-15', '2023', '002', 'VAR-INT-2023-002');
+INSERT INTO certificates (full_name, internship_role, project_title, mentor_name, grade, location, start_date, end_date, issue_date, cert_year, cert_num, certificate_id, public_verification_token) VALUES
+('Ramesh Kumar', 'QA Intern', 'E-commerce Platform Automation', 'Lead QA Mentor', 'A+', 'Remote, India', '2023-01-15', '2023-04-15', '2023-04-20', '2023', '001', 'VAR-INT-2023-001', '8f3e2b10-7a4c-4e56-b921-3d6f1a8c0e24'),
+('Sneha Gupta', 'Frontend Intern', 'Admin Dashboard Revamp', 'Priya Singh', 'A', 'Remote, India', '2023-05-10', '2023-08-10', '2023-08-15', '2023', '002', 'VAR-INT-2023-002', 'd4b7c9e2-1f3a-48d5-a6e0-9c2b4f7e8a15');
 
 -- 6. Insert Leads (Dummy data)
 INSERT INTO leads (name, email, phone, company, service, message, source, status) VALUES
 ('John Doe', 'john@example.com', '+1 234 567 8900', 'Tech Innovators', 'Automation Testing', 'Hey there! We really need some help automating our regression suite before we go crazy.', 'Website Form', 'new'),
 ('Amit Patel', 'amit@example.in', '+91 9876543210', 'StartUp Inc', 'Security Audits', 'Hi Varsaka team, we have a big product launch next month and want to make sure our app is bulletproof.', 'Website Form', 'ongoing');
+
+-- 7. Insert Case Studies (Existing Website Case Studies)
+INSERT INTO case_studies (id, client, tag, icon, outcome, "desc", description, content, status) VALUES
+('ourfab-technologies', 'Ourfab Technologies', 'Security Testing', 'fa-shield-halved', 'Zero Breaches Post-Launch', 'When Ourfab was gearing up to launch their new fintech app, they knew security couldn''t be an afterthought.', 'Full OWASP audit uncovering hidden vulnerabilities that automated tools missed.', '<h2>The Challenge: A High-Stakes Fintech Launch</h2><p>Ourfab Technologies was building a revolutionary payment gateway...</p>', 'published'),
+('techtd-platform', 'Techtd Platform', 'Automation', 'fa-bolt-lightning', 'Cut Release Times by 60%', 'The engineering team at Techtd was drowning in manual regression testing every sprint.', 'Custom Cypress automation framework from scratch running in CI/CD.', '<h2>The Challenge: Death by Manual Testing</h2><p>Techtd had a massive SaaS platform with hundreds of screens...</p>', 'published'),
+('takecare360', 'TakeCare360', 'AI-Powered Testing', 'fa-robot', 'Boosted Test Coverage to 90%', 'Healthcare apps require flawless precision, but TakeCare360 had massive gaps in their test coverage.', 'Introduced AI-assisted test generation to automatically write and maintain test scripts.', '<h2>The Challenge: Gaps in Critical Healthcare Logic</h2><p>TakeCare360 manages sensitive patient records...</p>', 'published'),
+('retailedge-india', 'RetailEdge India', 'Performance Testing', 'fa-gauge-high', 'Handled 5x Holiday Traffic Spikes', 'Intense, targeted load testing using JMeter on RetailEdge''s checkout flow.', 'Identified severe database bottlenecks and optimized infrastructure before Diwali.', '<h2>The Challenge: The Nightmare Before Diwali</h2><p>RetailEdge India was preparing for their massive flash sale...</p>', 'published'),
+('edustream-pro', 'EduStream Pro', 'Mobile Testing', 'fa-mobile-screen', '4.8 Star App Store Rating', 'EduStream''s mobile app was suffering from negative reviews due to device-specific UI glitches.', 'Real-device testing across 50+ iOS and Android configurations.', '<h2>The Challenge: The Fragmentation Nightmare</h2><p>EduStream''s educational app worked on iPhones but failed on Android...</p>', 'published'),
+('logisync-global', 'Logisync Global', 'API Testing', 'fa-network-wired', 'Eliminated Silent Data Failures', 'Logisync platform routes shipments by connecting to over 40 carrier APIs.', 'Built a robust API contract testing suite actively monitoring endpoint health.', '<h2>The Challenge: The Silent Killers</h2><p>Logisync''s platform routes shipments by connecting to 40+ APIs...</p>', 'published')
+ON CONFLICT (id) DO UPDATE SET 
+  client = EXCLUDED.client,
+  tag = EXCLUDED.tag,
+  outcome = EXCLUDED.outcome,
+  status = EXCLUDED.status;
+
+-- 8. Insert Careers / Open Positions
+INSERT INTO jobs (title, location, type, exp, tags, description, posted, closes, icon, status) VALUES
+('2026 Cohort Internship Program', 'Remote / Hybrid (SF / Bangalore)', 'Internship', 'Students / Grads', ARRAY['Tech', 'HR', 'Finance', 'Design', 'Management'], 'Join our intensive 12-week program. Open to all disciplines. Work on real projects, receive 1-on-1 mentorship, and accelerate your career.', '2 Jun 2026', '30 Jun 2026', '🎓', 'active'),
+('Senior QA Automation Engineer', 'Hyderabad (Hybrid)', 'Full-Time', '3+ Years', ARRAY['Selenium', 'Playwright', 'Cypress', 'CI/CD'], 'Lead the design and implementation of end-to-end automation frameworks. You will own the test architecture and mentor engineers.', '1 May 2026', '31 May 2026', '🤖', 'active'),
+('Performance Test Engineer', 'Remote', 'Full-Time', '2+ Years', ARRAY['JMeter', 'k6', 'Gatling', 'Cloud'], 'Design and execute load, stress, and soak tests for high-traffic applications. Identify bottlenecks and build performance dashboards.', '1 May 2026', '31 May 2026', '⚡', 'active'),
+('HR Generalist / Talent Acquisition', 'Hyderabad', 'Full-Time', '2+ Years', ARRAY['Recruitment', 'Onboarding', 'HR Operations', 'Culture'], 'Lead our recruitment efforts and help build a world-class team culture. Manage end-to-end hiring process.', '10 May 2026', '10 Jun 2026', '👥', 'active'),
+('QA Engineer - Manual & Exploratory', 'Hyderabad', 'Full-Time / Intern', '0-2 Years', ARRAY['Test Cases', 'Bug Reporting', 'Jira', 'Agile'], 'Write detailed test cases, perform exploratory testing, and help maintain quality across multiple client projects.', '8 May 2026', '8 Jun 2026', '🧪', 'active');

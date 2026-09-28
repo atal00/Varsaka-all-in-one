@@ -1,10 +1,11 @@
 import Link from 'next/link';
 import { ArrowLeft, CheckCircle2, FileText, Database, Globe, BrainCircuit } from 'lucide-react';
 import { CopyButton } from '@/components/copy-button';
+import { AI_SERVICE_URL } from '@/lib/config';
 
 async function getResearch(id: string) {
   try {
-    const res = await fetch(`http://127.0.0.1:3001/research/${id}`, { cache: 'no-store' });
+    const res = await fetch(`${AI_SERVICE_URL}/research/${id}`, { cache: 'no-store' });
     if (!res.ok) return null;
     return res.json();
   } catch (err) {

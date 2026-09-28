@@ -39,7 +39,8 @@ In Supabase Dashboard -> Project Settings -> API -> CORS Allowed Origins:
   - `https://varsaka.com`
   - `https://www.varsaka.com`
   - `https://blog.varsaka.com`
-  - `https://admin.varsaka.com`
+  - `https://loginto.varsaka.com`
+  - `https://invoice.varsaka.com`
 - **Reject Wildcard**: Ensure `*` is **NEVER** permitted in production CORS settings.
 
 ---

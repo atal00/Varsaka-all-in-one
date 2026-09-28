@@ -4,10 +4,17 @@ import { Helmet } from 'react-helmet-async';
 import logo from '../assets/logo.png';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
-import { sanitize } from '../utils/security'; // 🛡️ Security Guard
+import { sanitize, logSecurityEvent, updateSecuritySettings } from '../utils/security'; // 🛡️ Security Guard
+import { MODULES, ACTIONS, normalizePermissions, hasPermission, ALL_ADMIN_PERMISSIONS } from '../utils/permissions';
+import SecurityLogsPanel from '../components/SecurityLogsPanel';
+import ImageUploadField from '../components/ImageUploadField';
+import RichContentEditor from '../components/RichContentEditor';
+import CaseStudyEditorModal from '../components/cms/CaseStudyEditorModal';
+import BlogEditorModal from '../components/cms/BlogEditorModal';
 import './Portal.css';
 
 const ALL_COUNTRIES = [
+
   { name: 'Afghanistan', code: '+93', flag: '🇦🇫' }, { name: 'Albania', code: '+355', flag: '🇦🇱' }, { name: 'Algeria', code: '+213', flag: '🇩🇿' },
   { name: 'Andorra', code: '+376', flag: '🇦🇩' }, { name: 'Angola', code: '+244', flag: '🇦🇴' }, { name: 'Argentina', code: '+54', flag: '🇦🇷' },
   { name: 'Armenia', code: '+374', flag: '🇦🇲' }, { name: 'Australia', code: '+61', flag: '🇦🇺' }, { name: 'Austria', code: '+43', flag: '🇦🇹' },
@@ -121,15 +128,25 @@ const TimerBanner = ({ sessionExpiry }) => {
 };
 
 export default function Portal() {
-  const { session: authSession, userRole, signOut, sessionExpiry } = useAuth();
+  const { session: authSession, userRole, userPermissions, userProfile, loading: authLoading, signOut, sessionExpiry, refreshProfile } = useAuth();
   
-  // Mimic old session object for minimal refactoring
-  const session = authSession ? {
-    id: authSession.user.id,
-    role: userRole,
-    name: authSession.user.user_metadata?.full_name || authSession.user.email?.split('@')[0] || 'User',
-    email: authSession.user.email
-  } : null;
+  // Normalized session object with authoritative role & permissions
+  const session = useMemo(() => {
+    if (!authSession) return null;
+    const normalizedRole = (userRole || '').toLowerCase().trim() || null;
+    const effectivePermissions = normalizedRole === 'admin' 
+      ? JSON.parse(JSON.stringify(ALL_ADMIN_PERMISSIONS)) 
+      : userPermissions;
+
+    return {
+      id: authSession.user.id,
+      role: normalizedRole,
+      permissions: effectivePermissions,
+      name: userProfile?.name || authSession.user.user_metadata?.full_name || authSession.user.email?.split('@')[0] || 'User',
+      email: authSession.user.email
+    };
+  }, [authSession, userRole, userPermissions, userProfile]);
+
 
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -202,9 +219,110 @@ export default function Portal() {
   });
   const [addingIntern, setAddingIntern] = useState(false);
   
-  const [mockUsers, setMockUsers] = useState([]);
+  // --- Real Role & Permission Management Users State ---
+  const [usersList, setUsersList] = useState([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [usersError, setUsersError] = useState(null);
+
+  // User Management Modals
+  const [permModalUser, setPermModalUser] = useState(null);
+  const [editingPerms, setEditingPerms] = useState(null);
+  const [savingPerms, setSavingPerms] = useState(false);
+
+  const [roleModalUser, setRoleModalUser] = useState(null);
+  const [selectedNewRole, setSelectedNewRole] = useState('employee');
+  const [tempAccessDuration, setTempAccessDuration] = useState('permanent');
+  const [savingRole, setSavingRole] = useState(false);
+
+  // Platform Security Settings State
+  const [secSettings, setSecSettings] = useState({
+    failed_attempt_threshold: 5,
+    initial_block_minutes: 15,
+    progressive_multiplier: 4,
+    max_block_minutes: 1440,
+    mfa_enforced_for_admins: false,
+    session_timeout_minutes: 480
+  });
+  const [savingSecSettings, setSavingSecSettings] = useState(false);
+  const [secSettingsMsg, setSecSettingsMsg] = useState(null);
+
+  // Certificate Deletion Modal State
+  const [certToDelete, setCertToDelete] = useState(null);
+  const [deletingCert, setDeletingCert] = useState(false);
 
   const [settingsTab, setSettingsTab] = useState('profile');
+
+  // MFA State
+  const [mfaData, setMfaData] = useState(null);
+  const [mfaCode, setMfaCode] = useState('');
+  const [mfaLoading, setMfaLoading] = useState(false);
+  const [mfaFactors, setMfaFactors] = useState([]);
+  const [mfaMsg, setMfaMsg] = useState(null);
+
+  const fetchMfaFactors = async () => {
+    try {
+      if (!supabase?.auth?.mfa) return;
+      const { data, error } = await supabase.auth.mfa.listFactors();
+      if (!error && data?.totp) {
+        setMfaFactors(data.totp.filter(f => f.status === 'verified'));
+      }
+    } catch (e) {
+      console.warn('MFA factors fetch error:', e);
+    }
+  };
+
+  const handleEnrollMfa = async () => {
+    setMfaLoading(true);
+    setMfaMsg(null);
+    try {
+      const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp', issuer: 'Varsaka Labs' });
+      if (error) throw error;
+      setMfaData(data);
+    } catch (err) {
+      setMfaMsg({ type: 'error', text: err.message || 'MFA enrollment failed.' });
+    } finally {
+      setMfaLoading(false);
+    }
+  };
+
+  const handleVerifyMfa = async () => {
+    if (!mfaData || !mfaCode.trim()) return;
+    setMfaLoading(true);
+    setMfaMsg(null);
+    try {
+      const { error } = await supabase.auth.mfa.challengeAndVerify({
+        factorId: mfaData.id,
+        code: mfaCode.trim()
+      });
+      if (error) throw error;
+      setMfaMsg({ type: 'success', text: 'Two-Factor Authentication successfully verified & activated!' });
+      setMfaData(null);
+      setMfaCode('');
+      fetchMfaFactors();
+      await logSecurityEvent(supabase, {
+        action: 'mfa_success',
+        targetId: session?.id,
+        metadata: { event: 'MFA_ENROLLED' }
+      });
+    } catch (err) {
+      setMfaMsg({ type: 'error', text: err.message || 'Invalid verification code. Please try again.' });
+    } finally {
+      setMfaLoading(false);
+    }
+  };
+
+  const handleSaveSecuritySettings = async (e) => {
+    e.preventDefault();
+    setSavingSecSettings(true);
+    setSecSettingsMsg(null);
+    const res = await updateSecuritySettings(supabase, secSettings);
+    setSavingSecSettings(false);
+    if (res.success) {
+      setSecSettingsMsg({ type: 'success', text: 'Security policies updated & audited successfully.' });
+    } else {
+      setSecSettingsMsg({ type: 'error', text: res.error || 'Failed to update security settings.' });
+    }
+  };
   
   // --- Generic Modal State for Mock CRUD ---
   const [genericModal, setGenericModal] = useState({ isOpen: false, type: '', data: null });
@@ -213,12 +331,238 @@ export default function Portal() {
   const [mockTestimonials, setMockTestimonials] = useState([]);
   const [mockFaqs, setMockFaqs] = useState([]);
 
+  // Rich Content & Media States
+  const [modalTab, setModalTab] = useState('basic');
+  const [blogImage, setBlogImage] = useState('');
+  const [blogThumbnail, setBlogThumbnail] = useState('');
+  const [blogContent, setBlogContent] = useState('');
+  const [csImage, setCsImage] = useState('');
+  const [csLogo, setCsLogo] = useState('');
+  const [csContent, setCsContent] = useState('');
+  const [isFormDirty, setIsFormDirty] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [imageError, setImageError] = useState(null);
+
   const handleOpenGenericModal = (type, data = null) => {
     setGenericModal({ isOpen: true, type, data });
+    setModalTab('basic');
+    setIsFormDirty(false);
+    if (type === 'Blog') {
+      setBlogImage(data?.image || '');
+      setBlogThumbnail(data?.thumbnail || '');
+      setBlogContent(data?.content || data?.summary || '');
+      setImageError(null);
+      setImageUploading(false);
+    } else if (type === 'Case Study') {
+      setCsImage(data?.image || '');
+      setCsLogo(data?.logo || '');
+      setCsContent(data?.description || data?.approach || '');
+      setImageError(null);
+      setImageUploading(false);
+    }
   };
 
-  const handleCloseGenericModal = () => {
+  const handleCloseGenericModal = (force = false) => {
+    if (!force && isFormDirty) {
+      if (!window.confirm('You have unsaved changes. Are you sure you want to discard them?')) {
+        return;
+      }
+    }
     setGenericModal({ isOpen: false, type: '', data: null });
+    setModalTab('basic');
+    setBlogImage('');
+    setBlogThumbnail('');
+    setBlogContent('');
+    setCsImage('');
+    setCsLogo('');
+    setCsContent('');
+    setImageError(null);
+    setImageUploading(false);
+    setIsFormDirty(false);
+  };
+
+  const validateAndUploadBlogImage = async (file) => {
+    if (!file) return;
+    setImageError(null);
+
+    // 1. File size check (max 5MB)
+    const MAX_SIZE = 5 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+      setImageError('Image size exceeds 5MB limit. Please upload a smaller file.');
+      return;
+    }
+
+    // 2. Extension check
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    const allowedExts = ['jpg', 'jpeg', 'png', 'webp'];
+    if (!ext || !allowedExts.includes(ext)) {
+      setImageError('Unsupported file extension. Allowed formats: JPG, JPEG, PNG, WEBP.');
+      return;
+    }
+
+    // 3. MIME type check
+    const allowedMimes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedMimes.includes(file.type)) {
+      setImageError(`Invalid MIME type (${file.type}). Allowed: JPG, PNG, WEBP.`);
+      return;
+    }
+
+    // 4. Magic bytes / file signature validation
+    try {
+      const buffer = await file.slice(0, 12).arrayBuffer();
+      const bytes = new Uint8Array(buffer);
+      let isValidSig = false;
+
+      if (bytes[0] === 0xFF && bytes[1] === 0xD8 && bytes[2] === 0xFF) {
+        isValidSig = true;
+      } else if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47) {
+        isValidSig = true;
+      } else if (
+        bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 && 
+        bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50 
+      ) {
+        isValidSig = true;
+      }
+
+      if (!isValidSig) {
+        setImageError('Security Alert: File signature does not match a valid image. Upload aborted.');
+        return;
+      }
+
+      // 5. Safe object key to prevent path traversal
+      const safeKey = `blogs/blog_${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${ext}`;
+      setImageUploading(true);
+
+      const { error: uploadErr } = await supabase.storage
+        .from('public_assets')
+        .upload(safeKey, file, { contentType: file.type, upsert: true });
+
+      if (uploadErr) {
+        throw uploadErr;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('public_assets')
+        .getPublicUrl(safeKey);
+
+      // If replacing an existing image in public_assets, delete old one
+      if (blogImage && blogImage.includes('/public_assets/blogs/')) {
+        const oldPath = blogImage.split('/public_assets/')[1];
+        if (oldPath) {
+          supabase.storage.from('public_assets').remove([oldPath]).catch(() => {});
+        }
+      }
+
+      setBlogImage(publicUrl);
+    } catch (err) {
+      console.error('Image upload failed:', err);
+      setImageError(err.message || 'Image upload failed. Please try again.');
+    } finally {
+      setImageUploading(false);
+    }
+  };
+
+  const handleRemoveBlogImage = async () => {
+    if (blogImage && blogImage.includes('/public_assets/blogs/')) {
+      const oldPath = blogImage.split('/public_assets/')[1];
+      if (oldPath) {
+        supabase.storage.from('public_assets').remove([oldPath]).catch(() => {});
+      }
+    }
+    setBlogImage('');
+    setImageError(null);
+  };
+
+  // 🛡️ Prevent background page from scrolling while any modal is open
+  const isAnyModalOpen = Boolean(
+    genericModal.isOpen || 
+    showRejectModal || 
+    showDeleteModal || 
+    showInfoModal || 
+    permModalUser || 
+    roleModalUser || 
+    certToDelete || 
+    celebration
+  );
+
+  useEffect(() => {
+    if (isAnyModalOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isAnyModalOpen]);
+
+  const handleSaveCaseStudy = async (studyPayload) => {
+    try {
+      if (studyPayload.id) {
+        const { id, ...updates } = studyPayload;
+        const { error } = await supabase.from('case_studies').update(updates).eq('id', id);
+        if (error) throw error;
+        setMockCaseStudies(mockCaseStudies.map(s => s.id === id ? { ...s, ...studyPayload } : s));
+        logSecurityEvent('CMS_CASE_STUDY_UPDATED', { id, client: studyPayload.client, status: studyPayload.status });
+      } else {
+        const { data, error } = await supabase.from('case_studies').insert([studyPayload]).select();
+        if (error) throw error;
+        const newItem = data[0];
+        setMockCaseStudies([newItem, ...mockCaseStudies]);
+        logSecurityEvent('CMS_CASE_STUDY_CREATED', { id: newItem.id, client: newItem.client, status: newItem.status });
+      }
+      handleCloseGenericModal(true);
+    } catch (err) {
+      alert(`Database Error: ${err.message}`);
+      throw err;
+    }
+  };
+
+  const handleDeleteCaseStudy = async (id) => {
+    try {
+      const { error } = await supabase.from('case_studies').delete().eq('id', id);
+      if (error) throw error;
+      setMockCaseStudies(mockCaseStudies.filter(s => s.id !== id));
+      logSecurityEvent('CMS_CASE_STUDY_DELETED', { id });
+      handleCloseGenericModal(true);
+    } catch (err) {
+      alert(`Database Error: ${err.message}`);
+      throw err;
+    }
+  };
+
+  const handleSaveBlog = async (blogPayload) => {
+    try {
+      if (blogPayload.id) {
+        const { id, ...updates } = blogPayload;
+        const { error } = await supabase.from('blogs').update(updates).eq('id', id);
+        if (error) throw error;
+        setMockBlogs(mockBlogs.map(b => b.id === id ? { ...b, ...blogPayload } : b));
+        logSecurityEvent('CMS_BLOG_UPDATED', { id, title: blogPayload.title, status: blogPayload.status });
+      } else {
+        const { data, error } = await supabase.from('blogs').insert([blogPayload]).select();
+        if (error) throw error;
+        const newItem = data[0];
+        setMockBlogs([newItem, ...mockBlogs]);
+        logSecurityEvent('CMS_BLOG_CREATED', { id: newItem.id, title: newItem.title, status: newItem.status });
+      }
+      handleCloseGenericModal(true);
+    } catch (err) {
+      alert(`Database Error: ${err.message}`);
+      throw err;
+    }
+  };
+
+  const handleDeleteBlog = async (id) => {
+    try {
+      const { error } = await supabase.from('blogs').delete().eq('id', id);
+      if (error) throw error;
+      setMockBlogs(mockBlogs.filter(b => b.id !== id));
+      logSecurityEvent('CMS_BLOG_DELETED', { id });
+      handleCloseGenericModal(true);
+    } catch (err) {
+      alert(`Database Error: ${err.message}`);
+      throw err;
+    }
   };
 
   const handleGenericSave = async (e) => {
@@ -226,17 +570,46 @@ export default function Portal() {
     const fd = new FormData(e.target);
     const updates = Object.fromEntries(fd.entries());
     
+    if (genericModal.type === 'Blog') {
+      updates.image = blogImage;
+      updates.thumbnail = blogThumbnail;
+      updates.content = blogContent;
+      // Auto-generate slug if empty
+      if (!updates.slug && updates.title) {
+        updates.slug = updates.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      }
+      // Auto-calculate read time if missing
+      if (!updates.read_time && updates.content) {
+        const textOnly = updates.content.replace(/<[^>]*>/g, ' ');
+        const wordCount = textOnly.trim().split(/\s+/).filter(Boolean).length;
+        const minutes = Math.max(1, Math.ceil(wordCount / 200));
+        updates.read_time = `${minutes} min read`;
+      }
+    } else if (genericModal.type === 'Case Study') {
+      updates.image = csImage;
+      updates.logo = csLogo;
+      updates.description = csContent;
+      if (!updates.slug && (updates.client || updates.title)) {
+        updates.slug = (updates.client || updates.title).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      }
+    }
+    
     let table = '';
     if (genericModal.type === 'Service') table = 'services';
     else if (genericModal.type === 'Blog') table = 'blogs';
     else if (genericModal.type === 'Testimonial') table = 'testimonials';
     else if (genericModal.type === 'FAQ') table = 'faqs';
+    else if (genericModal.type === 'Case Study') table = 'case_studies';
+    else if (genericModal.type === 'Career') table = 'jobs';
+
+    if (genericModal.type === 'Career' && updates.tags) {
+      updates.tags = updates.tags.split(',').map(t => t.trim()).filter(Boolean);
+    }
     
-    // For users, it's more complex (Supabase Auth). We skip database modification for mocked users for now.
+    // User management is handled via the dedicated Role & Permission Management interface
     if (genericModal.type === 'User') {
-      if (genericModal.data) setMockUsers(mockUsers.map(s => s.id === genericModal.data.id ? {...s, ...updates} : s));
-      else setMockUsers([...mockUsers, { id: Date.now().toString(), lastLogin: 'Never', ...updates }]);
-      handleCloseGenericModal();
+      triggerInfo('User management is handled via the Role & Permission Management table.');
+      handleCloseGenericModal(true);
       return;
     }
 
@@ -249,6 +622,8 @@ export default function Portal() {
         if (table === 'blogs') setMockBlogs(mockBlogs.map(s => s.id === genericModal.data.id ? {...s, ...updates} : s));
         if (table === 'testimonials') setMockTestimonials(mockTestimonials.map(s => s.id === genericModal.data.id ? {...s, ...updates} : s));
         if (table === 'faqs') setMockFaqs(mockFaqs.map(s => s.id === genericModal.data.id ? {...s, ...updates} : s));
+        if (table === 'case_studies') setMockCaseStudies(mockCaseStudies.map(s => s.id === genericModal.data.id ? {...s, ...updates} : s));
+        if (table === 'jobs') setMockJobs(mockJobs.map(s => s.id === genericModal.data.id ? {...s, ...updates} : s));
       } else {
         const { data, error } = await supabase.from(table).insert([updates]).select();
         if (error) throw error;
@@ -258,8 +633,11 @@ export default function Portal() {
         if (table === 'blogs') setMockBlogs([newItem, ...mockBlogs]);
         if (table === 'testimonials') setMockTestimonials([newItem, ...mockTestimonials]);
         if (table === 'faqs') setMockFaqs([newItem, ...mockFaqs]);
+        if (table === 'case_studies') setMockCaseStudies([newItem, ...mockCaseStudies]);
+        if (table === 'jobs') setMockJobs([newItem, ...mockJobs]);
       }
-      handleCloseGenericModal();
+      setIsFormDirty(false);
+      handleCloseGenericModal(true);
     } catch (err) {
       alert(`Database Error: ${err.message}. Have you run the migrations.sql script?`);
     }
@@ -271,10 +649,12 @@ export default function Portal() {
     else if (genericModal.type === 'Blog') table = 'blogs';
     else if (genericModal.type === 'Testimonial') table = 'testimonials';
     else if (genericModal.type === 'FAQ') table = 'faqs';
+    else if (genericModal.type === 'Case Study') table = 'case_studies';
+    else if (genericModal.type === 'Career') table = 'jobs';
 
     if (genericModal.type === 'User') {
-      setMockUsers(mockUsers.filter(s => s.id !== genericModal.data.id));
-      handleCloseGenericModal();
+      triggerInfo('User management is handled via the Role & Permission Management table.');
+      handleCloseGenericModal(true);
       return;
     }
 
@@ -286,8 +666,10 @@ export default function Portal() {
       if (table === 'blogs') setMockBlogs(mockBlogs.filter(s => s.id !== genericModal.data.id));
       if (table === 'testimonials') setMockTestimonials(mockTestimonials.filter(s => s.id !== genericModal.data.id));
       if (table === 'faqs') setMockFaqs(mockFaqs.filter(s => s.id !== genericModal.data.id));
+      if (table === 'case_studies') setMockCaseStudies(mockCaseStudies.filter(s => s.id !== genericModal.data.id));
+      if (table === 'jobs') setMockJobs(mockJobs.filter(s => s.id !== genericModal.data.id));
       
-      handleCloseGenericModal();
+      handleCloseGenericModal(true);
     } catch (err) {
       alert(`Database Error: ${err.message}. Have you run the migrations.sql script?`);
     }
@@ -522,11 +904,14 @@ export default function Portal() {
       delete internData.cert_year;
       delete internData.cert_num;
 
-      const { error } = await supabase
+      const { data: insertedCert, error } = await supabase
         .from('certificates')
-        .insert([internData]);
+        .insert([internData])
+        .select()
+        .single();
       if (error) throw error;
-      triggerInfo('Intern certificate added successfully!');
+      const publicToken = insertedCert?.public_verification_token;
+      triggerInfo(`Intern certificate added successfully!\nVerification URL: https://varsaka.com/verify/${publicToken || internData.certificate_id}`);
       setNewIntern({
         full_name: '',
         internship_role: 'QA Intern',
@@ -549,31 +934,337 @@ export default function Portal() {
     setAddingIntern(false);
   };
 
-  const deleteIntern = async (id) => {
-    if (session?.role !== 'admin') {
-      triggerInfo('Error: Only Admins can delete intern records.');
+  // --- Certificate Deletion Handlers ---
+  const requestDeleteIntern = (intern) => {
+    if (!hasPermission(session, 'certificates', 'delete')) {
+      triggerInfo('Error: You do not have permission to delete certificates.');
       return;
     }
-    if (!window.confirm('Are you sure you want to delete this intern record?')) return;
-    const { error } = await supabase.from('certificates').delete().eq('id', id);
-    if (error) triggerInfo('Delete failed: ' + error.message);
-    else fetchInterns();
+    setCertToDelete(intern);
+  };
+
+  const confirmDeleteCert = async () => {
+    if (!certToDelete) return;
+    if (!hasPermission(session, 'certificates', 'delete')) {
+      triggerInfo('Error: You do not have permission to delete certificates.');
+      setCertToDelete(null);
+      return;
+    }
+    setDeletingCert(true);
+    try {
+      const { error } = await supabase.from('certificates').delete().eq('id', certToDelete.id);
+      if (error) throw error;
+
+      await logSecurityEvent(supabase, {
+        actorId: session?.id,
+        actorEmail: session?.email,
+        action: 'certificate_deleted',
+        targetId: certToDelete.id,
+        metadata: {
+          certificate_id: certToDelete.certificate_id,
+          recipient_name: certToDelete.full_name,
+          public_token: certToDelete.public_verification_token
+        }
+      });
+
+      triggerInfo(`Certificate ${certToDelete.certificate_id} deleted successfully.`);
+      setCertToDelete(null);
+      fetchInterns();
+    } catch (err) {
+      triggerInfo('Delete failed: ' + err.message);
+    } finally {
+      setDeletingCert(false);
+    }
+  };
+
+  // --- User & Role Management Handlers ---
+  const fetchUsers = async () => {
+    if (!hasPermission(session, 'users', 'view')) {
+      setUsersList([]);
+      setUsersLoading(false);
+      return;
+    }
+    setUsersLoading(true);
+    setUsersError(null);
+    try {
+      // 1. Try secure RPC function (joins profiles with auth.users for last_sign_in_at and status)
+      const { data: rpcData, error: rpcError } = await supabase.rpc('get_admin_users');
+      if (!rpcError && Array.isArray(rpcData)) {
+        setUsersList(rpcData.map(u => ({
+          id: u.id,
+          name: u.full_name || 'Staff Member',
+          email: u.email || 'N/A',
+          role: u.role || 'employee',
+          permissions: normalizePermissions(u.permissions, u.role),
+          lastLogin: u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleString() : 'Never',
+          status: u.status || 'active',
+          created_at: u.created_at
+        })));
+      } else {
+        // 2. Fallback to direct profiles query if RPC is pending migration
+        // Note: public.profiles does not contain created_at; sort by full_name
+        const { data: profData, error: profError } = await supabase
+          .from('profiles')
+          .select('id, full_name, email, role, permissions')
+          .order('full_name', { ascending: true });
+
+        if (profError) throw profError;
+
+        setUsersList((profData || []).map(p => ({
+          id: p.id,
+          name: p.full_name || 'Staff Member',
+          email: p.email || 'N/A',
+          role: p.role || 'employee',
+          permissions: normalizePermissions(p.permissions, p.role),
+          lastLogin: 'N/A',
+          status: (p.permissions && p.permissions.is_disabled) ? 'disabled' : 'active',
+          created_at: null
+        })));
+      }
+    } catch (err) {
+      console.error('Error fetching users:', err);
+      setUsersError(err.message || 'Failed to load user records.');
+    } finally {
+      setUsersLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'Users') {
+      fetchUsers();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+
+  const handleOpenPermModal = (user) => {
+    setPermModalUser(user);
+    setEditingPerms(JSON.parse(JSON.stringify(normalizePermissions(user.permissions, user.role))));
+  };
+
+  const togglePermission = (moduleKey, actionKey) => {
+    setEditingPerms(prev => {
+      const copy = { ...prev };
+      if (!copy[moduleKey]) copy[moduleKey] = {};
+      copy[moduleKey] = {
+        ...copy[moduleKey],
+        [actionKey]: !copy[moduleKey][actionKey]
+      };
+      return copy;
+    });
+  };
+
+  const handleSavePermissions = async () => {
+    if (!permModalUser || !editingPerms) return;
+    if (session?.role !== 'admin') {
+      triggerInfo('Access Denied: Only administrators can modify employee permissions.');
+      return;
+    }
+
+    setSavingPerms(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ permissions: editingPerms })
+        .eq('id', permModalUser.id);
+
+      if (error) throw error;
+
+      await logSecurityEvent(supabase, {
+        actorId: session?.id,
+        actorEmail: session?.email,
+        action: 'permissions_changed',
+        targetId: permModalUser.id,
+        metadata: {
+          target_email: permModalUser.email,
+          updated_permissions: editingPerms
+        }
+      });
+
+      triggerInfo(`Permissions for ${permModalUser.name} updated successfully.`);
+      setPermModalUser(null);
+      setEditingPerms(null);
+      fetchUsers();
+    } catch (err) {
+      triggerInfo('Failed to update permissions: ' + err.message);
+    } finally {
+      setSavingPerms(false);
+    }
+  };
+
+  const handleOpenRoleModal = (user) => {
+    if (session?.role !== 'admin') {
+      triggerInfo('Access Denied: Only administrators can modify user roles.');
+      return;
+    }
+    if (user.id === session?.id) {
+      triggerInfo('Self-demotion is prevented. An administrator cannot change their own role.');
+      return;
+    }
+    setRoleModalUser(user);
+    setSelectedNewRole(user.role || 'employee');
+    setTempAccessDuration(user.temporary_access_expires_at ? '24h' : 'permanent');
+  };
+
+  const handleSaveRole = async () => {
+    if (!roleModalUser) return;
+    if (session?.role !== 'admin') {
+      triggerInfo('Access Denied: Only administrators can modify user roles.');
+      return;
+    }
+
+    // Self-demotion check
+    if (roleModalUser.id === session?.id && selectedNewRole !== 'admin') {
+      triggerInfo('Access Denied: Self-demotion is prevented. You cannot change your own role.');
+      return;
+    }
+
+    // Last-admin protection check
+    if (roleModalUser.role === 'admin' && selectedNewRole !== 'admin') {
+      const activeAdminCount = usersList.filter(u => u.role === 'admin' && u.status !== 'disabled').length;
+      if (activeAdminCount <= 1) {
+        triggerInfo('Operation blocked: Cannot demote the last remaining active administrator.');
+        return;
+      }
+    }
+
+    setSavingRole(true);
+    try {
+      const updateData = { role: selectedNewRole };
+      if (selectedNewRole === 'security_auditor') {
+        if (tempAccessDuration === '24h') {
+          updateData.temporary_access_expires_at = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+        } else if (tempAccessDuration === '7d') {
+          updateData.temporary_access_expires_at = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+        } else {
+          updateData.temporary_access_expires_at = null;
+        }
+      } else {
+        updateData.temporary_access_expires_at = null;
+      }
+
+      const { error } = await supabase
+        .from('profiles')
+        .update(updateData)
+        .eq('id', roleModalUser.id);
+
+      if (error) throw error;
+
+      await logSecurityEvent(supabase, {
+        actorId: session?.id,
+        actorEmail: session?.email,
+        action: 'user_role_changed',
+        targetId: roleModalUser.id,
+        metadata: {
+          target_email: roleModalUser.email,
+          old_role: roleModalUser.role,
+          new_role: selectedNewRole,
+          temporary_access_expires_at: updateData.temporary_access_expires_at
+        }
+      });
+
+      triggerInfo(`Role for ${roleModalUser.name} changed to ${selectedNewRole}.`);
+      setRoleModalUser(null);
+      fetchUsers();
+    } catch (err) {
+      triggerInfo('Failed to change role: ' + err.message);
+    } finally {
+      setSavingRole(false);
+    }
+  };
+
+  const handleToggleUserStatus = async (user) => {
+    if (session?.role !== 'admin') {
+      triggerInfo('Access Denied: Only administrators can disable or enable employee accounts.');
+      return;
+    }
+
+    // Prevent disabling self
+    if (user.id === session?.id) {
+      triggerInfo('Action prevented: You cannot disable your own account.');
+      return;
+    }
+
+    const isCurrentlyDisabled = user.status === 'disabled' || Boolean(user.permissions?.is_disabled);
+    const newDisabledState = !isCurrentlyDisabled;
+
+    // Last admin protection
+    if (user.role === 'admin' && newDisabledState) {
+      const activeAdminCount = usersList.filter(u => u.role === 'admin' && u.status !== 'disabled').length;
+      if (activeAdminCount <= 1) {
+        triggerInfo('Operation blocked: Cannot disable the last remaining active administrator.');
+        return;
+      }
+    }
+
+    const updatedPermissions = {
+      ...(user.permissions || {}),
+      is_disabled: newDisabledState
+    };
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ permissions: updatedPermissions })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      await logSecurityEvent(supabase, {
+        actorId: session?.id,
+        actorEmail: session?.email,
+        action: newDisabledState ? 'user_disabled' : 'user_enabled',
+        targetId: user.id,
+        metadata: {
+          target_email: user.email,
+          status: newDisabledState ? 'disabled' : 'active'
+        }
+      });
+
+      triggerInfo(`User ${user.name} has been ${newDisabledState ? 'disabled' : 'activated'}.`);
+      fetchUsers();
+    } catch (err) {
+      triggerInfo('Failed to update user status: ' + err.message);
+    }
   };
 
   const handleLogout = async () => {
-    await signOut();
-    sessionStorage.removeItem('notified_refresh'); // 🔄 Clear flag on logout
-    navigate('/login');
+    try {
+      await signOut();
+    } catch (e) {
+      console.error('Logout error:', e);
+    }
+    sessionStorage.removeItem('notified_refresh');
+    sessionStorage.clear();
+    navigate('/login', { replace: true });
   };
+
+  // 🛡️ Prevent stale authenticated view on browser Back/Forward (bfcache)
+  useEffect(() => {
+    const handlePageShow = async (e) => {
+      if (e.persisted || !authSession) {
+        const { data } = await supabase.auth.getSession();
+        if (!data?.session) {
+          navigate('/login', { replace: true });
+        }
+      }
+    };
+    window.addEventListener('pageshow', handlePageShow);
+    return () => window.removeEventListener('pageshow', handlePageShow);
+  }, [authSession, navigate]);
 
   const assignTask = async (leadId, staffId) => {
     if (session?.role !== 'admin') {
       triggerInfo('Error: Only Admins can assign tasks.');
       return;
     }
+    const currentLead = data.find(r => r.id === leadId);
+    const updates = { assigned_to: staffId || null };
+    if (staffId && (!currentLead?.status || currentLead.status.toLowerCase() === 'new')) {
+      updates.status = 'ASSIGNED';
+    }
     const { error: updateError } = await supabase
       .from('leads')
-      .update({ assigned_to: staffId || null })
+      .update(updates)
       .eq('id', leadId);
 
     if (updateError) {
@@ -786,17 +1477,38 @@ export default function Portal() {
     fetchData();
   };
 
-  // 📈 Stats Calculation
-  const stats = (() => {
-    const relevant = data.filter(r => session?.role === 'admin' || r.assigned_to === session?.id);
+  // 📈 Live Production Stats Calculation
+  const liveStats = useMemo(() => {
+    const relevantLeads = data.filter(r => session?.role === 'admin' || r.assigned_to === session?.id);
+    const publishedBlogs = mockBlogs.filter(b => b.status === 'published').length;
+    const activeServices = mockServices.filter(s => s.status === 'active').length;
+    const openLeads = relevantLeads.filter(r => ['NEW', 'ASSIGNED', 'IN_PROGRESS', 'WAITING', 'new', 'ongoing', 'pending'].includes(r.status)).length;
+    const activeTestimonials = mockTestimonials.filter(t => t.status === 'approved' || t.status === 'active').length;
+    const totalFaqs = mockFaqs.length;
+    const activeStaff = usersList.length > 0 ? usersList.filter(u => u.status !== 'disabled').length : staffList.length;
+
     return {
-      total: relevant.length,
-      new: relevant.filter(r => r.status === 'new').length,
-      ongoing: relevant.filter(r => r.status === 'ongoing').length,
-      completed: relevant.filter(r => r.status === 'completed').length,
-      needsReview: relevant.filter(r => r.status === 'approval_pending').length
+      publishedBlogs,
+      totalBlogs: mockBlogs.length,
+      activeServices,
+      totalServices: mockServices.length,
+      openLeads,
+      totalLeads: relevantLeads.length,
+      activeTestimonials,
+      totalTestimonials: mockTestimonials.length,
+      totalFaqs,
+      activeStaff,
+      needsReview: relevantLeads.filter(r => r.status === 'approval_pending').length
     };
-  })();
+  }, [mockBlogs, mockServices, data, mockTestimonials, mockFaqs, usersList, staffList, session?.role, session?.id]);
+
+  const stats = {
+    total: liveStats.totalLeads,
+    new: liveStats.openLeads,
+    ongoing: data.filter(r => ['IN_PROGRESS', 'WAITING', 'ongoing'].includes(r.status)).length,
+    completed: data.filter(r => ['RESOLVED', 'CLOSED', 'completed'].includes(r.status)).length,
+    needsReview: liveStats.needsReview
+  };
 
   // 🔍 Filtering Logic
   const filteredData = data.filter(r => {
@@ -806,15 +1518,37 @@ export default function Portal() {
     return r.name.toLowerCase().includes(s) || r.email.toLowerCase().includes(s) || r.msg.toLowerCase().includes(s);
   });
 
-  if (!session) return <div style={{height: '100vh', background: 'red', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px'}}>DEBUG: SESSION IS NULL IN PORTAL!</div>;
+  const TAB_MODULE_MAP = {
+    'Dashboard': 'dashboard',
+    'Services': 'services',
+    'Blog': 'blog',
+    'Case Studies': 'case_studies',
+    'Care Requests': 'leads',
+    'Testimonials': 'testimonials',
+    'FAQ': 'faqs',
+    'Users': 'users',
+    'Security Logs': 'security_logs',
+    'Settings': 'settings'
+  };
+
+  const isTabAuthorized = (tabId) => {
+    if (!session) return false;
+    const role = (session.role || '').toLowerCase().trim();
+    if (role === 'admin') return true;
+    const mod = TAB_MODULE_MAP[tabId];
+    if (!mod || mod === 'dashboard') return true; // Dashboard is open to staff
+    if (tabId === 'Blog') {
+      return hasPermission(session, 'blog', 'view') || Boolean(session.permissions?.manage_blogs) || role === 'blogger';
+    }
+    return hasPermission(session, mod, 'view');
+  };
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    if (tab === 'Jobs') {
+    if (tab === 'Care Requests') {
       setShowTeam(false);
-      fetchInterns();
-    } else if (tab === 'Care Requests') {
-      setShowTeam(false);
+    } else if (tab === 'Users') {
+      fetchUsers();
     }
   };
 
@@ -824,13 +1558,20 @@ export default function Portal() {
     { id: 'Blog', icon: 'fa-solid fa-pen-nib', label: 'Blog' },
     { id: 'Case Studies', icon: 'fa-solid fa-book-open', label: 'Case Studies' },
     { id: 'Care Requests', icon: 'fa-solid fa-heart-pulse', label: 'Care Requests' },
-    { id: 'Jobs', icon: 'fa-solid fa-user-tie', label: 'Jobs' },
-
+    { id: 'Testimonials', icon: 'fa-solid fa-comment-dots', label: 'Testimonials' },
     { id: 'FAQ', icon: 'fa-solid fa-circle-question', label: 'FAQ' },
-    { id: 'Media', icon: 'fa-solid fa-image', label: 'Media' },
     { id: 'Users', icon: 'fa-solid fa-users', label: 'Users' },
+    { id: 'Security Logs', icon: 'fa-solid fa-shield-halved', label: 'Security Logs' },
     { id: 'Settings', icon: 'fa-solid fa-gear', label: 'Settings' }
-  ];
+  ].filter(item => isTabAuthorized(item.id));
+
+  if (!session || authLoading) {
+    return (
+      <div style={{height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b'}}>
+        Authenticating session...
+      </div>
+    );
+  }
 
   return (
     <div className="admin-layout">
@@ -890,29 +1631,55 @@ export default function Portal() {
         </header>
 
         <main className="admin-content">
-
+          {!isTabAuthorized(activeTab) ? (
+            <div className="portal-container" style={{padding: '3rem 2rem', textAlign: 'center'}}>
+              <div className="dash-panel" style={{maxWidth: '600px', margin: '2rem auto', padding: '3rem 2rem', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.06)'}}>
+                <div style={{fontSize: '3.5rem', marginBottom: '1rem'}}>🔒</div>
+                <h2 style={{color: '#1e293b', marginBottom: '0.75rem', fontSize: '1.5rem'}}>Access Restricted</h2>
+                <p style={{color: '#64748b', lineHeight: '1.6', marginBottom: '1.5rem', fontSize: '0.95rem'}}>
+                  You do not have the required permission (<code>{TAB_MODULE_MAP[activeTab] || activeTab}.view</code>) to access the <strong>{activeTab}</strong> section.
+                </p>
+                <div style={{background: '#f8fafc', border: '1px solid #e2e8f0', padding: '1rem', borderRadius: '8px', fontSize: '0.85rem', color: '#475569', marginBottom: '1.5rem'}}>
+                  Please contact a system administrator to request access.
+                </div>
+                <button 
+                  className="btn-refresh" 
+                  onClick={() => setActiveTab('Dashboard')} 
+                  style={{padding: '0.75rem 2rem', background: '#2563eb', color: '#fff', borderColor: '#2563eb', fontWeight: 'bold'}}
+                >
+                  Return to Dashboard
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
         {activeTab === 'Dashboard' && (
           <>
-            <div className="dash-stats-grid">
+            <div className="dash-stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
               <div className="dash-card">
-                <div className="dash-card-title">Total Posts</div>
-                <div className="dash-card-value">3</div>
-                <div className="dash-card-footer"><i className="fa-solid fa-minus"></i> 3 case studies</div>
+                <div className="dash-card-title">Published Posts</div>
+                <div className="dash-card-value">{liveStats.publishedBlogs}</div>
+                <div className="dash-card-footer"><i className="fa-solid fa-pen-nib"></i> {liveStats.totalBlogs} total articles</div>
               </div>
               <div className="dash-card">
-                <div className="dash-card-title">Services</div>
-                <div className="dash-card-value">6</div>
-                <div className="dash-card-footer"><i className="fa-solid fa-minus"></i> All active</div>
+                <div className="dash-card-title">Active Services</div>
+                <div className="dash-card-value">{liveStats.activeServices}</div>
+                <div className="dash-card-footer"><i className="fa-solid fa-layer-group"></i> {liveStats.totalServices} total catalog</div>
               </div>
               <div className="dash-card">
-                <div className="dash-card-title">Care Requests</div>
-                <div className="dash-card-value">{stats.new}</div>
-                <div className="dash-card-footer"><i className="fa-solid fa-minus"></i> {stats.new} pending</div>
+                <div className="dash-card-title">Open Care Requests</div>
+                <div className="dash-card-value">{liveStats.openLeads}</div>
+                <div className="dash-card-footer"><i className="fa-solid fa-heart-pulse"></i> {liveStats.totalLeads} total inquiries</div>
               </div>
               <div className="dash-card">
-                <div className="dash-card-title">Testimonials</div>
-                <div className="dash-card-value">3</div>
-                <div className="dash-card-footer"><i className="fa-solid fa-minus"></i> Active</div>
+                <div className="dash-card-title">Active Testimonials</div>
+                <div className="dash-card-value">{liveStats.activeTestimonials}</div>
+                <div className="dash-card-footer"><i className="fa-solid fa-comment-dots"></i> {liveStats.totalTestimonials} approved reviews</div>
+              </div>
+              <div className="dash-card">
+                <div className="dash-card-title">Authorized Staff</div>
+                <div className="dash-card-value">{liveStats.activeStaff}</div>
+                <div className="dash-card-footer"><i className="fa-solid fa-users"></i> Active team members</div>
               </div>
             </div>
 
@@ -1114,55 +1881,163 @@ export default function Portal() {
           </div>
         )}
 
-        {activeTab === 'Media' && (
+
+
+        {activeTab === 'Users' && (
           <div className="portal-container" style={{padding: '2rem'}}>
             <div className="dash-panel">
-              <div className="panel-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                <h2>Media Library</h2>
-                <button className="btn-settings" style={{background: 'var(--brand-blue)', color: 'white'}}>☁️ Upload</button>
+              <div className="panel-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem'}}>
+                <div>
+                  <h2>Role & Permission Management</h2>
+                  <p style={{color: '#64748b', fontSize: '0.85rem', margin: '4px 0 0'}}>
+                    Manage staff access levels, granular module permissions, and account statuses
+                  </p>
+                </div>
+                <div style={{display: 'flex', gap: '8px', alignItems: 'center'}}>
+                  <button 
+                    className="btn-refresh" 
+                    onClick={fetchUsers} 
+                    disabled={usersLoading} 
+                    style={{padding: '6px 14px', fontSize: '0.85rem'}}
+                  >
+                    ↻ {usersLoading ? 'Loading...' : 'Refresh Users'}
+                  </button>
+                  {hasPermission(session, 'users', 'create') && (
+                    <button 
+                      className="btn-settings" 
+                      style={{background: 'var(--brand-blue)', color: 'white', padding: '6px 14px', fontSize: '0.85rem'}} 
+                      onClick={() => handleOpenGenericModal('User')}
+                    >
+                      ➕ Invite User
+                    </button>
+                  )}
+                </div>
               </div>
-              <div className="empty-state" style={{marginTop: '2rem', border: '2px dashed #ddd', background: '#f9fafb'}}>
-                <h3>Drag & Drop Files Here</h3>
-                <p>Support for PNG, JPG, PDF, SVG</p>
+
+              {usersError && (
+                <div style={{background: '#fef2f2', border: '1px solid #f87171', color: '#b91c1c', padding: '12px 16px', borderRadius: '8px', margin: '1.25rem 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                  <div>
+                    <strong>Query Error:</strong> {usersError}
+                  </div>
+                  <button className="btn-refresh" onClick={fetchUsers} style={{background: '#b91c1c', color: '#fff', borderColor: '#b91c1c', padding: '4px 10px'}}>
+                    Retry
+                  </button>
+                </div>
+              )}
+
+              <div style={{overflowX: 'auto', marginTop: '1.25rem'}}>
+                <table className="portal-table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Email</th>
+                      <th>Role</th>
+                      <th>Last Login</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {usersLoading ? (
+                      <tr>
+                        <td colSpan="6" style={{textAlign: 'center', padding: '3rem', color: '#64748b'}}>
+                          <div style={{fontSize: '1.8rem', marginBottom: '8px'}}>⏳</div>
+                          Loading user directory...
+                        </td>
+                      </tr>
+                    ) : usersError ? (
+                      <tr>
+                        <td colSpan="6" style={{textAlign: 'center', padding: '2.5rem', color: '#b91c1c'}}>
+                          Unable to retrieve users due to a server or permission error.
+                        </td>
+                      </tr>
+                    ) : usersList.length === 0 ? (
+                      <tr>
+                        <td colSpan="6" style={{textAlign: 'center', padding: '3rem', color: '#64748b'}}>
+                          <div style={{fontSize: '2rem', marginBottom: '8px'}}>👥</div>
+                          <strong>No users found</strong>
+                          <p style={{fontSize: '0.85rem', margin: '4px 0 0'}}>Zero user records returned from the database.</p>
+                        </td>
+                      </tr>
+                    ) : (
+                      usersList.map(user => {
+                        const isSelf = user.id === session?.id;
+                        const isDisabled = user.status === 'disabled';
+                        return (
+                          <tr key={user.id} style={{opacity: isDisabled ? 0.6 : 1}}>
+                            <td>
+                              <strong>{user.name}</strong>
+                              {isSelf && (
+                                <span style={{marginLeft: '8px', fontSize: '0.7rem', background: '#e0f2fe', color: '#0369a1', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold'}}>
+                                  YOU
+                                </span>
+                              )}
+                            </td>
+                            <td style={{color: '#475569'}}>{user.email}</td>
+                            <td>
+                              <span 
+                                className={`pill ${user.role === 'admin' ? 'badge-blue' : user.role === 'blogger' ? 'badge-orange' : 'badge-purple'}`} 
+                                style={{textTransform: 'uppercase', fontWeight: 'bold', fontSize: '0.75rem'}}
+                              >
+                                {user.role}
+                              </span>
+                            </td>
+                            <td style={{fontSize: '0.85rem', color: '#64748b'}}>{user.lastLogin}</td>
+                            <td>
+                              <span className={`status-badge ${isDisabled ? 'status-lost' : 'status-won'}`}>
+                                {isDisabled ? 'DISABLED' : 'ACTIVE'}
+                              </span>
+                            </td>
+                            <td>
+                              <div style={{display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center'}}>
+                                {user.role !== 'admin' && hasPermission(session, 'users', 'edit') && (
+                                  <button 
+                                    className="btn-action" 
+                                    onClick={() => handleOpenPermModal(user)}
+                                    style={{background: '#3b82f6', color: '#fff', border: 'none', padding: '4px 8px', fontSize: '0.75rem', borderRadius: '4px'}}
+                                    title="Edit granular permissions"
+                                  >
+                                    🔑 Permissions
+                                  </button>
+                                )}
+                                {hasPermission(session, 'users', 'edit') && (
+                                  <button 
+                                    className="btn-action" 
+                                    onClick={() => handleOpenRoleModal(user)}
+                                    disabled={isSelf}
+                                    style={{background: isSelf ? '#e2e8f0' : '#8b5cf6', color: isSelf ? '#94a3b8' : '#fff', border: 'none', padding: '4px 8px', fontSize: '0.75rem', borderRadius: '4px', cursor: isSelf ? 'not-allowed' : 'pointer'}}
+                                    title={isSelf ? 'Cannot change your own role' : 'Change user role'}
+                                  >
+                                    👤 Role
+                                  </button>
+                                )}
+                                {hasPermission(session, 'users', 'edit') && (
+                                  <button 
+                                    className="btn-action" 
+                                    onClick={() => handleToggleUserStatus(user)}
+                                    disabled={isSelf}
+                                    style={{background: isSelf ? '#e2e8f0' : (isDisabled ? '#10b981' : '#f59e0b'), color: isSelf ? '#94a3b8' : '#fff', border: 'none', padding: '4px 8px', fontSize: '0.75rem', borderRadius: '4px', cursor: isSelf ? 'not-allowed' : 'pointer'}}
+                                    title={isSelf ? 'Cannot disable yourself' : (isDisabled ? 'Activate account' : 'Disable account')}
+                                  >
+                                    {isDisabled ? '✓ Enable' : '⊘ Disable'}
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
         )}
 
-        {activeTab === 'Users' && (
+        {activeTab === 'Security Logs' && (
           <div className="portal-container" style={{padding: '2rem'}}>
-            <div className="dash-panel">
-              <div className="panel-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                <h2>Role Management</h2>
-                <button className="btn-settings" style={{background: 'var(--brand-blue)', color: 'white'}} onClick={() => handleOpenGenericModal('User')}>➕ Invite User</button>
-              </div>
-              <table className="portal-table">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Role</th>
-                    <th>Last Login</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {mockUsers.map(user => (
-                    <tr key={user.id}>
-                      <td><strong>{user.name}</strong></td>
-                      <td>{user.email}</td>
-                      <td><span className={`pill ${user.role === 'admin' ? 'badge-blue' : 'badge-purple'}`}>{user.role}</span></td>
-                      <td>{user.lastLogin}</td>
-                      <td><span className={`status-badge ${user.status === 'active' ? 'status-won' : 'status-lost'}`}>{user.status}</span></td>
-                      <td>
-                        <button className="btn-action" onClick={() => handleOpenGenericModal('User', user)}>Manage</button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <SecurityLogsPanel />
           </div>
         )}
 
@@ -1196,12 +2071,213 @@ export default function Portal() {
                   )}
                   {settingsTab === 'security' && (
                     <div>
-                      <h3>Security & 2FA</h3>
-                      <p style={{color: '#666', marginBottom: '1.5rem'}}>Protect your account with additional security.</p>
-                      <div className="empty-state" style={{padding: '1.5rem', background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
-                        <p>Two-factor authentication is not configured.</p>
-                        <button className="btn-settings" style={{marginTop: '1rem', background: 'var(--brand-blue)', color: 'white'}}>Enable 2FA</button>
+                      <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '8px'}}>
+                        <div>
+                          <h3 style={{margin: 0}}>Security & Multi-Factor Authentication</h3>
+                          <p style={{color: '#666', fontSize: '0.85rem', margin: '4px 0 0'}}>Manage account TOTP MFA credentials and enterprise login firewall policies.</p>
+                        </div>
                       </div>
+
+                      {mfaMsg && (
+                        <div style={{
+                          padding: '10px 14px',
+                          borderRadius: '8px',
+                          marginBottom: '1.25rem',
+                          fontSize: '0.85rem',
+                          background: mfaMsg.type === 'success' ? '#f0fdf4' : '#fef2f2',
+                          color: mfaMsg.type === 'success' ? '#166534' : '#991b1b',
+                          border: `1px solid ${mfaMsg.type === 'success' ? '#86efac' : '#fca5a5'}`
+                        }}>
+                          {mfaMsg.type === 'success' ? '✓' : '⚠️'} {mfaMsg.text}
+                        </div>
+                      )}
+
+                      {/* MFA Card */}
+                      <div style={{background: 'white', padding: '1.5rem', borderRadius: '8px', border: '1px solid #e5e7eb', marginBottom: '1.5rem'}}>
+                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px'}}>
+                          <div>
+                            <strong style={{fontSize: '1rem', color: '#1e293b'}}>Two-Factor Authentication (TOTP MFA)</strong>
+                            <p style={{fontSize: '0.8rem', color: '#64748b', margin: '4px 0 0'}}>
+                              Require a time-based 6-digit one-time code from Google Authenticator, 1Password, or Authy on login.
+                            </p>
+                          </div>
+                          <span style={{
+                            padding: '4px 10px',
+                            borderRadius: '12px',
+                            fontSize: '0.75rem',
+                            fontWeight: '600',
+                            background: mfaFactors.length > 0 ? '#dcfce7' : '#f1f5f9',
+                            color: mfaFactors.length > 0 ? '#166534' : '#64748b'
+                          }}>
+                            {mfaFactors.length > 0 ? '✓ MFA ACTIVE' : 'NOT CONFIGURED'}
+                          </span>
+                        </div>
+
+                        {!mfaData && mfaFactors.length === 0 && (
+                          <div style={{marginTop: '1.25rem'}}>
+                            <button
+                              onClick={handleEnrollMfa}
+                              disabled={mfaLoading}
+                              className="btn-settings"
+                              style={{background: 'var(--brand-blue, #2563eb)', color: 'white'}}
+                            >
+                              {mfaLoading ? 'Generating TOTP Key...' : '🔐 Configure TOTP Two-Factor Authentication'}
+                            </button>
+                          </div>
+                        )}
+
+                        {mfaData && (
+                          <div style={{marginTop: '1.25rem', padding: '1.25rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #cbd5e1'}}>
+                            <h4 style={{margin: '0 0 8px', color: '#0f172a'}}>Scan QR Code or Enter Secret Key</h4>
+                            <p style={{fontSize: '0.8rem', color: '#64748b', margin: '0 0 12px'}}>
+                              Scan the QR code with your authenticator app, then enter the 6-digit code below to verify:
+                            </p>
+
+                            {mfaData.totp?.qr_code && (
+                              <div style={{textAlign: 'center', margin: '1rem 0'}}>
+                                <img
+                                  src={mfaData.totp.qr_code}
+                                  alt="MFA QR Code"
+                                  style={{maxWidth: '180px', borderRadius: '8px', border: '1px solid #cbd5e1', padding: '8px', background: '#fff'}}
+                                />
+                              </div>
+                            )}
+
+                            {mfaData.totp?.secret && (
+                              <div style={{fontSize: '0.8rem', background: '#fff', padding: '8px 12px', borderRadius: '6px', border: '1px solid #e2e8f0', marginBottom: '1rem', wordBreak: 'break-all'}}>
+                                <strong>Manual Secret:</strong> <code style={{fontFamily: 'monospace', color: '#2563eb'}}>{mfaData.totp.secret}</code>
+                              </div>
+                            )}
+
+                            <div style={{display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap'}}>
+                              <input
+                                type="text"
+                                placeholder="Enter 6-digit code"
+                                maxLength={6}
+                                value={mfaCode}
+                                onChange={e => setMfaCode(e.target.value.replace(/\D/g, ''))}
+                                style={{padding: '8px 12px', fontSize: '1rem', width: '160px', letterSpacing: '4px', textAlign: 'center', borderRadius: '6px', border: '1px solid #cbd5e1'}}
+                              />
+                              <button
+                                onClick={handleVerifyMfa}
+                                disabled={mfaLoading || mfaCode.length !== 6}
+                                style={{padding: '8px 16px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: '600', cursor: mfaCode.length === 6 ? 'pointer' : 'not-allowed'}}
+                              >
+                                {mfaLoading ? 'Verifying...' : 'Verify & Enable'}
+                              </button>
+                              <button
+                                onClick={() => { setMfaData(null); setMfaCode(''); }}
+                                style={{padding: '8px 12px', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '6px', cursor: 'pointer'}}
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 23. ADMIN PLATFORM SECURITY POLICIES */}
+                      {session?.role === 'admin' && (
+                        <div style={{background: 'white', padding: '1.5rem', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem'}}>
+                            <div>
+                              <strong style={{fontSize: '1rem', color: '#1e293b'}}>Enterprise Security Policies & Firewall Thresholds</strong>
+                              <p style={{fontSize: '0.8rem', color: '#64748b', margin: '4px 0 0'}}>
+                                Configure automated progressive IP blocking rules and session expiry durations.
+                              </p>
+                            </div>
+                            <span className="pill badge-purple" style={{fontSize: '0.75rem'}}>ADMIN ONLY</span>
+                          </div>
+
+                          {secSettingsMsg && (
+                            <div style={{
+                              padding: '8px 12px',
+                              borderRadius: '6px',
+                              marginBottom: '1rem',
+                              fontSize: '0.8rem',
+                              background: secSettingsMsg.type === 'success' ? '#f0fdf4' : '#fef2f2',
+                              color: secSettingsMsg.type === 'success' ? '#166534' : '#991b1b',
+                              border: `1px solid ${secSettingsMsg.type === 'success' ? '#86efac' : '#fca5a5'}`
+                            }}>
+                              {secSettingsMsg.text}
+                            </div>
+                          )}
+
+                          <form onSubmit={handleSaveSecuritySettings}>
+                            <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1.25rem'}}>
+                              <div>
+                                <label style={{display: 'block', fontSize: '0.8rem', fontWeight: '600', marginBottom: '4px'}}>
+                                  Failed Attempts Threshold
+                                </label>
+                                <input
+                                  type="number"
+                                  min={3}
+                                  max={20}
+                                  value={secSettings.failed_attempt_threshold}
+                                  onChange={e => setSecSettings({ ...secSettings, failed_attempt_threshold: Number(e.target.value) })}
+                                  style={{width: '100%', padding: '8px 10px', fontSize: '0.85rem', borderRadius: '6px', border: '1px solid #cbd5e1'}}
+                                />
+                                <span style={{fontSize: '0.7rem', color: '#64748b'}}>Triggers automatic IP blocking (Requirement: 5)</span>
+                              </div>
+
+                              <div>
+                                <label style={{display: 'block', fontSize: '0.8rem', fontWeight: '600', marginBottom: '4px'}}>
+                                  Initial Block Duration (Minutes)
+                                </label>
+                                <input
+                                  type="number"
+                                  min={5}
+                                  max={1440}
+                                  value={secSettings.initial_block_minutes}
+                                  onChange={e => setSecSettings({ ...secSettings, initial_block_minutes: Number(e.target.value) })}
+                                  style={{width: '100%', padding: '8px 10px', fontSize: '0.85rem', borderRadius: '6px', border: '1px solid #cbd5e1'}}
+                                />
+                                <span style={{fontSize: '0.7rem', color: '#64748b'}}>Duration of first automatic temporary block</span>
+                              </div>
+
+                              <div>
+                                <label style={{display: 'block', fontSize: '0.8rem', fontWeight: '600', marginBottom: '4px'}}>
+                                  Progressive Backoff Multiplier
+                                </label>
+                                <input
+                                  type="number"
+                                  min={2}
+                                  max={10}
+                                  value={secSettings.progressive_multiplier}
+                                  onChange={e => setSecSettings({ ...secSettings, progressive_multiplier: Number(e.target.value) })}
+                                  style={{width: '100%', padding: '8px 10px', fontSize: '0.85rem', borderRadius: '6px', border: '1px solid #cbd5e1'}}
+                                />
+                                <span style={{fontSize: '0.7rem', color: '#64748b'}}>Multiplier applied on repeated abuse (e.g. 4x)</span>
+                              </div>
+
+                              <div>
+                                <label style={{display: 'block', fontSize: '0.8rem', fontWeight: '600', marginBottom: '4px'}}>
+                                  Maximum Temporary Block (Minutes)
+                                </label>
+                                <input
+                                  type="number"
+                                  min={60}
+                                  max={10080}
+                                  value={secSettings.max_block_minutes}
+                                  onChange={e => setSecSettings({ ...secSettings, max_block_minutes: Number(e.target.value) })}
+                                  style={{width: '100%', padding: '8px 10px', fontSize: '0.85rem', borderRadius: '6px', border: '1px solid #cbd5e1'}}
+                                />
+                                <span style={{fontSize: '0.7rem', color: '#64748b'}}>Upper bound for auto progressive blocks (e.g. 1440m = 24h)</span>
+                              </div>
+                            </div>
+
+                            <div style={{display: 'flex', justifyContent: 'flex-end'}}>
+                              <button
+                                type="submit"
+                                disabled={savingSecSettings}
+                                style={{padding: '8px 16px', background: '#0f172a', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: '600', cursor: 'pointer', fontSize: '0.85rem'}}
+                              >
+                                {savingSecSettings ? 'Updating Policies...' : '💾 Save Security Policies'}
+                              </button>
+                            </div>
+                          </form>
+                        </div>
+                      )}
                     </div>
                   )}
                   {settingsTab === 'api' && (
@@ -1249,7 +2325,7 @@ export default function Portal() {
                   {showTeam ? '📋 Show Leads' : '👥 Team Workload'}
                 </button>
               )}
-              {session.role === 'admin' && activeTab === 'Jobs' && (
+              {(session.role === 'admin' || hasPermission(session, 'certificates', 'create')) && activeTab === 'Jobs' && (
                 <button className="btn-settings" style={{background: '#faf5ff', color: '#7c3aed', border: '1px solid #e9d5ff'}} onClick={() => setShowAddIntern(!showAddIntern)}>
                   ➕ Add Intern
                 </button>
@@ -1538,11 +2614,11 @@ export default function Portal() {
                       <td>{new Date(intern.start_date).toLocaleDateString()} - {new Date(intern.end_date).toLocaleDateString()}</td>
                       <td>
                         <div style={{display:'flex', gap:'8px', alignItems:'center'}}>
-                          <button className="btn-refresh" onClick={() => window.open(`/verify/${intern.certificate_id}`, '_blank')} style={{padding:'4px 8px', fontSize:'0.75rem'}}>View</button>
+                          <button className="btn-refresh" onClick={() => window.open(`/verify/${intern.public_verification_token || intern.certificate_id}`, '_blank')} style={{padding:'4px 8px', fontSize:'0.75rem'}}>View</button>
                           <button 
                             className="btn-refresh" 
                             onClick={() => {
-                              const verifyUrl = `https://varsaka.com/verify/${intern.certificate_id}`;
+                              const verifyUrl = `https://varsaka.com/verify/${intern.public_verification_token || intern.certificate_id}`;
                               navigator.clipboard.writeText(verifyUrl);
                               triggerInfo(`Verification link copied to clipboard!\n${verifyUrl}`);
                             }} 
@@ -1551,7 +2627,16 @@ export default function Portal() {
                           >
                             Copy Link
                           </button>
-                          <button className="btn-del-staff" onClick={() => deleteIntern(intern.id)} style={{position:'static'}}>✕</button>
+                          {hasPermission(session, 'certificates', 'delete') && (
+                            <button 
+                              className="btn-del-staff" 
+                              onClick={() => requestDeleteIntern(intern)} 
+                              style={{position:'static', background: '#fef2f2', color: '#dc2626', border: '1px solid #fca5a5'}}
+                              title="Delete Certificate"
+                            >
+                              ✕
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -1632,12 +2717,15 @@ export default function Portal() {
         </div>
 
         <div className="filter-row">
-          <input type="text" placeholder="Search leads..." value={search} onChange={e => setSearch(e.target.value)} />
+          <input type="text" placeholder="Search care requests..." value={search} onChange={e => setSearch(e.target.value)} />
           <select value={filter} onChange={e => setFilter(e.target.value)}>
-            <option value="all">All Items</option>
-            <option value="new">Pending</option>
-            <option value="ongoing">Ongoing</option>
-            <option value="completed">Completed</option>
+            <option value="all">All Statuses</option>
+            <option value="NEW">New</option>
+            <option value="ASSIGNED">Assigned</option>
+            <option value="IN_PROGRESS">In Progress</option>
+            <option value="WAITING">Waiting</option>
+            <option value="RESOLVED">Resolved</option>
+            <option value="CLOSED">Closed</option>
             <option value="rejected">Rejected</option>
           </select>
         </div>
@@ -1647,7 +2735,7 @@ export default function Portal() {
             <thead>
               <tr>
                 <th>Status</th>
-                {session.role === 'admin' && <th>Assign To</th>}
+                <th>Assignee</th>
                 <th>Client Details</th>
                 <th>Project Inquiry</th>
                 <th>Notes</th>
@@ -1659,9 +2747,6 @@ export default function Portal() {
                 <tr key={r.id} className={`status-row-${r.status}`}>
                   <td className="status-cell">
                     <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
-                      {r.status === 'new' && <img src="https://fonts.gstatic.com/s/e/notoemoji/latest/23f3/512.gif" width="20" />}
-                      {r.status === 'ongoing' && <img src="https://fonts.gstatic.com/s/e/notoemoji/latest/2699_fe0f/512.gif" width="20" />}
-                      {r.status === 'completed' && <img src="https://fonts.gstatic.com/s/e/notoemoji/latest/2705/512.gif" width="20" />}
                       {r.status === 'approval_pending' ? (
                         <div className="status-badge-pending pulse-text">⚠️ Review Required</div>
                       ) : r.status === 'rejected' ? (
@@ -1677,23 +2762,42 @@ export default function Portal() {
                           </div>
                         </div>
                       ) : (
-                        <select className={`status-select ${r.status}`} value={r.status} onChange={e => updateStatus(r.id, e.target.value)}>
-                          <option value="new">Pending</option>
-                          <option value="ongoing">Ongoing</option>
-                          <option value="completed">Completed</option>
-                          {session.role === 'admin' && <option value="rejected">Rejected</option>}
+                        <select 
+                          className={`status-select ${String(r.status || 'NEW').toLowerCase()}`} 
+                          value={String(r.status || 'NEW').toUpperCase() === 'ONGOING' ? 'IN_PROGRESS' : String(r.status || 'NEW').toUpperCase() === 'COMPLETED' ? 'RESOLVED' : String(r.status || 'NEW').toUpperCase()} 
+                          onChange={e => updateStatus(r.id, e.target.value)}
+                        >
+                          <option value="NEW">NEW</option>
+                          <option value="ASSIGNED">ASSIGNED</option>
+                          <option value="IN_PROGRESS">IN_PROGRESS</option>
+                          <option value="WAITING">WAITING</option>
+                          <option value="RESOLVED">RESOLVED</option>
+                          <option value="CLOSED">CLOSED</option>
+                          {session.role === 'admin' && <option value="rejected">REJECTED</option>}
                         </select>
                       )}
                     </div>
                   </td>
-                  {session.role === 'admin' && (
-                    <td>
+                  <td>
+                    {session.role === 'admin' ? (
                       <select className="assign-select" value={r.assigned_to || ''} onChange={e => assignTask(r.id, e.target.value)}>
                         <option value="">Unassigned</option>
                         {staffList.map(st => <option key={st.id} value={st.id}>{st.name}</option>)}
                       </select>
-                    </td>
-                  )}
+                    ) : (
+                      <div>
+                        {r.assigned_to === session?.id ? (
+                          <span className="pill badge-blue" style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>👤 Assigned to You</span>
+                        ) : r.assigned_to ? (
+                          <span style={{ fontSize: '0.8rem', color: '#475569' }}>
+                            {staffList.find(s => s.id === r.assigned_to)?.name || 'Staff Member'}
+                          </span>
+                        ) : (
+                          <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontStyle: 'italic' }}>Unassigned</span>
+                        )}
+                      </div>
+                    )}
+                  </td>
                   <td>
                     <div className="client-name">{r.name}</div>
                     <div className="client-email">{r.email}</div>
@@ -1748,26 +2852,52 @@ export default function Portal() {
 
         </div>
         )}
+            </>
+          )}
         </main>
       </div>
 
-      {/* --- Generic CRUD Modal --- */}
-      {genericModal.isOpen && (
+      {/* 📖 CMS Case Study Multi-Section Editor Modal */}
+      {genericModal.isOpen && genericModal.type === 'Case Study' && (
+        <CaseStudyEditorModal
+          isOpen={true}
+          data={genericModal.data}
+          onClose={() => handleCloseGenericModal(false)}
+          onSave={handleSaveCaseStudy}
+          onDelete={handleDeleteCaseStudy}
+        />
+      )}
+
+      {/* ✍️ CMS Blog Multi-Section Editor Modal */}
+      {genericModal.isOpen && genericModal.type === 'Blog' && (
+        <BlogEditorModal
+          isOpen={true}
+          data={genericModal.data}
+          onClose={() => handleCloseGenericModal(false)}
+          onSave={handleSaveBlog}
+          onDelete={handleDeleteBlog}
+        />
+      )}
+
+      {/* --- Generic CRUD Modal (Services, Testimonials, FAQs, Users, Careers) --- */}
+      {genericModal.isOpen && genericModal.type !== 'Blog' && genericModal.type !== 'Case Study' && (
         <div className="modern-modal-overlay">
           <div className="modern-modal-content">
             <div className="modern-modal-header">
               <h3>
                 {genericModal.type === 'Service' && '🛠️ '}
-                {genericModal.type === 'Blog' && '✍️ '}
                 {genericModal.type === 'Testimonial' && '💬 '}
                 {genericModal.type === 'FAQ' && '❓ '}
                 {genericModal.type === 'User' && '👤 '}
+                {genericModal.type === 'Career' && '💼 '}
                 {genericModal.data ? 'Edit' : 'Add'} {genericModal.type}
               </h3>
-              <button type="button" className="modern-modal-close" onClick={handleCloseGenericModal}>✕</button>
+              <button type="button" className="modern-modal-close" onClick={() => handleCloseGenericModal(false)}>✕</button>
             </div>
 
-            <form onSubmit={handleGenericSave} className="modern-form-grid">
+            <form onSubmit={handleGenericSave} className="modern-modal-form">
+              <div className="modern-modal-body">
+                <div className="modern-form-grid">
               
               {genericModal.type === 'Service' && (
                 <>
@@ -1791,31 +2921,6 @@ export default function Portal() {
                       <option value="inactive">Inactive</option>
                     </select>
                   </div>
-                </>
-              )}
-
-              {genericModal.type === 'Blog' && (
-                <>
-                  <div className="modern-form-group full-width">
-                    <label>Title</label>
-                    <input type="text" name="title" className="modern-input" defaultValue={genericModal.data?.title || ''} required placeholder="Enter an engaging blog title" />
-                  </div>
-                  <div className="modern-form-group">
-                    <label>Status</label>
-                    <select name="status" className="modern-input" defaultValue={genericModal.data?.status || 'draft'}>
-                      <option value="published">Published</option>
-                      <option value="draft">Draft</option>
-                    </select>
-                  </div>
-                  <div className="modern-form-group">
-                    <label>Publish Date</label>
-                    <input type="date" name="date" className="modern-input" defaultValue={genericModal.data?.date || new Date().toISOString().split('T')[0]} required />
-                  </div>
-                  <div className="modern-form-group full-width">
-                    <label>Content Summary</label>
-                    <textarea name="summary" className="modern-input modern-textarea" defaultValue={genericModal.data?.summary || ''} placeholder="Write a brief excerpt or summary for the blog..."></textarea>
-                  </div>
-                  <input type="hidden" name="views" value={genericModal.data?.views || 0} />
                 </>
               )}
 
@@ -1892,13 +2997,65 @@ export default function Portal() {
                 </>
               )}
 
+              {genericModal.type === 'Career' && (
+                <>
+                  <div className="modern-form-group">
+                    <label>Job Title</label>
+                    <input type="text" name="title" className="modern-input" defaultValue={genericModal.data?.title || ''} required placeholder="e.g., QA Automation Engineer" />
+                  </div>
+                  <div className="modern-form-group">
+                    <label>Icon Emoji</label>
+                    <input type="text" name="icon" className="modern-input" defaultValue={genericModal.data?.icon || '💼'} required placeholder="e.g., 🎓, 🤖, ⚡" />
+                  </div>
+                  <div className="modern-form-group">
+                    <label>Job Type</label>
+                    <select name="type" className="modern-input" defaultValue={genericModal.data?.type || 'Full-time'}>
+                      <option value="Full-time">Full-time</option>
+                      <option value="Part-time">Part-time</option>
+                      <option value="Internship">Internship</option>
+                      <option value="Contract">Contract</option>
+                    </select>
+                  </div>
+                  <div className="modern-form-group">
+                    <label>Location</label>
+                    <input type="text" name="location" className="modern-input" defaultValue={genericModal.data?.location || ''} required placeholder="e.g., Remote / Bangalore" />
+                  </div>
+                  <div className="modern-form-group">
+                    <label>Experience</label>
+                    <input type="text" name="exp" className="modern-input" defaultValue={genericModal.data?.exp || ''} required placeholder="e.g., 2+ Years / Students" />
+                  </div>
+                  <div className="modern-form-group">
+                    <label>Tags / Skills (comma-separated)</label>
+                    <input type="text" name="tags" className="modern-input" defaultValue={genericModal.data?.tags ? (Array.isArray(genericModal.data.tags) ? genericModal.data.tags.join(', ') : genericModal.data.tags) : ''} placeholder="e.g., Selenium, Playwright, Cypress" />
+                  </div>
+                  <div className="modern-form-group full-width">
+                    <label>Description</label>
+                    <textarea name="description" className="modern-input modern-textarea" defaultValue={genericModal.data?.description || ''} required placeholder="Describe the responsibilities and requirements..."></textarea>
+                  </div>
+                  <div className="modern-form-group">
+                    <label>Posted Date</label>
+                    <input type="text" name="posted" className="modern-input" defaultValue={genericModal.data?.posted || ''} required placeholder="e.g., 10 May 2026" />
+                  </div>
+                  <div className="modern-form-group">
+                    <label>Closes Date</label>
+                    <input type="text" name="closes" className="modern-input" defaultValue={genericModal.data?.closes || ''} required placeholder="e.g., 10 Jun 2026" />
+                  </div>
+                  <div className="modern-form-group full-width">
+                    <label>Apply Link (Optional)</label>
+                    <input type="text" name="apply_link" className="modern-input" defaultValue={genericModal.data?.apply_link || ''} placeholder="Leave empty for default application form link" />
+                  </div>
+                </>
+              )}
+                </div>
+              </div>
+
               <div className="modern-modal-actions">
                 {genericModal.data && (
                   <button type="button" className="modern-btn-delete" onClick={() => {
                     if(window.confirm(`Are you sure you want to delete this ${genericModal.type}?`)) handleGenericDelete();
                   }}>🗑️ Delete</button>
                 )}
-                <button type="button" className="modern-btn-cancel" onClick={handleCloseGenericModal}>Cancel</button>
+                <button type="button" className="modern-btn-cancel" onClick={() => handleCloseGenericModal(false)}>Cancel</button>
                 <button type="submit" className="modern-btn-submit">
                   {genericModal.data ? '💾 Save Changes' : '✨ Create'}
                 </button>
@@ -2006,6 +3163,160 @@ export default function Portal() {
                 style={{padding: '0.9rem 3rem', borderRadius: '100px'}}
               >
                 Got it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🔑 GRANULAR EMPLOYEE PERMISSIONS MODAL */}
+      {permModalUser && editingPerms && (
+        <div className="custom-modal-overlay">
+          <div className="custom-modal-box" style={{maxWidth: '750px', width: '90%'}}>
+            <div className="modal-header">
+              <div>
+                <h3>🔑 Edit Employee Permissions</h3>
+                <p style={{fontSize: '0.85rem', color: '#64748b', margin: '2px 0 0'}}>
+                  {permModalUser.name} &bull; {permModalUser.email} ({permModalUser.role})
+                </p>
+              </div>
+              <button className="close-x" onClick={() => { setPermModalUser(null); setEditingPerms(null); }}>✕</button>
+            </div>
+            <div className="modal-body" style={{maxHeight: '60vh', overflowY: 'auto', padding: '1.5rem'}}>
+              <p style={{fontSize: '0.85rem', color: '#475569', marginBottom: '1rem'}}>
+                Configure granular module-level permissions for this employee. Permissions are enforced by PostgreSQL Row Level Security (RLS) policies at the database layer.
+              </p>
+              
+              <div style={{border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden'}}>
+                <table className="portal-table" style={{margin: 0}}>
+                  <thead style={{background: '#f8fafc'}}>
+                    <tr>
+                      <th style={{width: '35%'}}>Module</th>
+                      {ACTIONS.map(act => (
+                        <th key={act.key} style={{textAlign: 'center', width: '16%'}}>{act.label}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {MODULES.map(mod => (
+                      <tr key={mod.key}>
+                        <td>
+                          <strong style={{color: '#1e293b'}}>{mod.label}</strong>
+                          <span style={{display: 'block', fontSize: '0.75rem', color: '#64748b'}}>{mod.description}</span>
+                        </td>
+                        {ACTIONS.map(act => {
+                          const isChecked = Boolean(editingPerms[mod.key]?.[act.key]);
+                          return (
+                            <td key={act.key} style={{textAlign: 'center'}}>
+                              <input 
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => togglePermission(mod.key, act.key)}
+                                style={{width: '18px', height: '18px', cursor: 'pointer', accentColor: '#2563eb'}}
+                              />
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {(editingPerms.users?.view || editingPerms.users?.edit || editingPerms.security_logs?.view) && (
+                <div style={{marginTop: '1rem', background: '#fffbeb', border: '1px solid #fde68a', color: '#b45309', padding: '10px 14px', borderRadius: '8px', fontSize: '0.85rem'}}>
+                  ⚠️ <strong>Elevated Privileges:</strong> You have selected User Management or Security Logs access for this employee. Ensure this level of trust is authorized.
+                </div>
+              )}
+            </div>
+            <div className="modal-footer" style={{display: 'flex', justifyContent: 'flex-end', gap: '10px'}}>
+              <button 
+                className="btn-cancel" 
+                onClick={() => { setPermModalUser(null); setEditingPerms(null); }} 
+                disabled={savingPerms}
+              >
+                Cancel
+              </button>
+              <button 
+                className="btn-save" 
+                onClick={handleSavePermissions} 
+                disabled={savingPerms}
+                style={{background: '#2563eb'}}
+              >
+                {savingPerms ? 'Saving Changes...' : 'Save Permissions'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 👤 CHANGE USER ROLE MODAL */}
+      {roleModalUser && (
+        <div className="custom-modal-overlay">
+          <div className="custom-modal-box" style={{maxWidth: '460px'}}>
+            <div className="modal-header">
+              <h3>👤 Change User Role</h3>
+              <button className="close-x" onClick={() => setRoleModalUser(null)}>✕</button>
+            </div>
+            <div className="modal-body">
+              <p style={{fontSize: '0.9rem', color: '#1e293b', marginBottom: '1rem'}}>
+                Select the target role for <strong>{roleModalUser.name}</strong> ({roleModalUser.email}).
+              </p>
+              <div className="modern-form-group">
+                <label style={{fontSize: '0.85rem', fontWeight: '600', color: '#475569', marginBottom: '6px', display: 'block'}}>
+                  System Role
+                </label>
+                <select 
+                  className="modern-input" 
+                  value={selectedNewRole} 
+                  onChange={e => setSelectedNewRole(e.target.value)}
+                  style={{width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1'}}
+                >
+                  <option value="admin">Admin (Full System Access)</option>
+                  <option value="security_auditor">Security Auditor (View Security Logs & Firewall)</option>
+                  <option value="employee">Employee (Restricted to Assigned Permissions)</option>
+                  <option value="blogger">Blogger (Blog & Media Management)</option>
+                </select>
+              </div>
+
+              {selectedNewRole === 'security_auditor' && (
+                <div className="modern-form-group" style={{marginTop: '1rem'}}>
+                  <label style={{fontSize: '0.85rem', fontWeight: '600', color: '#475569', marginBottom: '6px', display: 'block'}}>
+                    Access Duration & Auto-Expiry
+                  </label>
+                  <select
+                    className="modern-input"
+                    value={tempAccessDuration}
+                    onChange={e => setTempAccessDuration(e.target.value)}
+                    style={{width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1'}}
+                  >
+                    <option value="permanent">Standard / Permanent Access</option>
+                    <option value="24h">⏱️ Temporary: 24 Hours (Auto-expires)</option>
+                    <option value="7d">⏱️ Temporary: 7 Days (Auto-expires)</option>
+                  </select>
+                  <span style={{display: 'block', fontSize: '0.75rem', color: '#64748b', marginTop: '4px'}}>
+                    {tempAccessDuration === '24h' ? 'Access automatically revokes 24 hours after grant.' : tempAccessDuration === '7d' ? 'Access automatically revokes 7 days after grant.' : 'Indefinite view access until revoked.'}
+                  </span>
+                </div>
+              )}
+
+              {roleModalUser.role === 'admin' && selectedNewRole !== 'admin' && (
+                <div style={{marginTop: '1rem', background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', padding: '10px 14px', borderRadius: '8px', fontSize: '0.85rem'}}>
+                  ⚠️ <strong>Warning:</strong> Demoting an administrator removes full administrative privileges.
+                </div>
+              )}
+            </div>
+            <div className="modal-footer" style={{display: 'flex', justifyContent: 'flex-end', gap: '10px'}}>
+              <button className="btn-cancel" onClick={() => setRoleModalUser(null)} disabled={savingRole}>
+                Cancel
+              </button>
+              <button 
+                className="btn-save" 
+                onClick={handleSaveRole} 
+                disabled={savingRole}
+                style={{background: '#2563eb'}}
+              >
+                {savingRole ? 'Updating Role...' : 'Confirm Role Change'}
               </button>
             </div>
           </div>

@@ -3,13 +3,17 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, FileText, Users, Box, ShieldAlert } from 'lucide-react';
+import { LayoutDashboard, FileText, Users, Box, ShieldAlert, Settings } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 
-export const Sidebar = () => {
+interface SidebarProps {
+  isAdmin?: boolean;
+}
+
+export const Sidebar = ({ isAdmin: initialIsAdmin }: SidebarProps) => {
   const pathname = usePathname();
   const { data: session } = useSession();
-  const isAdmin = session?.user?.email === 'invoice@varsaka.com';
+  const isAdmin = initialIsAdmin !== undefined ? initialIsAdmin : session?.user?.email === 'invoice@varsaka.com';
 
   const links = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -19,7 +23,7 @@ export const Sidebar = () => {
   ];
   
   const bottomLinks = [
-    { name: 'Settings', href: '/profile', icon: require('lucide-react').Settings },
+    { name: 'Settings', href: '/profile', icon: Settings },
   ];
 
   if (isAdmin) {
@@ -65,7 +69,8 @@ export const Sidebar = () => {
           );
         })}
       </nav>
-
     </aside>
   );
 };
+
+export default Sidebar;

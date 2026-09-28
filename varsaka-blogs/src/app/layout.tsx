@@ -22,8 +22,24 @@ const mono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Varsaka Labs | AI Content Intelligence",
-  description: "Autonomous agents for generating enterprise case studies and deep research.",
+  title: "Varsaka Engineering & Quality Assurance Blog | Insights & Practices",
+  description: "In-depth insights, engineering guides, and quality assurance strategies from the Varsaka team.",
+  metadataBase: new URL("https://blog.varsaka.com"),
+  alternates: {
+    canonical: "https://blog.varsaka.com",
+  },
+  openGraph: {
+    title: "Varsaka Engineering & QA Blog",
+    description: "In-depth insights, engineering guides, and quality assurance strategies from the Varsaka team.",
+    url: "https://blog.varsaka.com",
+    siteName: "Varsaka Blog",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Varsaka Engineering & QA Blog",
+    description: "In-depth insights, engineering guides, and quality assurance strategies from the Varsaka team.",
+  },
 };
 
 export default async function RootLayout({

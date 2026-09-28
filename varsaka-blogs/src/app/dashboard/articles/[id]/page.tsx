@@ -3,9 +3,11 @@ import { ArrowLeft, Calendar, FileText, Share2, CheckCircle2, UserCheck, Sparkle
 import { ArticleActions } from './article-actions';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { AI_SERVICE_URL } from '@/lib/config';
+
 async function getArticle(id: string) {
   try {
-    const res = await fetch(`http://127.0.0.1:3001/articles/${id}`, { cache: 'no-store' });
+    const res = await fetch(`${AI_SERVICE_URL}/articles/${id}`, { cache: 'no-store' });
     if (!res.ok) return null;
     return res.json();
   } catch (err) {

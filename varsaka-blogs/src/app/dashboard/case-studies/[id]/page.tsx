@@ -1,10 +1,11 @@
 import Link from 'next/link';
 import { ArrowLeft, Calendar, Briefcase, Sparkles } from 'lucide-react';
 import { CaseStudyActions } from './case-study-actions';
+import { AI_SERVICE_URL } from '@/lib/config';
 
 async function getCaseStudy(id: string) {
   try {
-    const res = await fetch(`http://127.0.0.1:3001/case-studies/${id}`, { cache: 'no-store' });
+    const res = await fetch(`${AI_SERVICE_URL}/case-studies/${id}`, { cache: 'no-store' });
     if (!res.ok) return null;
     return res.json();
   } catch (err) {

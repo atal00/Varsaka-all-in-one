@@ -171,7 +171,6 @@ const NAV_CONFIG = [
   { label:'Case Studies',        slug:'case-studies',  perm:'caseStudies.view' },
   { label:'Careers',             slug:'careers',       any:['jobs.view','applications.view'] },
   { label:'Leads',               slug:'leads',         any:['leads.view','leads.viewAssigned'] },
-  { label:'Media',               slug:'media',         perm:'media.view' },
   { label:'Users',               slug:'users',         perm:'users.view' },
   { label:'Roles & Permissions', slug:'roles',         perm:'roles.view' },
   { label:'Audit Log',           slug:'audit',         perm:'audit.view' },

@@ -1,8 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { supabase } from '../supabaseClient';
 import './Careers.css';
 
-function useFadeIn() {
+function useFadeIn(deps = []) {
   useEffect(() => {
     const obs = new IntersectionObserver((entries) => {
       entries.forEach((e, i) => {
@@ -16,7 +17,7 @@ function useFadeIn() {
       document.querySelectorAll('.fade-in').forEach(el => obs.observe(el));
     }, 100);
     return () => { obs.disconnect(); clearTimeout(timer); };
-  }, []);
+  }, deps);
 }
 
 const isDeadlinePassed = (closesStr) => {
@@ -26,7 +27,7 @@ const isDeadlinePassed = (closesStr) => {
   return new Date() > deadline;
 };
 
-const jobs = [
+const fallbackJobs = [
   {
     icon: '🎓',
     title: '2026 Cohort Internship Program',
@@ -99,8 +100,50 @@ const perks = [
 ];
 
 export default function Careers() {
-  useFadeIn();
-  useEffect(() => { window.scrollTo(0, 0); }, []);
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useFadeIn([jobs]);
+  useEffect(() => { 
+    window.scrollTo(0, 0); 
+    const fetchJobs = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('jobs')
+          .select('*')
+          .eq('status', 'active')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          // DB or network failure -> optional static fallback
+          console.warn('DB error fetching jobs, using static fallback:', error.message);
+          setJobs(fallbackJobs);
+        } else {
+          // DB success! If data is empty [], jobs becomes [] (showing empty state)
+          setJobs((data || []).map(j => ({
+            id: j.id,
+            icon: j.icon || '💼',
+            title: j.title,
+            location: j.location || 'Remote',
+            type: j.type || 'Full-Time',
+            exp: j.exp || 'Experienced',
+            tags: Array.isArray(j.tags) ? j.tags : (typeof j.tags === 'string' ? j.tags.split(',').map(t => t.trim()) : []),
+            desc: j.description || j.desc || '',
+            posted: j.posted || 'Recent',
+            closes: j.closes || '',
+            applyLink: j.apply_link || `/apply?role=${encodeURIComponent(j.title)}`
+          })));
+        }
+      } catch (err) {
+        // Network exception -> fallback
+        console.warn('Network exception fetching jobs, using fallback:', err);
+        setJobs(fallbackJobs);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchJobs();
+  }, []);
 
   return (
     <div className="page-wrapper">
@@ -130,9 +173,10 @@ export default function Careers() {
           <p className="section-sub">We're a small but growing team. Every hire matters - and so does every project.</p>
         </div>
 
-        <div className="jobs-grid">
-          {jobs.map(j => (
-            <div key={j.title} className="job-card fade-in">
+        {jobs.length > 0 ? (
+          <div className="jobs-grid">
+            {jobs.map(j => (
+              <div key={j.title} className="job-card fade-in">
               <div className="job-card-top">
                 <div className="job-icon">{j.icon}</div>
                 <div className="job-badges">
@@ -167,6 +211,13 @@ export default function Careers() {
             </div>
           ))}
         </div>
+        ) : (
+          <div style={{ textAlign: 'center', padding: '3.5rem 1rem', color: '#94a3b8' }}>
+            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>💼</div>
+            <p style={{ fontSize: '1.25rem', fontWeight: '600', color: '#e2e8f0', marginBottom: '0.5rem' }}>No Open Positions at Present</p>
+            <p style={{ fontSize: '0.95rem' }}>All current openings are filled. You can still submit a general application for future opportunities.</p>
+          </div>
+        )}
       </section>
 
       {/* PERKS */}

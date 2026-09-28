@@ -45,10 +45,10 @@
 
 | Domain / Subdomain | Application | Hosting Target | Cache Policy | SSL / TLS |
 |---|---|---|---|---|
-| `varsaka.com` / `www` | `varsaka-react` | Netlify / Cloudflare Pages | Edge Cached (Assets: 1 year immutable; HTML: no-cache) | Cloudflare Edge SSL |
+| `varsaka.com` / `www` | `varsaka-react` | Vercel / Netlify | Edge Cached (Assets: 1 year immutable; HTML: no-cache) | Managed SSL |
+| `loginto.varsaka.com` | `varsaka-admin` | Vercel / Netlify | Strict no-store for authenticated views | Managed SSL |
+| `invoice.varsaka.com` | `invoice-generator` | Vercel Node Serverless | Client cache with secure session cookies | Managed SSL |
 | `blog.varsaka.com` | `varsaka-blogs` | Vercel / Netlify Next.js | ISR / Edge Cached (revalidate: 3600s) | Managed SSL |
-| `admin.varsaka.com` | `varsaka-admin` | Netlify / Cloudflare Pages | Strict no-store for authenticated views | Managed SSL |
-| `billing.varsaka.com` | `invoice-generator` | Vercel Node Serverless | Client cache with secure session cookies | Managed SSL |
 
 ---
 

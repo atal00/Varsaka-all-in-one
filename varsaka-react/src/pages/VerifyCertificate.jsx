@@ -8,9 +8,14 @@ import directorSignature from '../assets/director_signature.png';
 import { QRCodeCanvas } from 'qrcode.react';
 import './VerifyCertificate.css';
 
+// Strict UUIDv4 pattern to reject predictable/sequential strings before sending requests
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const GENERIC_VERIFY_ERROR = 'Unable to verify this certificate. Please check the verification link or contact Varsaka Labs.';
+
 export default function VerifyCertificate() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const rawToken = (id || '').trim();
     const [loading, setLoading] = useState(true);
     const [certificate, setCertificate] = useState(null);
     const [error, setError] = useState(null);
@@ -23,7 +28,7 @@ export default function VerifyCertificate() {
         if (isMobile && !dismissed) {
             const timer = setTimeout(() => {
                 setShowMobilePopup(true);
-            }, 1500); // Delay for better UX
+            }, 1500);
             return () => clearTimeout(timer);
         }
     }, []);
@@ -39,44 +44,75 @@ export default function VerifyCertificate() {
     };
 
     useEffect(() => {
-        const fetchCertificate = async () => {
-            if (!id) return;
-            
-            // 🛡️ SECURITY: Sanitize the ID to prevent any injection attempt
-            const cleanId = id.replace(/[^a-zA-Z0-9-]/g, '').trim();
-            
-            console.log("Fetching certificate for ID:", cleanId);
+        let isMounted = true;
+
+        const verifyToken = async () => {
+            if (!rawToken) {
+                if (isMounted) {
+                    setError(GENERIC_VERIFY_ERROR);
+                    setLoading(false);
+                }
+                return;
+            }
+
+            // 🛡️ ANTI-ENUMERATION: Validate token format strictly.
+            // If the identifier is sequential (e.g. VAR-INT-2026-001) or malformed,
+            // reject immediately without leaking state or sending network requests.
+            if (!UUID_REGEX.test(rawToken)) {
+                if (isMounted) {
+                    setError(GENERIC_VERIFY_ERROR);
+                    setLoading(false);
+                }
+                return;
+            }
+
             setLoading(true);
             try {
-                const { data, error: fetchError } = await supabase
-                    .from('certificates')
-                    .select('*')
-                    .eq('certificate_id', cleanId)
-                    .single();
+                const { data, error: rpcError } = await supabase.rpc(
+                    'verify_certificate_by_token',
+                    { p_token: rawToken }
+                );
 
-                if (fetchError) {
-                    console.error("Supabase Error:", fetchError);
-                    if (fetchError.code === 'PGRST116') {
-                        setError('Certificate not found. Please check the ID and try again.');
-                    } else {
-                        throw fetchError;
+                if (rpcError) {
+                    console.error('Certificate verification RPC error:', rpcError);
+                    if (isMounted) {
+                        setError(GENERIC_VERIFY_ERROR);
+                        setCertificate(null);
                     }
-                } else {
-                    console.log("Certificate found:", data);
-                    setCertificate(data);
+                    return;
+                }
+
+                if (!data || data.length === 0) {
+                    if (isMounted) {
+                        setError(GENERIC_VERIFY_ERROR);
+                        setCertificate(null);
+                    }
+                    return;
+                }
+
+                if (isMounted) {
+                    setCertificate(data[0]);
+                    setError(null);
                 }
             } catch (err) {
-                console.error('Verification Error:', err);
-                setError('An error occurred while verifying the certificate.');
+                console.error('Unexpected certificate verification error:', err);
+                if (isMounted) {
+                    setError(GENERIC_VERIFY_ERROR);
+                    setCertificate(null);
+                }
             } finally {
-                setLoading(false);
+                if (isMounted) {
+                    setLoading(false);
+                }
             }
         };
 
-        if (id) {
-            fetchCertificate();
-        }
-    }, [id]);
+        verifyToken();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [rawToken]);
 
     return (
         <div className="verify-page">
@@ -100,14 +136,14 @@ export default function VerifyCertificate() {
                             <div className="spinner" style={{margin:'0 auto 20px'}}></div>
                             <p style={{fontFamily:'Inter, sans-serif', letterSpacing:'0.05em'}}>Authenticating Digital Credential...</p>
                         </div>
-                    ) : error ? (
+                    ) : error || !certificate ? (
                         <div style={{padding:'100px', textAlign:'center'}}>
                             <div style={{fontSize:'4rem', marginBottom:'20px'}}>❌</div>
                             <h2 style={{color:'#ef4444', fontFamily:'Inter, sans-serif'}}>Verification Failed</h2>
-                            <p style={{color:'#64748b', fontFamily:'Inter, sans-serif'}}>{error}</p>
+                            <p style={{color:'#64748b', fontFamily:'Inter, sans-serif', maxWidth:'460px', margin:'10px auto'}}>{error || GENERIC_VERIFY_ERROR}</p>
                             <button className="btn-back" onClick={() => navigate('/')} style={{marginTop:'20px', padding:'10px 20px', borderRadius:'8px', background:'#1e293b', color:'white', border:'none', cursor:'pointer'}}>Back to Home</button>
                         </div>
-                    ) : certificate ? (
+                    ) : (
                         <div className="certificate-frame">
                             <div className="cert-watermark">
                                 <img src={logo} alt="Watermark" className="ghost-watermark" />
@@ -165,7 +201,7 @@ export default function VerifyCertificate() {
 
                                 <div className="qr-code-wrap">
                                     <QRCodeCanvas 
-                                        value={`https://varsaka.com/verify/${certificate.certificate_id}`}
+                                        value={`https://varsaka.com/verify/${rawToken}`}
                                         size={100}
                                         level={"H"}
                                         includeMargin={true}
@@ -185,21 +221,16 @@ export default function VerifyCertificate() {
                                 VERIFICATION ID: {certificate.certificate_id}
                             </div>
                         </div>
-                    ) : (
-                        <div style={{padding:'100px', textAlign:'center'}}>
-                            <div style={{fontSize:'4rem', marginBottom:'20px'}}>❓</div>
-                            <h2>Unknown Record</h2>
-                            <p>We couldn't locate this certificate. Please contact career@in.varsaka.com</p>
-                            <button className="btn-back" onClick={() => navigate('/')}>Back</button>
-                        </div>
                     )}
                 </main>
 
-                <div className="btn-print-wrap" style={{textAlign:'center'}}>
-                    <button className="btn-print-cert" onClick={handleDownload}>
-                        📥 Download Official Certificate (PDF)
-                    </button>
-                </div>
+                {!loading && !error && certificate && (
+                    <div className="btn-print-wrap" style={{textAlign:'center'}}>
+                        <button className="btn-print-cert" onClick={handleDownload}>
+                            📥 Download Official Certificate (PDF)
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Mobile View Suggestion Popup */}

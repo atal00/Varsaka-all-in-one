@@ -92,50 +92,92 @@ const TOOLS = [
   'Jenkins CI', 'JIRA Software', 'Docker Containers', 'PyTest', 'TestRail'
 ];
 
+const defaultServices = [
+  { icon: '🧪', title: 'Functional Testing', desc: 'Comprehensive manual and exploratory testing across modern web and mobile platforms.', pill: 'Core QA', link: '/services/functional-testing' },
+  { icon: '🤖', title: 'Automation Testing', desc: 'Scalable automation suites with Playwright & Cypress built for enterprise velocity.', pill: 'Speed', link: '/services/automation-testing' },
+  { icon: '⚡', title: 'Performance Testing', desc: 'Stress and load testing using k6 and JMeter to ensure sub-second response times.', pill: 'Scale', link: '/services/performance-testing' },
+  { icon: '🔐', title: 'Security Testing', desc: 'OWASP Top 10 vulnerability assessments and continuous security audits.', pill: 'SecOps', link: '/services/security-testing' },
+  { icon: '🧠', title: 'AI-Powered Testing', desc: 'Self-healing test automation and predictive defect analysis for next-gen apps.', pill: 'NextGen', link: '/services/ai-powered-testing' },
+  { icon: '📱', title: 'Mobile App Testing', desc: 'Cross-platform testing on real Android and iOS devices under live network conditions.', pill: 'Mobile', link: '/services/mobile-testing' }
+];
+
 export default function Home() {
   const [faqs, setFaqs] = useState([]);
   const [services, setServices] = useState([]);
   const [faqsLoading, setFaqsLoading] = useState(true);
+  const [faqsError, setFaqsError] = useState(null);
+  const [showAllFaqs, setShowAllFaqs] = useState(false);
   const [servicesLoading, setServicesLoading] = useState(true);
 
-  useFadeIn([services, faqs]);
+  useFadeIn([services, faqs, showAllFaqs]);
 
   // Fetch Dynamic Content
   useEffect(() => {
     const fetchDynamicContent = async () => {
       // Services
-      const { data: sData } = await supabase.from('services').select('*').in('status', ['active', 'beta']).order('created_at', { ascending: true });
-      if (sData) {
-        setServices(sData.map((s, idx) => ({
-          icon: ['🧪', '🤖', '⚡', '🔐', '🧠', '📱'][idx % 6],
-          title: s.name,
-          desc: s.description || `Professional ${s.category} solutions delivered by Varsaka Labs experts.`,
-          pill: s.category,
-          link: `/services/${s.name.toLowerCase().replace(/\s+/g, '-')}`
-        })));
+      try {
+        const { data: sData, error: sError } = await supabase
+          .from('services')
+          .select('*')
+          .in('status', ['active', 'beta'])
+          .order('created_at', { ascending: true });
+
+        if (sError) {
+          // DB or network failure -> optional static fallback
+          console.warn('DB error fetching services, using fallback:', sError.message);
+          setServices(defaultServices);
+        } else {
+          // DB success! Use DB records; if empty, services is [] (clean empty state)
+          setServices((sData || []).map((s, idx) => ({
+            icon: ['🧪', '🤖', '⚡', '🔐', '🧠', '📱'][idx % 6],
+            title: s.name,
+            desc: s.description || `Professional ${s.category} solutions delivered by Varsaka Labs experts.`,
+            pill: s.category,
+            link: `/services/${s.name.toLowerCase().replace(/\s+/g, '-')}`
+          })));
+        }
+      } catch (err) {
+        console.warn('Network exception fetching services, using fallback:', err);
+        setServices(defaultServices);
+      } finally {
+        setServicesLoading(false);
       }
-      setServicesLoading(false);
 
       // FAQs
-      const { data: fData } = await supabase.from('faqs').select('*').order('created_at', { ascending: true });
-      if (fData) {
-        let dbFaqs = fData.map(f => ({
-          q: f.question,
-          a: f.answer,
-          category: f.category
-        }));
-        
-        if (dbFaqs.length < 5) {
-           const fallbacks = [
-             { q: 'How fast can you start?', a: 'Most engagements begin within a week of the discovery call. Automation framework setup typically takes one to two weeks.' },
-             { q: 'Do you work inside our existing tools?', a: 'Yes. We work in your Jira, GitHub, GitLab, and integrate test runs into your existing CI/CD pipelines.' },
-             { q: 'What about contracts and data security?', a: 'Every engagement starts with a bilateral NDA. We operate strictly under ISO-aligned controls and DPDP Act compliance.' }
-           ];
-           dbFaqs = [...dbFaqs, ...fallbacks.filter(fb => !dbFaqs.some(d => d.q === fb.q))];
+      try {
+        const { data: fData, error: fError } = await supabase
+          .from('faqs')
+          .select('*')
+          .order('created_at', { ascending: true });
+
+        if (fError) {
+          // DB or network failure -> optional static fallback
+          console.warn('DB error fetching FAQs, using fallback:', fError.message);
+          setFaqs([
+            { q: 'How fast can you start?', a: 'Most engagements begin within a week of the discovery call. Automation framework setup typically takes one to two weeks.' },
+            { q: 'Do you work inside our existing tools?', a: 'Yes. We work in your Jira, GitHub, GitLab, and integrate test runs into your existing CI/CD pipelines.' },
+            { q: 'What about contracts and data security?', a: 'Every engagement starts with a bilateral NDA. We operate strictly under ISO-aligned controls and DPDP Act compliance.' }
+          ]);
+        } else {
+          // DB success! Use DB records; if empty, faqs is [] (clean empty state)
+          setFaqs((fData || []).map(f => ({
+            q: f.question,
+            a: f.answer,
+            category: f.category
+          })));
         }
-        setFaqs(dbFaqs);
+      } catch (err) {
+        console.warn('Network exception fetching FAQs, using fallback:', err);
+        setFaqs([
+          { q: 'How fast can you start?', a: 'Most engagements begin within a week of the discovery call. Automation framework setup typically takes one to two weeks.' },
+          { q: 'Do you work inside our existing tools?', a: 'Yes. We work in your Jira, GitHub, GitLab, and integrate test runs into your existing CI/CD pipelines.' },
+          { q: 'What about contracts and data security?', a: 'Every engagement starts with a bilateral NDA. We operate strictly under ISO-aligned controls and DPDP Act compliance.' }
+        ]);
+      } finally {
+        setFaqsLoading(false);
       }
-      setFaqsLoading(false);
+
+
     };
     fetchDynamicContent();
   }, []);
@@ -504,18 +546,83 @@ export default function Home() {
         </div>
         <div className="faq-container fade-in">
           {faqsLoading ? (
-            <div style={{textAlign: 'center', padding: '2rem'}}>Loading FAQs...</div>
-          ) : faqs.map((f, i) => (
-            <div key={i} className={`faq-item${faqOpen === i ? ' open' : ''}`} onClick={() => setFaqOpen(faqOpen === i ? null : i)}>
-              <button className="faq-btn">
-                {f.q}
-                <span className="faq-icon">{faqOpen === i ? '−' : '+'}</span>
-              </button>
-              <div className="faq-content" style={{maxHeight: faqOpen === i ? '200px' : '0'}}>
-                <p>{f.a}</p>
-              </div>
+            <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
+              <div className="spinner" style={{ margin: '0 auto 1rem', width: '32px', height: '32px', border: '3px solid #e2e8f0', borderTopColor: 'var(--blue-mid, #2563eb)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+              <p>Loading FAQs...</p>
             </div>
-          ))}
+          ) : faqsError ? (
+            <div style={{ textAlign: 'center', padding: '2rem', color: '#ef4444' }}>
+              <p>Unable to load FAQs right now. Please try refreshing.</p>
+            </div>
+          ) : faqs.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '3rem 1rem', color: '#94a3b8' }}>
+              <p>No frequently asked questions available at this time.</p>
+            </div>
+          ) : (
+            <>
+              {(showAllFaqs ? faqs : faqs.slice(0, 3)).map((f, i) => (
+                <div key={f.id || i} className={`faq-item${faqOpen === i ? ' open' : ''}`} onClick={() => setFaqOpen(faqOpen === i ? null : i)}>
+                  <button className="faq-btn" type="button" aria-expanded={faqOpen === i}>
+                    {f.q}
+                    <span className="faq-icon">{faqOpen === i ? '−' : '+'}</span>
+                  </button>
+                  <div className="faq-content" style={{ maxHeight: faqOpen === i ? '500px' : '0' }}>
+                    <p>{f.a}</p>
+                  </div>
+                </div>
+              ))}
+
+              {faqs.length > 3 && (
+                <div style={{ textAlign: 'center', marginTop: '2.5rem' }}>
+                  <button
+                    type="button"
+                    id="faq-toggle-btn"
+                    onClick={() => setShowAllFaqs(prev => !prev)}
+                    className="btn-outline-primary"
+                    style={{
+                      padding: '0.75rem 2.2rem',
+                      borderRadius: '50px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      fontSize: '0.95rem',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.6rem',
+                      transition: 'all 0.25s ease',
+                      background: 'var(--bg-white, #ffffff)',
+                      border: '1.5px solid var(--blue-mid, #2563eb)',
+                      color: 'var(--blue-mid, #2563eb)',
+                      boxShadow: '0 2px 8px rgba(37, 99, 235, 0.08)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'var(--blue-mid, #2563eb)';
+                      e.currentTarget.style.color = '#ffffff';
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 6px 16px rgba(37, 99, 235, 0.2)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'var(--bg-white, #ffffff)';
+                      e.currentTarget.style.color = 'var(--blue-mid, #2563eb)';
+                      e.currentTarget.style.transform = 'none';
+                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(37, 99, 235, 0.08)';
+                    }}
+                  >
+                    {showAllFaqs ? (
+                      <>
+                        <span>Show Less</span>
+                        <span style={{ fontSize: '1rem' }}>↑</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>View More FAQs ({faqs.length - 3} more)</span>
+                        <span style={{ fontSize: '1rem' }}>↓</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </section>
 

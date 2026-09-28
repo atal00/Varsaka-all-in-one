@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Share2, CheckCircle2, Loader2, Copy, Check } from "lucide-react";
+import { AI_SERVICE_URL } from "@/lib/config";
 
 export function CaseStudyActions({ caseStudyId, isPublished, content }: { caseStudyId: string, isPublished: boolean, content?: string }) {
   const [isPublishing, setIsPublishing] = useState(false);
@@ -12,7 +13,7 @@ export function CaseStudyActions({ caseStudyId, isPublished, content }: { caseSt
   const handlePublish = async () => {
     setIsPublishing(true);
     try {
-      const res = await fetch(`http://127.0.0.1:3001/case-studies/${caseStudyId}/publish`, {
+      const res = await fetch(`${AI_SERVICE_URL}/case-studies/${caseStudyId}/publish`, {
         method: 'POST'
       });
       if (res.ok) {

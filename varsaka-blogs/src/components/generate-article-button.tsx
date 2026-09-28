@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
+import { AI_SERVICE_URL } from '@/lib/config';
 
 export function GenerateArticleButton({ topicId, type = 'blog' }: { topicId: string, type?: 'blog' | 'case-study' }) {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -15,7 +16,7 @@ export function GenerateArticleButton({ topicId, type = 'blog' }: { topicId: str
       const endpoint = type === 'blog' ? 'articles/generate' : 'case-studies/generate';
       const redirectBase = type === 'blog' ? 'articles' : 'case-studies';
       
-      const res = await fetch(`http://127.0.0.1:3001/${endpoint}`, {
+      const res = await fetch(`${AI_SERVICE_URL}/${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ topicId })

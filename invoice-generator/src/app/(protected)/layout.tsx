@@ -1,10 +1,11 @@
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/Sidebar";
-import { Button } from "@/components/ui/Button";
-import { Search, Bell, LogOut } from "lucide-react";
+import { Bell } from "lucide-react";
 import { LogoutButton } from "@/components/LogoutButton";
+import { SearchInvoices } from "@/components/SearchInvoices";
+import { TopNavLoader } from "@/components/TopNavLoader";
 
 export default async function ProtectedLayout({
   children,
@@ -17,9 +18,12 @@ export default async function ProtectedLayout({
     redirect("/login");
   }
 
+  const isAdmin = session.user?.email === 'invoice@varsaka.com';
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-app)' }}>
-      <Sidebar />
+      <TopNavLoader />
+      <Sidebar isAdmin={isAdmin} />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         <header style={{ 
           background: 'var(--bg-surface)', 
@@ -27,14 +31,30 @@ export default async function ProtectedLayout({
           padding: '1rem 2rem', 
           display: 'flex', 
           justifyContent: 'space-between', 
-          alignItems: 'center' 
+          alignItems: 'center',
+          position: 'sticky',
+          top: 0,
+          zIndex: 30
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', background: '#f3f4f6', padding: '0.5rem 1rem', borderRadius: 'var(--radius-md)', width: '300px' }}>
-            <Search size={16} color="var(--text-muted)" style={{ marginRight: '0.5rem' }} />
-            <input type="text" placeholder="Search in Invoices..." style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: '0.9rem', width: '100%' }} />
-          </div>
+          {/* Debounced Search Invoices */}
+          <SearchInvoices />
+
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-            <Bell size={20} color="var(--text-secondary)" style={{ cursor: 'pointer' }} />
+            <div 
+              style={{ 
+                background: '#f3f4f6', 
+                padding: '0.45rem', 
+                borderRadius: 'var(--radius-md)', 
+                display: 'flex', 
+                alignItems: 'center', 
+                cursor: 'pointer',
+                color: 'var(--text-secondary)'
+              }}
+              title="Notifications"
+            >
+              <Bell size={18} />
+            </div>
+
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', borderLeft: '1px solid var(--border-light)', paddingLeft: '1.5rem' }}>
               <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--accent-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: '0.9rem' }}>
                 {session.user?.email?.[0].toUpperCase()}

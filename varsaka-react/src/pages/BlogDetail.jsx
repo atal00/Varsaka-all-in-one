@@ -5,6 +5,7 @@ import { supabase } from '../supabaseClient';
 import DOMPurify from 'dompurify';
 import SEO from '../components/SEO';
 import defaultBlogImg from '../assets/ai_testing_future.png';
+import BlogDetailRenderer from '../components/cms/BlogDetailRenderer';
 import './Blog.css';
 
 export default function BlogDetail() {
@@ -17,55 +18,95 @@ export default function BlogDetail() {
     window.scrollTo(0, 0); 
     
     const fetchPost = async () => {
-      const localPost = blogPosts.find(p => p.id === id);
-      if (localPost) {
-        setPost(localPost);
-        setLoading(false);
-        return;
-      }
-
-      // Fallback to Supabase
       try {
-        const { data, error } = await supabase.from('blogs').select('*').eq('id', id).single();
-        if (data) {
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+        let query = supabase.from('blogs').select('*').eq('status', 'published');
+        if (isUUID) {
+          query = query.eq('id', id);
+        } else {
+          query = query.eq('slug', id);
+        }
+        
+        const { data, error } = await query.maybeSingle();
+
+        if (error) {
+          console.warn('DB error fetching blog post, checking static fallback:', error.message);
+          const localPost = blogPosts.find(p => p.id === id || p.slug === id);
+          if (localPost) {
+            setPost(localPost);
+          } else {
+            navigate('/blog');
+          }
+        } else if (data) {
+          // Parse sections
+          let parsedSections = [];
+          if (Array.isArray(data.sections) && data.sections.length > 0) {
+            parsedSections = data.sections;
+          } else if (typeof data.sections === 'string' && data.sections.trim()) {
+            try {
+              parsedSections = JSON.parse(data.sections);
+            } catch (e) {
+              parsedSections = [];
+            }
+          }
+
+          // Parse tags
+          let parsedTags = [];
+          if (Array.isArray(data.tags) && data.tags.length > 0) {
+            parsedTags = data.tags;
+          } else if (data.tag) {
+            parsedTags = data.tag.split(',').map(t => t.trim()).filter(Boolean);
+          }
+
+          // Normalize post record
           setPost({
             id: data.id,
+            slug: data.slug || data.id,
             title: data.title,
             date: data.date,
+            updated_at: data.updated_at,
+            category: data.category || data.tag || 'Quality Engineering',
             tag: data.tag || 'Technology',
+            tags: parsedTags,
+            author: data.author || 'Varsaka Engineering Team',
+            author_role: data.author_role || 'Quality Engineering & Security Practice',
+            read_time: data.read_time || '8 min read',
             summary: data.summary,
-            content: data.content || (
-              data.title.includes('QA') ? `
-              <p>The landscape of software testing is evolving at an unprecedented pace. As organizations push for faster release cycles and higher quality, traditional manual testing simply cannot keep up with the demands of modern continuous delivery pipelines.</p>
-              
-              <h2>The Rise of Intelligent Automation</h2>
-              <p>We are moving past simple record-and-playback scripts. The next generation of QA relies on intelligent automation frameworks that can heal themselves. When a UI element's ID changes or a button shifts slightly, AI-driven tests can dynamically adapt instead of failing outright, drastically reducing maintenance time.</p>
-              
-              <h2>Predictive Defect Analysis</h2>
-              <p>Imagine knowing where a bug is likely to occur before a single test is run. By analyzing historical commit data, past defect rates, and test results, advanced machine learning models can point QA engineers directly to the most risky areas of a codebase. This allows teams to optimize test coverage and focus their energy where it matters most.</p>
-              
-              <h2>What This Means for QA Teams</h2>
-              <p>Quality Assurance is no longer just about finding bugs-it's about preventing them entirely. The engineers of the future will spend less time writing repetitive scripts and more time architecting robust quality strategies, analyzing data trends, and ensuring that the final product delivers an exceptional user experience.</p>
-              
-              <p>At Varsaka, we are already implementing these forward-thinking strategies to help our clients ship better software, faster, and with complete confidence.</p>
-            ` : '<p>Content coming soon.</p>'
-            ),
-            image: data.image || defaultBlogImg
+            content: data.content || '<p>Content coming soon.</p>',
+            image: data.image || defaultBlogImg,
+            thumbnail: data.thumbnail || data.image || defaultBlogImg,
+            seo_title: data.seo_title || data.title,
+            seo_description: data.seo_description || data.summary,
+            seo_keywords: data.seo_keywords || 'software testing, quality engineering, QA insights',
+            sections: parsedSections
           });
+        } else {
+          // Check static fallback before navigating away
+          const localPost = blogPosts.find(p => p.id === id);
+          if (localPost) {
+            setPost(localPost);
+          } else {
+            navigate('/blog');
+          }
+        }
+      } catch (err) {
+        console.warn('Exception fetching blog post:', err);
+        const localPost = blogPosts.find(p => p.id === id);
+        if (localPost) {
+          setPost(localPost);
         } else {
           navigate('/blog');
         }
-      } catch (err) {
-        navigate('/blog');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     fetchPost();
 
     const handleScroll = () => {
       const scrollTotal = document.documentElement.scrollHeight - window.innerHeight;
-      const scrollProgress = (window.pageYOffset / scrollTotal) * 100;
+      const scrollProgress = scrollTotal > 0 ? (window.pageYOffset / scrollTotal) * 100 : 0;
       const progressBar = document.getElementById('reading-progress');
       if (progressBar) progressBar.style.width = `${scrollProgress}%`;
     };
@@ -75,49 +116,32 @@ export default function BlogDetail() {
   }, [id, navigate]);
 
   if (loading) {
-    return <div style={{textAlign: 'center', padding: '10rem'}}>Loading article...</div>;
+    return <div style={{textAlign: 'center', padding: '10rem', color: '#64748b'}}>Loading article...</div>;
   }
   if (!post) return null;
 
   return (
     <div className="blog-detail-page">
       <SEO 
-        title={post.title}
-        description={post.summary}
-        keywords={`${post.tag}, ${post.title.toLowerCase()}, software testing insights, QA blog`}
+        title={post.seo_title || post.title}
+        description={post.seo_description || post.summary}
+        keywords={post.seo_keywords || `${post.category}, ${post.title.toLowerCase()}, software testing insights, QA blog`}
         image={post.image}
+        type="article"
+        author={post.author}
+        publishedTime={post.date}
+        modifiedTime={post.updated_at || post.date}
       />
-      <div id="reading-progress" className="reading-progress-bar"></div>
-      {/* 🚀 Article Header Image */}
-      <div className="blog-detail-header-img" style={{ height: '400px', overflow: 'hidden' }}>
-        <img 
-          src={post.image} 
-          alt={post.title} 
-          style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-        />
-      </div>
+      
+      {/* Unified BlogDetailRenderer with sections and rich formatting support */}
+      <BlogDetailRenderer post={post} showBackBtn={false} />
 
-      <div className="blog-hero" style={{ paddingBottom: '2rem', paddingTop: '4rem' }}>
-        <div className="blog-container" style={{ textAlign: 'center' }}>
-          <div className="section-tag">{post.tag}</div>
-          <h1 className="blog-title" style={{ fontSize: '3rem', maxWidth: '900px', margin: '0 auto 1.5rem' }}>{post.title}</h1>
-          <div className="blog-card-meta" style={{ justifyContent: 'center' }}>
-            <i className="fa-regular fa-calendar"></i> {post.date} • 5 min read
-          </div>
-        </div>
-      </div>
-
-      <div className="blog-container">
-        <div className="prose-block" style={{ marginTop: 0, boxShadow: 'none', border: 'none', background: 'transparent', padding: '0 5%' }}>
-          <div className="blog-full-content" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.content) }} />
-          
-          <div style={{ textAlign: 'center', marginTop: '3rem', marginBottom: '2rem' }}>
-            <Link to="/blog" className="read-more" style={{ display: 'inline-flex', fontSize: '1.1rem' }}>
-              <i className="fa-solid fa-arrow-left"></i> Back to more blogs
-            </Link>
-          </div>
-          
-          </div>
+      {/* 🔙 Back to All Blogs CTA */}
+      <div className="back-btn-container" style={{ textAlign: 'center', marginTop: '3.5rem', marginBottom: '4rem' }}>
+        <Link to="/blog" className="back-to-listing-btn" aria-label="Back to All Blogs">
+          <i className="fa-solid fa-arrow-left back-arrow-icon" aria-hidden="true"></i>
+          <span>Back to All Blogs</span>
+        </Link>
       </div>
     </div>
   );

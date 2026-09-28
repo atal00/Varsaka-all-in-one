@@ -4,8 +4,10 @@ const SecureCaptcha = ({ onValidate }) => {
   const [captchaText, setCaptchaText] = useState('');
   const [userInput, setUserInput] = useState('');
   const canvasRef = useRef(null);
+  const captchaTextRef = useRef('');
 
   const generateRandomString = (length) => {
+    // Clean character set excluding easily confused symbols
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
     let result = '';
     for (let i = 0; i < length; i++) {
@@ -29,7 +31,10 @@ const SecureCaptcha = ({ onValidate }) => {
     ctx.fillRect(0, 0, width, height);
 
     const text = generateRandomString(6);
+    captchaTextRef.current = text;
     setCaptchaText(text);
+
+    console.log('[SecureCaptcha] Generated CAPTCHA:', text);
 
     // Add noise (dots)
     for (let i = 0; i < 100; i++) {
@@ -74,20 +79,39 @@ const SecureCaptcha = ({ onValidate }) => {
   const handleChange = (e) => {
     const val = e.target.value;
     setUserInput(val);
-    if (val.toLowerCase() === captchaText.toLowerCase() && captchaText.length > 0) {
-      onValidate(true);
-    } else {
-      onValidate(false);
-    }
+
+    // Normalize both input and target by trimming whitespace and normalizing case
+    // This resolves font distortion confusion (e.g. rotated P vs p, C vs c) and trailing whitespace
+    const target = captchaTextRef.current || captchaText;
+    const normalizedInput = (val || '').trim().toLowerCase();
+    const normalizedTarget = (target || '').trim().toLowerCase();
+    const isValid = Boolean(
+      normalizedInput.length > 0 &&
+      normalizedTarget.length > 0 &&
+      normalizedInput === normalizedTarget
+    );
+
+    console.log('[SecureCaptcha] Validation - Input:', val, '| Target:', target, '| Normalized Input:', normalizedInput, '| Normalized Target:', normalizedTarget, '| Valid:', isValid);
+
+    onValidate(isValid);
+  };
+
+  const handleRefresh = (e) => {
+    e.preventDefault();
+    drawCaptcha();
+    setUserInput('');
+    onValidate(false);
   };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '5px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
         <canvas 
+          id="captcha-canvas"
           ref={canvasRef} 
           width="220" 
           height="60" 
+          data-captcha={import.meta.env.DEV ? (captchaTextRef.current || captchaText) : undefined}
           style={{ 
             border: '2px solid #e2e8f0', 
             borderRadius: '8px',
@@ -95,8 +119,9 @@ const SecureCaptcha = ({ onValidate }) => {
           }} 
         />
         <button 
+          id="btn-refresh-captcha"
           type="button" 
-          onClick={(e) => { e.preventDefault(); drawCaptcha(); setUserInput(''); onValidate(false); }}
+          onClick={handleRefresh}
           style={{
             background: '#f1f5f9',
             border: '1px solid #cbd5e1',
@@ -117,11 +142,13 @@ const SecureCaptcha = ({ onValidate }) => {
         </button>
       </div>
       <input 
+        id="captcha-input"
         type="text" 
         value={userInput}
         onChange={handleChange}
-        placeholder="Enter the text from image"
+        placeholder="Enter security code"
         required
+        autoComplete="off"
         spellCheck="false"
         style={{
           padding: '10px 12px',

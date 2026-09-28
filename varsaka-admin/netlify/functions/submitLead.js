@@ -7,7 +7,7 @@ const ipCache = new Map();
 
 exports.handler = async (event, context) => {
   // Strict CORS checking
-  const allowedOrigins = (process.env.ALLOWED_ORIGIN || 'https://varsaka.com,https://admin.varsaka.com').split(',').map(o => o.trim());
+  const allowedOrigins = (process.env.ALLOWED_ORIGIN || 'https://varsaka.com,https://loginto.varsaka.com').split(',').map(o => o.trim());
   const requestOrigin = event.headers.origin;
   
   let corsOrigin = allowedOrigins[0];

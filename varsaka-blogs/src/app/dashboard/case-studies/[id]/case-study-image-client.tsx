@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { RefreshCw, Download } from "lucide-react";
+import { AI_SERVICE_URL } from "@/lib/config";
 
 export function CaseStudyImageClient({ caseStudyId, imageUrls, alt }: { caseStudyId: string, imageUrls: string[], alt: string }) {
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -11,7 +12,7 @@ export function CaseStudyImageClient({ caseStudyId, imageUrls, alt }: { caseStud
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      const res = await fetch(`http://127.0.0.1:3001/case-studies/${caseStudyId}/refresh-image`, {
+      const res = await fetch(`${AI_SERVICE_URL}/case-studies/${caseStudyId}/refresh-image`, {
         method: 'POST'
       });
       if (res.ok) {

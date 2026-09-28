@@ -96,6 +96,7 @@ CREATE TABLE IF NOT EXISTS certificates (
   cert_year TEXT,
   cert_num TEXT,
   certificate_id TEXT UNIQUE,
+  public_verification_token UUID UNIQUE DEFAULT gen_random_uuid(),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
