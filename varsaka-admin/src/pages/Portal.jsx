@@ -11,6 +11,10 @@ import ImageUploadField from '../components/ImageUploadField';
 import RichContentEditor from '../components/RichContentEditor';
 import CaseStudyEditorModal from '../components/cms/CaseStudyEditorModal';
 import BlogEditorModal from '../components/cms/BlogEditorModal';
+import ServiceEditorModal from '../components/cms/ServiceEditorModal';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
+import ToastContainer from '../components/ui/Toast';
+import { resolveServiceSlug } from '../utils/serviceSlug';
 import './Portal.css';
 
 const ALL_COUNTRIES = [
@@ -130,13 +134,13 @@ const PUBLIC_VERIFY_URL = (import.meta.env.VITE_SITE_URL || 'https://varsaka.com
 
 export default function Portal() {
   const { session: authSession, userRole, userPermissions, userProfile, loading: authLoading, signOut, sessionExpiry, refreshProfile } = useAuth();
-  
+
   // Normalized session object with authoritative role & permissions
   const session = useMemo(() => {
     if (!authSession) return null;
     const normalizedRole = (userRole || '').toLowerCase().trim() || null;
-    const effectivePermissions = normalizedRole === 'admin' 
-      ? JSON.parse(JSON.stringify(ALL_ADMIN_PERMISSIONS)) 
+    const effectivePermissions = normalizedRole === 'admin'
+      ? JSON.parse(JSON.stringify(ALL_ADMIN_PERMISSIONS))
       : userPermissions;
 
     return {
@@ -197,8 +201,8 @@ export default function Portal() {
   };
 
   const [showAddLead, setShowAddLead] = useState(false);
-  const [newLead, setNewLead] = useState({ 
-    name: '', email: '', phone: '', countryCode: '+91', service: 'Functional Testing', msg: '' 
+  const [newLead, setNewLead] = useState({
+    name: '', email: '', phone: '', countryCode: '+91', service: 'Functional Testing', msg: ''
   });
   const [addingLead, setAddingLead] = useState(false);
   const [countrySearch, setCountrySearch] = useState('');
@@ -237,7 +241,7 @@ export default function Portal() {
     certificate_id: ''
   });
   const [addingIntern, setAddingIntern] = useState(false);
-  
+
   // --- Real Role & Permission Management Users State ---
   const [usersList, setUsersList] = useState([]);
   const [usersLoading, setUsersLoading] = useState(false);
@@ -343,15 +347,86 @@ export default function Portal() {
       setSecSettingsMsg({ type: 'error', text: res.error || 'Failed to update security settings.' });
     }
   };
-  
+
+  // --- Modern Toast & Confirmation Dialog System ---
+  const [toasts, setToasts] = useState([]);
+  const addToast = (type, message, title = '') => {
+    const id = Date.now() + Math.random().toString(36).substring(2, 9);
+    setToasts(prev => [...prev, { id, type, message, title }]);
+  };
+  const dismissToast = (id) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  };
+
+  const [confirmDialog, setConfirmDialog] = useState({
+    isOpen: false,
+    title: '',
+    description: '',
+    confirmLabel: 'Confirm',
+    cancelLabel: 'Cancel',
+    isDestructive: true,
+    isLoading: false,
+    onConfirm: () => {}
+  });
+
+  const showConfirm = ({ title, description, confirmLabel = 'Confirm', cancelLabel = 'Cancel', isDestructive = true, onConfirm }) => {
+    setConfirmDialog({
+      isOpen: true,
+      title,
+      description,
+      confirmLabel,
+      cancelLabel,
+      isDestructive,
+      isLoading: false,
+      onConfirm: async () => {
+        try {
+          if (onConfirm) await onConfirm();
+        } finally {
+          setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+        }
+      }
+    });
+  };
+
+  const closeConfirm = () => {
+    setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+  };
+
   // --- Generic Modal State for Mock CRUD ---
   const [genericModal, setGenericModal] = useState({ isOpen: false, type: '', data: null });
   const [mockServices, setMockServices] = useState([]);
   const [mockBlogs, setMockBlogs] = useState([]);
-  const [mockTestimonials, setMockTestimonials] = useState([]);
   const [mockFaqs, setMockFaqs] = useState([]);
   const [mockCaseStudies, setMockCaseStudies] = useState([]);
   const [mockJobs, setMockJobs] = useState([]);
+
+  // --- Filter States for Blog & Case Studies ---
+  const [blogFilter, setBlogFilter] = useState('all');
+  const [caseStudyFilter, setCaseStudyFilter] = useState('all');
+
+  const blogCounts = useMemo(() => ({
+    all: mockBlogs.length,
+    published: mockBlogs.filter(b => b.status === 'published').length,
+    draft: mockBlogs.filter(b => b.status === 'draft' || b.status !== 'published').length
+  }), [mockBlogs]);
+
+  const filteredBlogs = useMemo(() => {
+    if (blogFilter === 'published') return mockBlogs.filter(b => b.status === 'published');
+    if (blogFilter === 'draft') return mockBlogs.filter(b => b.status === 'draft' || b.status !== 'published');
+    return mockBlogs;
+  }, [mockBlogs, blogFilter]);
+
+  const caseStudyCounts = useMemo(() => ({
+    all: mockCaseStudies.length,
+    published: mockCaseStudies.filter(cs => cs.status === 'published').length,
+    draft: mockCaseStudies.filter(cs => cs.status === 'draft' || cs.status !== 'published').length
+  }), [mockCaseStudies]);
+
+  const filteredCaseStudies = useMemo(() => {
+    if (caseStudyFilter === 'published') return mockCaseStudies.filter(cs => cs.status === 'published');
+    if (caseStudyFilter === 'draft') return mockCaseStudies.filter(cs => cs.status === 'draft' || cs.status !== 'published');
+    return mockCaseStudies;
+  }, [mockCaseStudies, caseStudyFilter]);
 
   // Rich Content & Media States
   const [modalTab, setModalTab] = useState('basic');
@@ -386,9 +461,15 @@ export default function Portal() {
 
   const handleCloseGenericModal = (force = false) => {
     if (!force && isFormDirty) {
-      if (!window.confirm('You have unsaved changes. Are you sure you want to discard them?')) {
-        return;
-      }
+      showConfirm({
+        title: 'Discard Unsaved Changes?',
+        description: 'You have unsaved edits in this form. Are you sure you want to discard them?',
+        confirmLabel: 'Discard Changes',
+        cancelLabel: 'Keep Editing',
+        isDestructive: true,
+        onConfirm: () => handleCloseGenericModal(true)
+      });
+      return;
     }
     setGenericModal({ isOpen: false, type: '', data: null });
     setModalTab('basic');
@@ -500,13 +581,13 @@ export default function Portal() {
 
   // 🛡️ Prevent background page from scrolling while any modal is open
   const isAnyModalOpen = Boolean(
-    genericModal.isOpen || 
-    showRejectModal || 
-    showDeleteModal || 
-    showInfoModal || 
-    permModalUser || 
-    roleModalUser || 
-    certToDelete || 
+    genericModal.isOpen ||
+    showRejectModal ||
+    showDeleteModal ||
+    showInfoModal ||
+    permModalUser ||
+    roleModalUser ||
+    certToDelete ||
     showAddIntern ||
     celebration
   );
@@ -521,24 +602,88 @@ export default function Portal() {
     }
   }, [isAnyModalOpen]);
 
+  const handleSaveService = async (servicePayload) => {
+    try {
+      const isValidUuid = typeof servicePayload.id === 'string' &&
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(servicePayload.id);
+
+      let savedRecord;
+      if (isValidUuid) {
+        const { id, ...updates } = servicePayload;
+        updates.updated_at = new Date().toISOString();
+        const { data, error } = await supabase.from('services').update(updates).eq('id', id).select();
+        if (error) throw error;
+        savedRecord = data && data[0] ? data[0] : { ...servicePayload };
+        setMockServices(mockServices.map(s => s.id === id ? savedRecord : s));
+        logSecurityEvent('CMS_SERVICE_UPDATED', { id, name: servicePayload.name, status: servicePayload.status });
+        addToast('success', 'Service updated successfully');
+      } else {
+        const insertPayload = { ...servicePayload };
+        delete insertPayload.id;
+        insertPayload.updated_at = new Date().toISOString();
+        const { data, error } = await supabase.from('services').insert([insertPayload]).select();
+        if (error) throw error;
+        savedRecord = data[0];
+        setMockServices([savedRecord, ...mockServices]);
+        logSecurityEvent('CMS_SERVICE_CREATED', { id: savedRecord.id, name: savedRecord.name, status: savedRecord.status });
+        addToast('success', 'Service created successfully');
+      }
+      handleCloseGenericModal(true);
+      return savedRecord;
+    } catch (err) {
+      console.error('CMS Service Save Error:', err);
+      addToast('error', 'Unable to save service. Please verify the required fields and try again.');
+      throw err;
+    }
+  };
+
+  const handleDeleteService = async (id) => {
+    try {
+      const { error } = await supabase.from('services').delete().eq('id', id);
+      if (error) throw error;
+      setMockServices(mockServices.filter(s => s.id !== id));
+      logSecurityEvent('CMS_SERVICE_DELETED', { id });
+      addToast('success', 'Service deleted successfully');
+      handleCloseGenericModal(true);
+    } catch (err) {
+      console.error('CMS Service Delete Error:', err);
+      addToast('error', 'Unable to delete this service. Please try again.');
+      throw err;
+    }
+  };
+
   const handleSaveCaseStudy = async (studyPayload) => {
     try {
-      if (studyPayload.id) {
+      const isValidUuid = typeof studyPayload.id === 'string' &&
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(studyPayload.id);
+
+      if (isValidUuid) {
         const { id, ...updates } = studyPayload;
+        if (!updates.slug && (updates.client || updates.title)) {
+          updates.slug = (updates.client || updates.title).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        }
         const { error } = await supabase.from('case_studies').update(updates).eq('id', id);
         if (error) throw error;
         setMockCaseStudies(mockCaseStudies.map(s => s.id === id ? { ...s, ...studyPayload } : s));
         logSecurityEvent('CMS_CASE_STUDY_UPDATED', { id, client: studyPayload.client, status: studyPayload.status });
+        addToast('success', 'Case study updated successfully');
       } else {
-        const { data, error } = await supabase.from('case_studies').insert([studyPayload]).select();
+        const insertPayload = { ...studyPayload };
+        delete insertPayload.id;
+        if (!insertPayload.slug && (insertPayload.client || insertPayload.title)) {
+          insertPayload.slug = (insertPayload.client || insertPayload.title).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        }
+        const { data, error } = await supabase.from('case_studies').insert([insertPayload]).select();
         if (error) throw error;
         const newItem = data[0];
         setMockCaseStudies([newItem, ...mockCaseStudies]);
         logSecurityEvent('CMS_CASE_STUDY_CREATED', { id: newItem.id, client: newItem.client, status: newItem.status });
+        addToast('success', 'Case study created successfully');
       }
       handleCloseGenericModal(true);
     } catch (err) {
-      alert(`Database Error: ${err.message}`);
+      console.error('CMS Case Study Save Error:', err);
+      addToast('error', 'Unable to save this case study. Please verify the client name and required fields, then retry.');
       throw err;
     }
   };
@@ -549,31 +694,47 @@ export default function Portal() {
       if (error) throw error;
       setMockCaseStudies(mockCaseStudies.filter(s => s.id !== id));
       logSecurityEvent('CMS_CASE_STUDY_DELETED', { id });
+      addToast('success', 'Case study deleted successfully');
       handleCloseGenericModal(true);
     } catch (err) {
-      alert(`Database Error: ${err.message}`);
+      console.error('CMS Case Study Delete Error:', err);
+      addToast('error', 'Unable to delete this case study. Please try again.');
       throw err;
     }
   };
 
   const handleSaveBlog = async (blogPayload) => {
     try {
-      if (blogPayload.id) {
+      const isValidUuid = typeof blogPayload.id === 'string' &&
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(blogPayload.id);
+
+      if (isValidUuid) {
         const { id, ...updates } = blogPayload;
+        if (!updates.slug && updates.title) {
+          updates.slug = updates.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        }
         const { error } = await supabase.from('blogs').update(updates).eq('id', id);
         if (error) throw error;
         setMockBlogs(mockBlogs.map(b => b.id === id ? { ...b, ...blogPayload } : b));
         logSecurityEvent('CMS_BLOG_UPDATED', { id, title: blogPayload.title, status: blogPayload.status });
+        addToast('success', 'Blog article updated successfully');
       } else {
-        const { data, error } = await supabase.from('blogs').insert([blogPayload]).select();
+        const insertPayload = { ...blogPayload };
+        delete insertPayload.id;
+        if (!insertPayload.slug && insertPayload.title) {
+          insertPayload.slug = insertPayload.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        }
+        const { data, error } = await supabase.from('blogs').insert([insertPayload]).select();
         if (error) throw error;
         const newItem = data[0];
         setMockBlogs([newItem, ...mockBlogs]);
         logSecurityEvent('CMS_BLOG_CREATED', { id: newItem.id, title: newItem.title, status: newItem.status });
+        addToast('success', 'Blog article created successfully');
       }
       handleCloseGenericModal(true);
     } catch (err) {
-      alert(`Database Error: ${err.message}`);
+      console.error('CMS Blog Save Error:', err);
+      addToast('error', 'Unable to save this article. Please verify the title and required fields, then retry.');
       throw err;
     }
   };
@@ -584,9 +745,11 @@ export default function Portal() {
       if (error) throw error;
       setMockBlogs(mockBlogs.filter(b => b.id !== id));
       logSecurityEvent('CMS_BLOG_DELETED', { id });
+      addToast('success', 'Blog article deleted successfully');
       handleCloseGenericModal(true);
     } catch (err) {
-      alert(`Database Error: ${err.message}`);
+      console.error('CMS Blog Delete Error:', err);
+      addToast('error', 'Unable to delete this article. Please try again.');
       throw err;
     }
   };
@@ -595,7 +758,12 @@ export default function Portal() {
     e.preventDefault();
     const fd = new FormData(e.target);
     const updates = Object.fromEntries(fd.entries());
-    
+
+    // Strip empty id so database generates fresh UUID on insert
+    if (updates.id !== undefined && (!updates.id || typeof updates.id !== 'string' || !updates.id.trim())) {
+      delete updates.id;
+    }
+
     if (genericModal.type === 'Blog') {
       updates.image = blogImage;
       updates.thumbnail = blogThumbnail;
@@ -619,19 +787,25 @@ export default function Portal() {
         updates.slug = (updates.client || updates.title).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
       }
     }
-    
+
     let table = '';
     if (genericModal.type === 'Service') table = 'services';
     else if (genericModal.type === 'Blog') table = 'blogs';
-    else if (genericModal.type === 'Testimonial') table = 'testimonials';
     else if (genericModal.type === 'FAQ') table = 'faqs';
     else if (genericModal.type === 'Case Study') table = 'case_studies';
     else if (genericModal.type === 'Career') table = 'jobs';
 
-    if (genericModal.type === 'Career' && updates.tags) {
-      updates.tags = updates.tags.split(',').map(t => t.trim()).filter(Boolean);
+    if (genericModal.type === 'Career') {
+      if (typeof updates.tags === 'string') {
+        updates.tags = updates.tags.split(',').map(t => t.trim()).filter(Boolean);
+      } else if (!Array.isArray(updates.tags)) {
+        updates.tags = [];
+      }
+      if (updates.apply_link === '') {
+        updates.apply_link = null;
+      }
     }
-    
+
     // User management is handled via the dedicated Role & Permission Management interface
     if (genericModal.type === 'User') {
       triggerInfo('User management is handled via the Role & Permission Management table.');
@@ -643,29 +817,37 @@ export default function Portal() {
       if (genericModal.data) {
         const { error } = await supabase.from(table).update(updates).eq('id', genericModal.data.id);
         if (error) throw error;
-        
+
         if (table === 'services') setMockServices(mockServices.map(s => s.id === genericModal.data.id ? {...s, ...updates} : s));
-        if (table === 'blogs') setMockBlogs(mockBlogs.map(s => s.id === genericModal.data.id ? {...s, ...updates} : s));
-        if (table === 'testimonials') setMockTestimonials(mockTestimonials.map(s => s.id === genericModal.data.id ? {...s, ...updates} : s));
-        if (table === 'faqs') setMockFaqs(mockFaqs.map(s => s.id === genericModal.data.id ? {...s, ...updates} : s));
-        if (table === 'case_studies') setMockCaseStudies(mockCaseStudies.map(s => s.id === genericModal.data.id ? {...s, ...updates} : s));
-        if (table === 'jobs') setMockJobs(mockJobs.map(s => s.id === genericModal.data.id ? {...s, ...updates} : s));
+        if (table === 'blogs') setMockBlogs(mockBlogs.map(b => b.id === genericModal.data.id ? {...b, ...updates} : b));
+        if (table === 'faqs') setMockFaqs(mockFaqs.map(f => f.id === genericModal.data.id ? {...f, ...updates} : f));
+        if (table === 'case_studies') setMockCaseStudies(mockCaseStudies.map(cs => cs.id === genericModal.data.id ? {...cs, ...updates} : cs));
+        if (table === 'jobs') setMockJobs(mockJobs.map(j => j.id === genericModal.data.id ? {...j, ...updates} : j));
       } else {
         const { data, error } = await supabase.from(table).insert([updates]).select();
         if (error) throw error;
-        
+
         const newItem = data[0];
         if (table === 'services') setMockServices([newItem, ...mockServices]);
         if (table === 'blogs') setMockBlogs([newItem, ...mockBlogs]);
-        if (table === 'testimonials') setMockTestimonials([newItem, ...mockTestimonials]);
         if (table === 'faqs') setMockFaqs([newItem, ...mockFaqs]);
         if (table === 'case_studies') setMockCaseStudies([newItem, ...mockCaseStudies]);
         if (table === 'jobs') setMockJobs([newItem, ...mockJobs]);
       }
       setIsFormDirty(false);
+      addToast('success', `${genericModal.type} saved successfully`);
       handleCloseGenericModal(true);
     } catch (err) {
-      alert(`Database Error: ${err.message}. Have you run the migrations.sql script?`);
+      console.error('Generic CMS Save Error:', err);
+      let userFriendlyMsg = 'Unable to save changes. Please verify the required fields and try again.';
+      if (genericModal.type === 'Career') {
+        userFriendlyMsg = 'Unable to save the career opening. Please ensure all required fields are filled correctly.';
+      } else if (genericModal.type === 'Service') {
+        userFriendlyMsg = 'Unable to save the service. Please verify the service name and details.';
+      } else if (genericModal.type === 'FAQ') {
+        userFriendlyMsg = 'Unable to save the FAQ. Please ensure question and answer are provided.';
+      }
+      addToast('error', userFriendlyMsg);
     }
   };
 
@@ -673,7 +855,6 @@ export default function Portal() {
     let table = '';
     if (genericModal.type === 'Service') table = 'services';
     else if (genericModal.type === 'Blog') table = 'blogs';
-    else if (genericModal.type === 'Testimonial') table = 'testimonials';
     else if (genericModal.type === 'FAQ') table = 'faqs';
     else if (genericModal.type === 'Case Study') table = 'case_studies';
     else if (genericModal.type === 'Career') table = 'jobs';
@@ -690,14 +871,14 @@ export default function Portal() {
 
       if (table === 'services') setMockServices(mockServices.filter(s => s.id !== genericModal.data.id));
       if (table === 'blogs') setMockBlogs(mockBlogs.filter(s => s.id !== genericModal.data.id));
-      if (table === 'testimonials') setMockTestimonials(mockTestimonials.filter(s => s.id !== genericModal.data.id));
       if (table === 'faqs') setMockFaqs(mockFaqs.filter(s => s.id !== genericModal.data.id));
       if (table === 'case_studies') setMockCaseStudies(mockCaseStudies.filter(s => s.id !== genericModal.data.id));
       if (table === 'jobs') setMockJobs(mockJobs.filter(s => s.id !== genericModal.data.id));
-      
+      addToast('success', `${genericModal.type} deleted successfully`);
       handleCloseGenericModal();
     } catch (err) {
-      alert(`Database Error: ${err.message}. Have you run the migrations.sql script?`);
+      console.error('Generic CMS Delete Error:', err);
+      addToast('error', 'Unable to delete this item. Please try again.');
     }
   };
 
@@ -716,7 +897,7 @@ export default function Portal() {
       const nextNum = yearNums.length > 0 ? Math.max(...yearNums) + 1 : 1;
       // Pad to 3 digits (e.g. 001, 015, 120)
       const paddedNum = nextNum.toString().padStart(3, '0');
-      
+
       setTimeout(() => {
         setNewIntern(prev => ({ ...prev, cert_num: paddedNum }));
       }, 0);
@@ -732,27 +913,25 @@ export default function Portal() {
       // 🛡️ SECURITY FIX 3: Network Data Minimization
       // Prevent data leakage over network by strictly querying only assigned leads for employees
       let query = supabase.from('leads').select('*').order('created_at', { ascending: false });
-      
+
       if (session.role === 'employee') {
         query = query.eq('assigned_to', session.id);
       }
-      
+
       const { data: leads, error: fetchError } = await query;
-      
+
       if (fetchError) throw fetchError;
 
       // Fetch other data
       const [
         { data: sData },
         { data: bData },
-        { data: tData },
         { data: fData },
         csResult,
         jobsResult
       ] = await Promise.all([
         supabase.from('services').select('*').order('created_at', { ascending: false }),
         supabase.from('blogs').select('*').order('created_at', { ascending: false }),
-        supabase.from('testimonials').select('*').order('created_at', { ascending: false }),
         supabase.from('faqs').select('*').order('created_at', { ascending: false }),
         supabase.from('case_studies').select('*').order('created_at', { ascending: false }).then(res => res).catch(() => ({ data: [] })),
         supabase.from('jobs').select('*').order('created_at', { ascending: false }).then(res => res).catch(() => ({ data: [] }))
@@ -760,7 +939,6 @@ export default function Portal() {
 
       if (sData) setMockServices(sData);
       if (bData) setMockBlogs(bData);
-      if (tData) setMockTestimonials(tData);
       if (fData) setMockFaqs(fData);
       if (csResult?.data) setMockCaseStudies(csResult.data);
       if (jobsResult?.data) setMockJobs(jobsResult.data);
@@ -784,9 +962,9 @@ export default function Portal() {
       // 🎊 Celebration Check (Only for Employee)
       if (session.role === 'employee') {
         // 1. Check for newly approved leads
-        const newlyApproved = leads.find(l => 
-          l.assigned_to === session.id && 
-          l.status === 'new' && 
+        const newlyApproved = leads.find(l =>
+          l.assigned_to === session.id &&
+          l.status === 'new' &&
           !localStorage.getItem(`celebrated_${l.id}`)
         );
 
@@ -794,11 +972,11 @@ export default function Portal() {
           const msg = CONGRATS_MESSAGES[Math.floor(Math.random() * CONGRATS_MESSAGES.length)];
           setCelebration({ name: newlyApproved.name, message: msg, type: 'approval' });
           localStorage.setItem(`celebrated_${newlyApproved.id}`, 'true');
-        } 
+        }
         // 2. Or check for newly assigned leads (if not already approved/celebrated)
         else {
-          const newlyAssigned = leads.find(l => 
-            l.assigned_to === session.id && 
+          const newlyAssigned = leads.find(l =>
+            l.assigned_to === session.id &&
             l.status !== 'rejected' &&
             l.status !== 'approval_pending' && // 🛡️ Fix: Don't celebrate yet!
             !localStorage.getItem(`assigned_notified_${l.id}`)
@@ -870,10 +1048,6 @@ export default function Portal() {
         supabase.from('blogs').select('*').order('created_at', { ascending: false })
           .then(({ data }) => { if (data) setMockBlogs(data); });
       })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'testimonials' }, () => {
-        supabase.from('testimonials').select('*').order('created_at', { ascending: false })
-          .then(({ data }) => { if (data) setMockTestimonials(data); });
-      })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'faqs' }, () => {
         supabase.from('faqs').select('*').order('created_at', { ascending: false })
           .then(({ data }) => { if (data) setMockFaqs(data); });
@@ -911,7 +1085,7 @@ export default function Portal() {
     const cleanup = async () => {
       const now = new Date();
       const sixtyMinsAgo = new Date(now.getTime() - 60 * 60 * 1000).toISOString();
-      
+
       const { data: expired } = await supabase
         .from('leads')
         .select('id')
@@ -964,7 +1138,7 @@ export default function Portal() {
         issue_date: newIntern.issue_date,
         certificate_id: `VAR-INT-${newIntern.cert_year}-${newIntern.cert_num}`
       };
-      
+
       if (internData.internship_role === 'other') {
         internData.internship_role = sanitize(internData.custom_role) || 'Intern';
       }
@@ -1326,7 +1500,7 @@ export default function Portal() {
       triggerInfo('Error: You do not have permission to assign care requests.');
       return;
     }
-    
+
     const targetLead = data.find(l => l.id === leadId);
     const updates = { assigned_to: staffId || null };
 
@@ -1411,9 +1585,9 @@ export default function Portal() {
     }
     if (!deleteTarget) return;
     const { id, email } = deleteTarget;
-    
+
     const { error: deleteError } = await supabase.from('leads').delete().eq('id', id);
-    
+
     if (deleteError) {
       triggerInfo('Failed to delete from DB: ' + deleteError.message);
     } else {
@@ -1436,7 +1610,7 @@ export default function Portal() {
     if (!newLead.name || !newLead.email) {
       return triggerInfo('Please enter Name and Email');
     }
-    
+
     setAddingLead(true);
     try {
       const isStaff = session.role === 'employee';
@@ -1454,21 +1628,21 @@ export default function Portal() {
       if (insError) throw insError;
 
       triggerInfo(isStaff ? 'Lead submitted for Admin approval!' : 'Lead added successfully!');
-      
+
       // 🛡️ GATED APPROVAL
       const gsUrl = import.meta.env.VITE_GS_SYNC_URL;
       if (!isStaff && gsUrl) {
         fetch(gsUrl, {
           method: 'POST',
           mode: 'no-cors',
-          body: JSON.stringify({ 
-            action: 'add', 
+          body: JSON.stringify({
+            action: 'add',
             ...newLead,
             phone: `'${newLead.countryCode} ${newLead.phone}`
           })
         }).catch(err => console.error('GS Sync Error:', err));
       }
-      
+
       setNewLead({ name: '', email: '', phone: '', countryCode: '+91', service: 'Functional Testing', msg: '' });
       setShowAddLead(false);
       fetchData(); // Refresh data
@@ -1485,24 +1659,24 @@ export default function Portal() {
       return;
     }
     const { error } = await supabase.from('leads').update({ status: 'new' }).eq('id', lead.id);
-    
+
     const gsUrl = import.meta.env.VITE_GS_SYNC_URL;
     if (!error && gsUrl) {
       // 🚀 SYNC TO GOOGLE SHEETS ONLY ON APPROVAL
       fetch(gsUrl, {
         method: 'POST',
         mode: 'no-cors',
-        body: JSON.stringify({ 
-          action: 'add', 
+        body: JSON.stringify({
+          action: 'add',
           name: lead.name,
           email: lead.email,
           phone: `'${lead.phone}`, // 🛠️ Fix: Add ' to prevent GS formula error
           service: lead.service,
-          msg: lead.msg 
+          msg: lead.msg
         })
       }).catch(err => console.error('GS Sync Error:', err));
     }
-    
+
     fetchData();
   };
 
@@ -1513,7 +1687,7 @@ export default function Portal() {
     if (data.length === 0) {
       return triggerInfo('No data to export!');
     }
-    
+
     const headers = ['Time', 'Client Name', 'Email', 'Phone', 'Service', 'Message', 'Status', 'Notes'];
     const rows = data.map(r => [
       `"${r.time}"`,
@@ -1526,7 +1700,7 @@ export default function Portal() {
       `"${r.notes.replace(/"/g, '""')}"`
     ]);
 
-    const csvContent = "data:text/csv;charset=utf-8," 
+    const csvContent = "data:text/csv;charset=utf-8,"
       + [headers, ...rows].map(e => e.join(",")).join("\n");
 
     const encodedUri = encodeURI(csvContent);
@@ -1544,7 +1718,7 @@ export default function Portal() {
       return;
     }
     if (!rejectReason.trim()) return;
-    await supabase.from('leads').update({ 
+    await supabase.from('leads').update({
       status: 'rejected',
       notes: `🚫 REJECTED: ${rejectReason}`,
       rejected_at: new Date().toISOString() // ⏱️ Start countdown
@@ -1560,7 +1734,6 @@ export default function Portal() {
     const publishedBlogs = mockBlogs.filter(b => b.status === 'published').length;
     const activeServices = mockServices.filter(s => s.status === 'active').length;
     const openLeads = relevantLeads.filter(r => ['NEW', 'ASSIGNED', 'IN_PROGRESS', 'WAITING', 'new', 'ongoing', 'pending'].includes(r.status)).length;
-    const activeTestimonials = mockTestimonials.filter(t => t.status === 'approved' || t.status === 'active').length;
     const openCareers = mockJobs.filter(j => j.status !== 'closed').length;
     const totalCaseStudies = mockCaseStudies.length;
     const totalFaqs = mockFaqs.length;
@@ -1573,8 +1746,6 @@ export default function Portal() {
       totalServices: mockServices.length,
       openLeads,
       totalLeads: relevantLeads.length,
-      activeTestimonials,
-      totalTestimonials: mockTestimonials.length,
       openCareers,
       totalCareers: mockJobs.length,
       totalCaseStudies,
@@ -1582,7 +1753,7 @@ export default function Portal() {
       activeStaff,
       needsReview: relevantLeads.filter(r => r.status === 'approval_pending').length
     };
-  }, [mockBlogs, mockServices, data, mockTestimonials, mockJobs, mockCaseStudies, mockFaqs, usersList, staffList, session?.role, session?.id]);
+  }, [mockBlogs, mockServices, data, mockJobs, mockCaseStudies, mockFaqs, usersList, staffList, session?.role, session?.id]);
 
   // Backward compatibility alias
   const stats = {
@@ -1619,7 +1790,6 @@ export default function Portal() {
     'Care Requests': 'leads',
     'Careers': 'careers',
     'Certificates': 'certificates',
-    'Testimonials': 'testimonials',
     'FAQ': 'faqs',
     'Users': 'users',
     'Security Logs': 'security_logs',
@@ -1655,7 +1825,6 @@ export default function Portal() {
     { id: 'Care Requests', icon: 'fa-solid fa-heart-pulse', label: 'Care Requests' },
     { id: 'Careers', icon: 'fa-solid fa-briefcase', label: 'Careers' },
     { id: 'Certificates', icon: 'fa-solid fa-graduation-cap', label: 'Certificates' },
-    { id: 'Testimonials', icon: 'fa-solid fa-comment-dots', label: 'Testimonials' },
     { id: 'FAQ', icon: 'fa-solid fa-circle-question', label: 'FAQ' },
     { id: 'Users', icon: 'fa-solid fa-users', label: 'Users' },
     { id: 'Security Logs', icon: 'fa-solid fa-shield-halved', label: 'Security Logs' },
@@ -1675,7 +1844,7 @@ export default function Portal() {
       <Helmet>
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
-      
+
       {/* SIDEBAR */}
       <aside className="admin-sidebar">
         <div className="sidebar-header">
@@ -1685,12 +1854,12 @@ export default function Portal() {
             <span>{session?.role === 'admin' ? 'Admin Panel' : 'Staff Portal'}</span>
           </div>
         </div>
-        
+
         <div className="sidebar-menu-title">Menu</div>
-        
+
         <nav className="sidebar-nav">
           {MENU_ITEMS.map(item => (
-            <div 
+            <div
               key={item.id}
               className={`sidebar-item ${activeTab === item.id ? 'active' : ''}`}
               onClick={() => handleTabChange(item.id)}
@@ -1739,9 +1908,9 @@ export default function Portal() {
                 <div style={{background: '#f8fafc', border: '1px solid #e2e8f0', padding: '1rem', borderRadius: '8px', fontSize: '0.85rem', color: '#475569', marginBottom: '1.5rem'}}>
                   Please contact a system administrator to request access.
                 </div>
-                <button 
-                  className="btn-refresh" 
-                  onClick={() => setActiveTab('Dashboard')} 
+                <button
+                  className="btn-refresh"
+                  onClick={() => setActiveTab('Dashboard')}
                   style={{padding: '0.75rem 2rem', background: '#2563eb', color: '#fff', borderColor: '#2563eb', fontWeight: 'bold'}}
                 >
                   Return to Dashboard
@@ -1767,11 +1936,6 @@ export default function Portal() {
                 <div className="dash-card-title">Open Care Requests</div>
                 <div className="dash-card-value">{liveStats.openLeads}</div>
                 <div className="dash-card-footer"><i className="fa-solid fa-heart-pulse"></i> {liveStats.totalLeads} total inquiries</div>
-              </div>
-              <div className="dash-card">
-                <div className="dash-card-title">Active Testimonials</div>
-                <div className="dash-card-value">{liveStats.activeTestimonials}</div>
-                <div className="dash-card-footer"><i className="fa-solid fa-comment-dots"></i> {liveStats.totalTestimonials} approved reviews</div>
               </div>
               <div className="dash-card">
                 <div className="dash-card-title">Open Careers</div>
@@ -1833,8 +1997,8 @@ export default function Portal() {
                     <span>Care Requests</span>
                     <i className="fa-solid fa-arrow-right"></i>
                   </div>
-                  <div className="quick-action-btn">
-                    <span>Testimonials</span>
+                  <div className="quick-action-btn" onClick={() => handleTabChange('Careers')}>
+                    <span>Manage Careers</span>
                     <i className="fa-solid fa-arrow-right"></i>
                   </div>
                 </div>
@@ -1858,25 +2022,61 @@ export default function Portal() {
               <table className="portal-table">
                 <thead>
                   <tr>
+                    <th style={{width: '60px', textAlign: 'center'}}>Icon</th>
                     <th>Service Name</th>
                     <th>Category</th>
+                    <th>URL Slug</th>
                     <th>Status</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {mockServices.map(srv => (
-                    <tr key={srv.id}>
-                      <td><strong>{srv.name}</strong></td>
-                      <td><span className="pill badge-blue">{srv.category}</span></td>
-                      <td>
-                        <span className={`status-badge ${srv.status === 'active' ? 'status-new' : 'status-in-progress'}`}>{srv.status}</span>
-                      </td>
-                      <td>
-                        <button className="btn-action" onClick={() => handleOpenGenericModal('Service', srv)}>Edit</button>
-                      </td>
-                    </tr>
-                  ))}
+                  {mockServices.map(srv => {
+                    const resolvedSlug = srv.slug || resolveServiceSlug(srv, mockServices);
+                    return (
+                      <tr key={srv.id}>
+                        <td style={{fontSize: '1.5rem', textAlign: 'center'}}>{srv.icon || '🧪'}</td>
+                        <td><strong>{srv.name}</strong></td>
+                        <td><span className="pill badge-blue">{srv.category}</span></td>
+                        <td>
+                          <code style={{fontSize: '0.8rem', background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px', color: '#0f172a'}}>
+                            /services/{resolvedSlug}
+                          </code>
+                        </td>
+                        <td>
+                          <span className={`status-badge ${srv.status === 'active' ? 'status-won' : (srv.status === 'beta' ? 'status-new' : 'status-lost')}`}>{srv.status}</span>
+                        </td>
+                        <td>
+                          <button className="btn-action" onClick={() => handleOpenGenericModal('Service', srv)}>Edit</button>
+                          <a
+                            href={`${PUBLIC_VERIFY_URL}/services/${resolvedSlug}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn-action"
+                            style={{marginLeft: '6px', textDecoration: 'none'}}
+                          >
+                            View ↗
+                          </a>
+                          <button
+                            className="btn-action"
+                            style={{marginLeft: '6px', color: '#dc2626'}}
+                            onClick={() => {
+                              showConfirm({
+                                title: 'Delete Service?',
+                                description: `Permanently delete "${srv.name}"? This action cannot be undone.`,
+                                confirmLabel: 'Delete Service',
+                                cancelLabel: 'Cancel',
+                                isDestructive: true,
+                                onConfirm: () => handleDeleteService(srv.id)
+                              });
+                            }}
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -1890,35 +2090,79 @@ export default function Portal() {
                 <h2>Blog Content</h2>
                 <button className="btn-settings" style={{background: 'var(--brand-blue)', color: 'white'}} onClick={() => handleOpenGenericModal('Blog')}>✍️ New Post</button>
               </div>
-              <div className="filter-row" style={{marginBottom: '1rem'}}>
-                <button className="filter-btn active">All Posts</button>
-                <button className="filter-btn">Published</button>
-                <button className="filter-btn">Drafts</button>
+              <div className="filter-row" style={{marginBottom: '1rem', display: 'flex', gap: '8px'}}>
+                <button
+                  className={`filter-btn ${blogFilter === 'all' ? 'active' : ''}`}
+                  onClick={() => setBlogFilter('all')}
+                >
+                  All Posts ({blogCounts.all})
+                </button>
+                <button
+                  className={`filter-btn ${blogFilter === 'published' ? 'active' : ''}`}
+                  onClick={() => setBlogFilter('published')}
+                >
+                  Published ({blogCounts.published})
+                </button>
+                <button
+                  className={`filter-btn ${blogFilter === 'draft' ? 'active' : ''}`}
+                  onClick={() => setBlogFilter('draft')}
+                >
+                  Drafts ({blogCounts.draft})
+                </button>
               </div>
-              <table className="portal-table">
-                <thead>
-                  <tr>
-                    <th>Title</th>
-                    <th>Status</th>
-                    <th>Views</th>
-                    <th>Date</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {mockBlogs.map(post => (
-                    <tr key={post.id}>
-                      <td><strong>{post.title}</strong></td>
-                      <td><span className={`status-badge ${post.status === 'published' ? 'status-won' : 'status-lost'}`}>{post.status}</span></td>
-                      <td>{post.views}</td>
-                      <td>{post.date}</td>
-                      <td>
-                        <button className="btn-action" onClick={() => handleOpenGenericModal('Blog', post)}>Edit</button>
-                      </td>
+
+              {filteredBlogs.length === 0 ? (
+                <div className="empty-state" style={{padding: '3rem 1rem', textAlign: 'center', color: '#64748b'}}>
+                  <div style={{fontSize: '2.5rem', marginBottom: '0.75rem'}}>📝</div>
+                  <h3 style={{color: '#0f172a', marginBottom: '0.25rem'}}>
+                    {blogFilter === 'published' ? 'No published articles found.' : (blogFilter === 'draft' ? 'No draft articles found.' : 'No articles found.')}
+                  </h3>
+                  <p style={{fontSize: '0.9rem'}}>
+                    {blogFilter === 'published' ? 'Articles will appear here once published.' : 'Create a draft post or switch filters to view content.'}
+                  </p>
+                </div>
+              ) : (
+                <table className="portal-table">
+                  <thead>
+                    <tr>
+                      <th>Title</th>
+                      <th>Status</th>
+                      <th>Views</th>
+                      <th>Date</th>
+                      <th>Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {filteredBlogs.map(post => (
+                      <tr key={post.id}>
+                        <td><strong>{post.title}</strong></td>
+                        <td><span className={`status-badge ${post.status === 'published' ? 'status-won' : 'status-lost'}`}>{post.status}</span></td>
+                        <td>{post.views || 0}</td>
+                        <td>{post.date || 'Recent'}</td>
+                        <td>
+                          <button className="btn-action" onClick={() => handleOpenGenericModal('Blog', post)}>Edit</button>
+                          <button
+                            className="btn-action"
+                            style={{marginLeft: '6px', color: '#dc2626'}}
+                            onClick={() => {
+                              showConfirm({
+                                title: 'Delete Blog Article?',
+                                description: `Permanently delete "${post.title}"? This action cannot be undone.`,
+                                confirmLabel: 'Delete Article',
+                                cancelLabel: 'Cancel',
+                                isDestructive: true,
+                                onConfirm: () => handleDeleteBlog(post.id)
+                              });
+                            }}
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
           </div>
         )}
@@ -1930,31 +2174,75 @@ export default function Portal() {
                 <h2>Case Studies</h2>
                 <button className="btn-settings" style={{background: 'var(--brand-blue)', color: 'white'}} onClick={() => handleOpenGenericModal('Case Study')}>➕ Add Study</button>
               </div>
-              
-              {mockCaseStudies.length === 0 ? (
-                <div className="empty-state" style={{marginTop: '2rem'}}>
-                  <h3>No Case Studies Published</h3>
-                  <p>Add your first case study to showcase your work.</p>
+
+              <div className="filter-row" style={{marginBottom: '1rem', display: 'flex', gap: '8px'}}>
+                <button
+                  className={`filter-btn ${caseStudyFilter === 'all' ? 'active' : ''}`}
+                  onClick={() => setCaseStudyFilter('all')}
+                >
+                  All Case Studies ({caseStudyCounts.all})
+                </button>
+                <button
+                  className={`filter-btn ${caseStudyFilter === 'published' ? 'active' : ''}`}
+                  onClick={() => setCaseStudyFilter('published')}
+                >
+                  Published ({caseStudyCounts.published})
+                </button>
+                <button
+                  className={`filter-btn ${caseStudyFilter === 'draft' ? 'active' : ''}`}
+                  onClick={() => setCaseStudyFilter('draft')}
+                >
+                  Drafts ({caseStudyCounts.draft})
+                </button>
+              </div>
+
+              {filteredCaseStudies.length === 0 ? (
+                <div className="empty-state" style={{padding: '3rem 1rem', textAlign: 'center', color: '#64748b'}}>
+                  <div style={{fontSize: '2.5rem', marginBottom: '0.75rem'}}>💼</div>
+                  <h3 style={{color: '#0f172a', marginBottom: '0.25rem'}}>
+                    {caseStudyFilter === 'published' ? 'No published case studies found.' : (caseStudyFilter === 'draft' ? 'No draft case studies found.' : 'No case studies found.')}
+                  </h3>
+                  <p style={{fontSize: '0.9rem'}}>Add a case study or switch filters to view items.</p>
                 </div>
               ) : (
-                <div className="leads-table-wrap" style={{marginTop: '1.5rem'}}>
+                <div className="leads-table-wrap" style={{marginTop: '1rem'}}>
                   <table className="leads-table">
                     <thead>
                       <tr>
                         <th>Client</th>
                         <th>Category Tag</th>
+                        <th>Status</th>
                         <th>Outcome</th>
                         <th>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {mockCaseStudies.map(cs => (
+                      {filteredCaseStudies.map(cs => (
                         <tr key={cs.id}>
                           <td><strong>{cs.client}</strong></td>
-                          <td><span className="role-badge employee" style={{background:'#eff6ff', color:'#1d4ed8'}}>{cs.tag}</span></td>
+                          <td><span className="role-badge employee" style={{background:'#eff6ff', color:'#1d4ed8'}}>{cs.tag || cs.category || 'QA'}</span></td>
+                          <td>
+                            <span className={`status-badge ${cs.status === 'published' ? 'status-won' : 'status-lost'}`}>{cs.status || 'published'}</span>
+                          </td>
                           <td>{cs.outcome}</td>
                           <td>
                             <button className="btn-action" onClick={() => handleOpenGenericModal('Case Study', cs)}>Edit</button>
+                            <button
+                              className="btn-action"
+                              style={{marginLeft: '6px', color: '#dc2626'}}
+                              onClick={() => {
+                                showConfirm({
+                                  title: 'Delete Case Study?',
+                                  description: `Permanently delete case study for "${cs.client}"? This action cannot be undone.`,
+                                  confirmLabel: 'Delete Case Study',
+                                  cancelLabel: 'Cancel',
+                                  isDestructive: true,
+                                  onConfirm: () => handleDeleteCaseStudy(cs.id)
+                                });
+                              }}
+                            >
+                              Delete
+                            </button>
                           </td>
                         </tr>
                       ))}
@@ -1962,32 +2250,6 @@ export default function Portal() {
                   </table>
                 </div>
               )}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'Testimonials' && (
-          <div className="portal-container" style={{padding: '2rem'}}>
-            <div className="dash-panel">
-              <div className="panel-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                <h2>Client Testimonials</h2>
-                <button className="btn-settings" style={{background: 'var(--brand-blue)', color: 'white'}} onClick={() => handleOpenGenericModal('Testimonial')}>➕ Add Testimonial</button>
-              </div>
-              <div className="interns-grid" style={{marginTop: '1.5rem'}}>
-                {mockTestimonials.map(t => (
-                  <div key={t.id} className="intern-card" style={{cursor: 'pointer'}} onClick={() => handleOpenGenericModal('Testimonial', t)}>
-                    <div className="intern-card-header">
-                      <h3>{t.client}</h3>
-                      <span className={`status-badge ${t.status === 'approved' ? 'status-won' : 'status-in-progress'}`}>{t.status}</span>
-                    </div>
-                    <div className="intern-card-body">
-                      <p style={{fontSize: '14px', color: '#666', marginBottom: '10px'}}>{t.company}</p>
-                      <p>"{t.text}"</p>
-                      <p style={{color: 'gold', marginTop: '10px'}}>{"★".repeat(t.rating)}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
           </div>
         )}
@@ -2028,18 +2290,18 @@ export default function Portal() {
                   </p>
                 </div>
                 <div style={{display: 'flex', gap: '8px', alignItems: 'center'}}>
-                  <button 
-                    className="btn-refresh" 
-                    onClick={fetchUsers} 
-                    disabled={usersLoading} 
+                  <button
+                    className="btn-refresh"
+                    onClick={fetchUsers}
+                    disabled={usersLoading}
                     style={{padding: '6px 14px', fontSize: '0.85rem'}}
                   >
                     ↻ {usersLoading ? 'Loading...' : 'Refresh Users'}
                   </button>
                   {hasPermission(session, 'users', 'create') && (
-                    <button 
-                      className="btn-settings" 
-                      style={{background: 'var(--brand-blue)', color: 'white', padding: '6px 14px', fontSize: '0.85rem'}} 
+                    <button
+                      className="btn-settings"
+                      style={{background: 'var(--brand-blue)', color: 'white', padding: '6px 14px', fontSize: '0.85rem'}}
                       onClick={() => handleOpenGenericModal('User')}
                     >
                       ➕ Invite User
@@ -2109,8 +2371,8 @@ export default function Portal() {
                             </td>
                             <td style={{color: '#475569'}}>{user.email}</td>
                             <td>
-                              <span 
-                                className={`pill ${user.role === 'admin' ? 'badge-blue' : user.role === 'blogger' ? 'badge-orange' : 'badge-purple'}`} 
+                              <span
+                                className={`pill ${user.role === 'admin' ? 'badge-blue' : user.role === 'blogger' ? 'badge-orange' : 'badge-purple'}`}
                                 style={{textTransform: 'uppercase', fontWeight: 'bold', fontSize: '0.75rem'}}
                               >
                                 {user.role}
@@ -2125,8 +2387,8 @@ export default function Portal() {
                             <td>
                               <div style={{display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center'}}>
                                 {user.role !== 'admin' && hasPermission(session, 'users', 'edit') && (
-                                  <button 
-                                    className="btn-action" 
+                                  <button
+                                    className="btn-action"
                                     onClick={() => handleOpenPermModal(user)}
                                     style={{background: '#3b82f6', color: '#fff', border: 'none', padding: '4px 8px', fontSize: '0.75rem', borderRadius: '4px'}}
                                     title="Edit granular permissions"
@@ -2135,8 +2397,8 @@ export default function Portal() {
                                   </button>
                                 )}
                                 {hasPermission(session, 'users', 'edit') && (
-                                  <button 
-                                    className="btn-action" 
+                                  <button
+                                    className="btn-action"
                                     onClick={() => handleOpenRoleModal(user)}
                                     disabled={isSelf}
                                     style={{background: isSelf ? '#e2e8f0' : '#8b5cf6', color: isSelf ? '#94a3b8' : '#fff', border: 'none', padding: '4px 8px', fontSize: '0.75rem', borderRadius: '4px', cursor: isSelf ? 'not-allowed' : 'pointer'}}
@@ -2146,8 +2408,8 @@ export default function Portal() {
                                   </button>
                                 )}
                                 {hasPermission(session, 'users', 'edit') && (
-                                  <button 
-                                    className="btn-action" 
+                                  <button
+                                    className="btn-action"
                                     onClick={() => handleToggleUserStatus(user)}
                                     disabled={isSelf}
                                     style={{background: isSelf ? '#e2e8f0' : (isDisabled ? '#10b981' : '#f59e0b'), color: isSelf ? '#94a3b8' : '#fff', border: 'none', padding: '4px 8px', fontSize: '0.75rem', borderRadius: '4px', cursor: isSelf ? 'not-allowed' : 'pointer'}}
@@ -2446,7 +2708,7 @@ export default function Portal() {
 
         {(activeTab === 'Care Requests' || activeTab === 'Certificates') && (
           <div className="portal-container" style={{padding: 0}}>
-            
+
             {/* Context Actions */}
             <div className="filter-row" style={{justifyContent: 'flex-end', marginBottom: '1rem'}}>
               {activeTab === 'Care Requests' && (
@@ -2484,10 +2746,10 @@ export default function Portal() {
                 <div className="form-group">
                   <label>Phone Number</label>
                   <div style={{display:'flex', gap:'5px', position:'relative'}}>
-                    <div 
+                    <div
                       className="country-picker-trigger"
                       style={{
-                        width:'100px', padding:'0.5rem', borderRadius:'8px', border:'1px solid #e2e8f0', 
+                        width:'100px', padding:'0.5rem', borderRadius:'8px', border:'1px solid #e2e8f0',
                         background:'white', cursor:'pointer', display:'flex', justifyContent:'space-between', alignItems:'center',
                         fontSize: '0.85rem', fontWeight: '600'
                       }}
@@ -2499,13 +2761,13 @@ export default function Portal() {
 
                     {showCountryList && (
                       <div className="country-dropdown-list" style={{
-                        position:'absolute', top:'100%', left:0, width:'250px', maxHeight:'300px', 
-                        overflowY:'auto', background:'white', border:'1px solid #e2e8f0', 
+                        position:'absolute', top:'100%', left:0, width:'250px', maxHeight:'300px',
+                        overflowY:'auto', background:'white', border:'1px solid #e2e8f0',
                         borderRadius:'12px', boxShadow:'0 10px 25px rgba(0,0,0,0.1)', zIndex:1000, marginTop:'5px'
                       }}>
-                        <input 
-                          type="text" 
-                          placeholder="Search country..." 
+                        <input
+                          type="text"
+                          placeholder="Search country..."
                           style={{width:'100%', padding:'10px', border:'none', borderBottom:'1px solid #f1f5f9', position:'sticky', top:0, background:'white'}}
                           value={countrySearch}
                           onChange={e => setCountrySearch(e.target.value)}
@@ -2513,7 +2775,7 @@ export default function Portal() {
                           onClick={e => e.stopPropagation()}
                         />
                         {ALL_COUNTRIES.filter(c => c.name.toLowerCase().includes(countrySearch.toLowerCase()) || c.code.includes(countrySearch)).map(c => (
-                          <div 
+                          <div
                             key={c.name}
                             style={{padding:'12px', cursor:'pointer', fontSize:'0.85rem', borderBottom:'1px solid #f8fafc', display:'flex', gap:'10px'}}
                             onClick={() => {
@@ -2525,19 +2787,19 @@ export default function Portal() {
                             onMouseOut={e => e.currentTarget.style.background = 'transparent'}
                           >
                             <span>{c.flag}</span>
-                            <strong>{c.code}</strong> 
+                            <strong>{c.code}</strong>
                             <span style={{color:'#64748b'}}>{c.name}</span>
                           </div>
                         ))}
                       </div>
                     )}
 
-                    <input 
+                    <input
                       style={{flex:1}}
-                      type="tel" 
-                      placeholder="00000 00000" 
-                      value={newLead.phone} 
-                      onChange={e => setNewLead({...newLead, phone: e.target.value.replace(/\D/g, '')})} 
+                      type="tel"
+                      placeholder="00000 00000"
+                      value={newLead.phone}
+                      onChange={e => setNewLead({...newLead, phone: e.target.value.replace(/\D/g, '')})}
                     />
                   </div>
                 </div>
@@ -2610,8 +2872,8 @@ export default function Portal() {
                   </div>
                   <div className="form-group">
                     <label>Internship Role</label>
-                    <select 
-                      value={newIntern.internship_role} 
+                    <select
+                      value={newIntern.internship_role}
                       onChange={e => setNewIntern({...newIntern, internship_role: e.target.value})}
                     >
                       <option value="QA Intern">QA Intern</option>
@@ -2624,12 +2886,12 @@ export default function Portal() {
                       <option value="other">Other (Custom Role)...</option>
                     </select>
                     {newIntern.internship_role === 'other' && (
-                      <input 
-                        type="text" 
-                        placeholder="Enter custom role title" 
+                      <input
+                        type="text"
+                        placeholder="Enter custom role title"
                         style={{marginTop: '10px'}}
                         onChange={e => setNewIntern({...newIntern, custom_role: e.target.value})}
-                        required 
+                        required
                       />
                     )}
                   </div>
@@ -2637,9 +2899,9 @@ export default function Portal() {
                     <label>Certificate ID Generator</label>
                     <div style={{display:'flex', alignItems:'center', gap:'5px'}}>
                       <span style={{background: '#f1f5f9', padding: '0.6rem', borderRadius: '8px', fontWeight: 'bold', fontSize: '0.85rem', color: '#64748b'}}>VAR-INT-</span>
-                      <select 
-                        style={{width: '90px'}} 
-                        value={newIntern.cert_year} 
+                      <select
+                        style={{width: '90px'}}
+                        value={newIntern.cert_year}
                         onChange={e => setNewIntern({...newIntern, cert_year: e.target.value})}
                       >
                         <option value="2023">2023</option>
@@ -2648,13 +2910,13 @@ export default function Portal() {
                         <option value="2026">2026</option>
                       </select>
                       <span style={{fontWeight: 'bold'}}>-</span>
-                      <input 
-                        type="text" 
-                        placeholder="001" 
-                        style={{flex: 1}} 
-                        value={newIntern.cert_num} 
-                        onChange={e => setNewIntern({...newIntern, cert_num: e.target.value.toUpperCase()})} 
-                        required 
+                      <input
+                        type="text"
+                        placeholder="001"
+                        style={{flex: 1}}
+                        value={newIntern.cert_num}
+                        onChange={e => setNewIntern({...newIntern, cert_num: e.target.value.toUpperCase()})}
+                        required
                       />
                     </div>
                     <p style={{fontSize: '0.7rem', color: '#94a3b8', marginTop: '5px'}}>
@@ -2668,17 +2930,17 @@ export default function Portal() {
                   <div className="form-group" style={{gridColumn: 'span 2'}}>
                     <label>Project Title</label>
                     <input type="text" placeholder="e.g. AI-Powered Testing" value={newIntern.project_title} onChange={e => setNewIntern({...newIntern, project_title: e.target.value})} />
-                    
+
                     {/* Suggestions Bar */}
                     {PROJECT_SUGGESTIONS[newIntern.internship_role] && (
                       <div className="suggestion-pills" style={{display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px'}}>
                         {PROJECT_SUGGESTIONS[newIntern.internship_role].map(title => (
-                          <button 
-                            key={title} 
-                            type="button" 
+                          <button
+                            key={title}
+                            type="button"
                             className="suggestion-pill"
                             style={{
-                              padding: '4px 10px', fontSize: '0.7rem', borderRadius: '100px', 
+                              padding: '4px 10px', fontSize: '0.7rem', borderRadius: '100px',
                               background: '#f1f5f9', border: '1px solid #e2e8f0', cursor: 'pointer',
                               color: '#475569', transition: 'all 0.2s'
                             }}
@@ -2750,29 +3012,29 @@ export default function Portal() {
                       <td>{new Date(intern.start_date).toLocaleDateString()} - {new Date(intern.end_date).toLocaleDateString()}</td>
                       <td>
                         <div style={{display:'flex', gap:'8px', alignItems:'center'}}>
-                          <button 
-                            className="btn-refresh" 
-                            onClick={() => window.open(`${PUBLIC_VERIFY_URL}/verify/${intern.public_verification_token || intern.certificate_id}`, '_blank')} 
+                          <button
+                            className="btn-refresh"
+                            onClick={() => window.open(`${PUBLIC_VERIFY_URL}/verify/${intern.public_verification_token || intern.certificate_id}`, '_blank')}
                             style={{padding:'4px 8px', fontSize:'0.75rem'}}
                           >
                             View
                           </button>
-                          <button 
-                            className="btn-refresh" 
+                          <button
+                            className="btn-refresh"
                             onClick={() => {
                               const verifyUrl = `${PUBLIC_VERIFY_URL}/verify/${intern.public_verification_token || intern.certificate_id}`;
                               navigator.clipboard.writeText(verifyUrl);
                               triggerInfo(`Verification link copied to clipboard!\n${verifyUrl}`);
-                            }} 
+                            }}
                             style={{padding:'4px 8px', fontSize:'0.75rem', background: '#0284c7', borderColor: '#0284c7', color: '#fff'}}
                             title="Copy public verification link"
                           >
                             Copy Link
                           </button>
                           {hasPermission(session, 'certificates', 'delete') && (
-                            <button 
-                              className="btn-del-staff" 
-                              onClick={() => requestDeleteIntern(intern)} 
+                            <button
+                              className="btn-del-staff"
+                              onClick={() => requestDeleteIntern(intern)}
                               style={{position:'static', background: '#fef2f2', color: '#dc2626', border: '1px solid #fca5a5'}}
                               title="Delete Certificate"
                             >
@@ -2800,13 +3062,13 @@ export default function Portal() {
             <div className={`stats-bar ${showMobileStats ? 'stats-open' : ''}`}>
           <div className="stat-box">
             <span>
-              <img 
-                src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f4ca/512.gif" 
-                width="24" 
-                style={{verticalAlign:'middle', marginRight:'8px'}} 
+              <img
+                src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f4ca/512.gif"
+                width="24"
+                style={{verticalAlign:'middle', marginRight:'8px'}}
                 alt="📊"
                 onError={(e) => { e.target.style.display = 'none'; e.target.insertAdjacentHTML('afterend', '📊 '); }}
-              /> 
+              />
               Total
             </span>
             <strong>{stats.total}</strong>
@@ -2819,39 +3081,39 @@ export default function Portal() {
           )}
           <div className="stat-box new">
             <span>
-              <img 
-                src="https://fonts.gstatic.com/s/e/notoemoji/latest/23f3/512.gif" 
-                width="24" 
-                style={{verticalAlign:'middle', marginRight:'8px'}} 
+              <img
+                src="https://fonts.gstatic.com/s/e/notoemoji/latest/23f3/512.gif"
+                width="24"
+                style={{verticalAlign:'middle', marginRight:'8px'}}
                 alt="⏳"
                 onError={(e) => { e.target.style.display = 'none'; e.target.insertAdjacentHTML('afterend', '⏳ '); }}
-              /> 
+              />
               Pending
             </span>
             <strong>{stats.new}</strong>
           </div>
           <div className="stat-box ongoing">
             <span>
-              <img 
-                src="https://fonts.gstatic.com/s/e/notoemoji/latest/2699_fe0f/512.gif" 
-                width="24" 
-                style={{verticalAlign:'middle', marginRight:'8px'}} 
+              <img
+                src="https://fonts.gstatic.com/s/e/notoemoji/latest/2699_fe0f/512.gif"
+                width="24"
+                style={{verticalAlign:'middle', marginRight:'8px'}}
                 alt="⚙️"
                 onError={(e) => { e.target.style.display = 'none'; e.target.insertAdjacentHTML('afterend', '⚙️ '); }}
-              /> 
+              />
               Ongoing
             </span>
             <strong>{stats.ongoing}</strong>
           </div>
           <div className="stat-box done">
             <span>
-              <img 
-                src="https://fonts.gstatic.com/s/e/notoemoji/latest/2705/512.gif" 
-                width="24" 
-                style={{verticalAlign:'middle', marginRight:'8px'}} 
+              <img
+                src="https://fonts.gstatic.com/s/e/notoemoji/latest/2705/512.gif"
+                width="24"
+                style={{verticalAlign:'middle', marginRight:'8px'}}
                 alt="✅"
                 onError={(e) => { e.target.style.display = 'none'; e.target.insertAdjacentHTML('afterend', '✅ '); }}
-              /> 
+              />
               Completed
             </span>
             <strong>{stats.completed}</strong>
@@ -2904,9 +3166,9 @@ export default function Portal() {
                           </div>
                         </div>
                       ) : (
-                        <select 
-                          className={`status-select ${String(r.status || 'NEW').toLowerCase()}`} 
-                          value={String(r.status || 'NEW').toUpperCase() === 'ONGOING' ? 'IN_PROGRESS' : String(r.status || 'NEW').toUpperCase() === 'COMPLETED' ? 'RESOLVED' : String(r.status || 'NEW').toUpperCase()} 
+                        <select
+                          className={`status-select ${String(r.status || 'NEW').toLowerCase()}`}
+                          value={String(r.status || 'NEW').toUpperCase() === 'ONGOING' ? 'IN_PROGRESS' : String(r.status || 'NEW').toUpperCase() === 'COMPLETED' ? 'RESOLVED' : String(r.status || 'NEW').toUpperCase()}
                           onChange={e => updateStatus(r.id, e.target.value)}
                         >
                           <option value="NEW">NEW</option>
@@ -2954,7 +3216,7 @@ export default function Portal() {
                     {session.role === 'admin' && (
                       <div style={{marginTop:'8px'}}>
                         <span style={{
-                          fontSize:'0.6rem', padding:'2px 8px', borderRadius:'100px', 
+                          fontSize:'0.6rem', padding:'2px 8px', borderRadius:'100px',
                           background: r.source === 'Website' ? '#dbeafe' : r.source === 'AI Chatbot' ? '#f3e8ff' : '#f1f5f9',
                           color: r.source === 'Website' ? '#1e40af' : r.source === 'AI Chatbot' ? '#7e22ce' : '#475569',
                           fontWeight:'800', textTransform:'uppercase', letterSpacing:'0.03em', border:'1px solid rgba(0,0,0,0.05)'
@@ -2966,10 +3228,10 @@ export default function Portal() {
                   </td>
                   <td><div className="service-tag">{r.service}</div><p className="client-msg">{r.msg}</p></td>
                   <td>
-                    <textarea 
-                      placeholder="Add notes..." 
-                      value={r.notes} 
-                      onChange={e => updateNoteLocally(r.id, e.target.value)} 
+                    <textarea
+                      placeholder="Add notes..."
+                      value={r.notes}
+                      onChange={e => updateNoteLocally(r.id, e.target.value)}
                       onBlur={e => saveNoteToDB(r.id, e.target.value)}
                     />
                   </td>
@@ -3002,7 +3264,7 @@ export default function Portal() {
                 <h2>Careers / Open Positions</h2>
                 <button className="btn-settings" style={{background: 'var(--brand-blue)', color: 'white'}} onClick={() => handleOpenGenericModal('Career')}>➕ Add Position</button>
               </div>
-              
+
               {mockJobs.length === 0 ? (
                 <div className="empty-state" style={{marginTop: '2rem'}}>
                   <h3>No Careers / Open Positions Listed</h3>
@@ -3044,6 +3306,17 @@ export default function Portal() {
         </main>
       </div>
 
+      {/* 🛠️ CMS Service Full Builder Modal */}
+      {genericModal.isOpen && genericModal.type === 'Service' && (
+        <ServiceEditorModal
+          isOpen={true}
+          data={genericModal.data}
+          onClose={() => handleCloseGenericModal(false)}
+          onSave={handleSaveService}
+          onDelete={handleDeleteService}
+        />
+      )}
+
       {/* 📖 CMS Case Study Multi-Section Editor Modal */}
       {genericModal.isOpen && genericModal.type === 'Case Study' && (
         <CaseStudyEditorModal
@@ -3066,14 +3339,12 @@ export default function Portal() {
         />
       )}
 
-      {/* --- Generic CRUD Modal (Services, Testimonials, FAQs, Users, Careers) --- */}
-      {genericModal.isOpen && genericModal.type !== 'Blog' && genericModal.type !== 'Case Study' && (
+      {/* --- Generic CRUD Modal (FAQs, Users, Careers) --- */}
+      {genericModal.isOpen && genericModal.type !== 'Blog' && genericModal.type !== 'Case Study' && genericModal.type !== 'Service' && (
         <div className="modern-modal-overlay">
           <div className="modern-modal-content">
             <div className="modern-modal-header">
               <h3>
-                {genericModal.type === 'Service' && '🛠️ '}
-                {genericModal.type === 'Testimonial' && '💬 '}
                 {genericModal.type === 'FAQ' && '❓ '}
                 {genericModal.type === 'User' && '👤 '}
                 {genericModal.type === 'Career' && '💼 '}
@@ -3085,59 +3356,6 @@ export default function Portal() {
             <form onSubmit={handleGenericSave} className="modern-modal-form">
               <div className="modern-modal-body">
                 <div className="modern-form-grid">
-              
-              {genericModal.type === 'Service' && (
-                <>
-                  <div className="modern-form-group">
-                    <label>Service Name</label>
-                    <input type="text" name="name" className="modern-input" defaultValue={genericModal.data?.name || ''} required placeholder="e.g., Automation Testing" />
-                  </div>
-                  <div className="modern-form-group">
-                    <label>Category</label>
-                    <input type="text" name="category" className="modern-input" defaultValue={genericModal.data?.category || ''} required placeholder="e.g., Testing" />
-                  </div>
-                  <div className="modern-form-group full-width">
-                    <label>Description</label>
-                    <textarea name="description" className="modern-input modern-textarea" defaultValue={genericModal.data?.description || ''} placeholder="Write a short description about this service..."></textarea>
-                  </div>
-                  <div className="modern-form-group full-width">
-                    <label>Status</label>
-                    <select name="status" className="modern-input" defaultValue={genericModal.data?.status || 'active'}>
-                      <option value="active">Active</option>
-                      <option value="beta">Beta</option>
-                      <option value="inactive">Inactive</option>
-                    </select>
-                  </div>
-                </>
-              )}
-
-              {genericModal.type === 'Testimonial' && (
-                <>
-                  <div className="modern-form-group">
-                    <label>Client Name</label>
-                    <input type="text" name="client" className="modern-input" defaultValue={genericModal.data?.client || ''} required placeholder="e.g., Jane Doe" />
-                  </div>
-                  <div className="modern-form-group">
-                    <label>Company</label>
-                    <input type="text" name="company" className="modern-input" defaultValue={genericModal.data?.company || ''} required placeholder="e.g., TechCorp" />
-                  </div>
-                  <div className="modern-form-group full-width">
-                    <label>Testimonial Text</label>
-                    <textarea name="text" className="modern-input modern-textarea" defaultValue={genericModal.data?.text || ''} required placeholder="What did they say about Varsaka?"></textarea>
-                  </div>
-                  <div className="modern-form-group">
-                    <label>Rating (1-5)</label>
-                    <input type="number" name="rating" className="modern-input" min="1" max="5" defaultValue={genericModal.data?.rating || 5} required />
-                  </div>
-                  <div className="modern-form-group">
-                    <label>Status</label>
-                    <select name="status" className="modern-input" defaultValue={genericModal.data?.status || 'pending'}>
-                      <option value="approved">Approved</option>
-                      <option value="pending">Pending</option>
-                    </select>
-                  </div>
-                </>
-              )}
 
               {genericModal.type === 'FAQ' && (
                 <>
@@ -3234,7 +3452,14 @@ export default function Portal() {
               <div className="modern-modal-actions">
                 {genericModal.data && (
                   <button type="button" className="modern-btn-delete" onClick={() => {
-                    if(window.confirm(`Are you sure you want to delete this ${genericModal.type}?`)) handleGenericDelete();
+                    showConfirm({
+                      title: `Delete ${genericModal.type}?`,
+                      description: `Are you sure you want to permanently delete this ${genericModal.type.toLowerCase()} record? This action cannot be undone.`,
+                      confirmLabel: `Delete ${genericModal.type}`,
+                      cancelLabel: 'Cancel',
+                      isDestructive: true,
+                      onConfirm: () => handleGenericDelete()
+                    });
                   }}>🗑️ Delete</button>
                 )}
                 <button type="button" className="modern-btn-cancel" onClick={() => handleCloseGenericModal(false)}>Cancel</button>
@@ -3258,10 +3483,10 @@ export default function Portal() {
               <p style={{fontSize: '0.9rem', color: '#64748b', marginBottom: '10px'}}>
                 Please provide a clear reason for rejecting this lead. This will be visible to the employee.
               </p>
-              <textarea 
-                value={rejectReason} 
-                onChange={e => setRejectReason(e.target.value)} 
-                placeholder="e.g., Duplicate entry, Incorrect service selected, etc." 
+              <textarea
+                value={rejectReason}
+                onChange={e => setRejectReason(e.target.value)}
+                placeholder="e.g., Duplicate entry, Incorrect service selected, etc."
               />
             </div>
             <div className="modal-footer">
@@ -3322,10 +3547,10 @@ export default function Portal() {
             </div>
             <div className="modal-body center-content">
               <div className="info-icon-wrap">
-                <img 
-                  src={infoIcon.url} 
-                  alt={infoIcon.fallback} 
-                  className="info-live-gif" 
+                <img
+                  src={infoIcon.url}
+                  alt={infoIcon.fallback}
+                  className="info-live-gif"
                   onError={(e) => {
                     e.target.style.display = 'none';
                     e.target.nextSibling.style.display = 'block';
@@ -3338,10 +3563,10 @@ export default function Portal() {
               </p>
             </div>
             <div className="modal-footer" style={{justifyContent: 'center'}}>
-              <button 
+              <button
                 id="btn-info-close"
-                className="btn-save" 
-                onClick={() => setShowInfoModal(false)} 
+                className="btn-save"
+                onClick={() => setShowInfoModal(false)}
                 style={{padding: '0.9rem 3rem', borderRadius: '100px'}}
               >
                 Got it
@@ -3376,9 +3601,9 @@ export default function Portal() {
               <button className="btn-cancel" onClick={() => setCertToDelete(null)} disabled={deletingCert}>
                 Cancel
               </button>
-              <button 
-                className="btn-confirm-reject" 
-                onClick={confirmDeleteCert} 
+              <button
+                className="btn-confirm-reject"
+                onClick={confirmDeleteCert}
                 disabled={deletingCert}
                 style={{background: '#dc2626', borderColor: '#dc2626'}}
               >
@@ -3406,7 +3631,7 @@ export default function Portal() {
               <p style={{fontSize: '0.85rem', color: '#475569', marginBottom: '1rem'}}>
                 Configure granular module-level permissions for this employee. Permissions are enforced by PostgreSQL Row Level Security (RLS) policies at the database layer.
               </p>
-              
+
               <div style={{border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden'}}>
                 <table className="portal-table" style={{margin: 0}}>
                   <thead style={{background: '#f8fafc'}}>
@@ -3428,7 +3653,7 @@ export default function Portal() {
                           const isChecked = Boolean(editingPerms[mod.key]?.[act.key]);
                           return (
                             <td key={act.key} style={{textAlign: 'center'}}>
-                              <input 
+                              <input
                                 type="checkbox"
                                 checked={isChecked}
                                 onChange={() => togglePermission(mod.key, act.key)}
@@ -3450,16 +3675,16 @@ export default function Portal() {
               )}
             </div>
             <div className="modal-footer" style={{display: 'flex', justifyContent: 'flex-end', gap: '10px'}}>
-              <button 
-                className="btn-cancel" 
-                onClick={() => { setPermModalUser(null); setEditingPerms(null); }} 
+              <button
+                className="btn-cancel"
+                onClick={() => { setPermModalUser(null); setEditingPerms(null); }}
                 disabled={savingPerms}
               >
                 Cancel
               </button>
-              <button 
-                className="btn-save" 
-                onClick={handleSavePermissions} 
+              <button
+                className="btn-save"
+                onClick={handleSavePermissions}
                 disabled={savingPerms}
                 style={{background: '#2563eb'}}
               >
@@ -3486,9 +3711,9 @@ export default function Portal() {
                 <label style={{fontSize: '0.85rem', fontWeight: '600', color: '#475569', marginBottom: '6px', display: 'block'}}>
                   System Role
                 </label>
-                <select 
-                  className="modern-input" 
-                  value={selectedNewRole} 
+                <select
+                  className="modern-input"
+                  value={selectedNewRole}
                   onChange={e => setSelectedNewRole(e.target.value)}
                   style={{width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1'}}
                 >
@@ -3530,9 +3755,9 @@ export default function Portal() {
               <button className="btn-cancel" onClick={() => setRoleModalUser(null)} disabled={savingRole}>
                 Cancel
               </button>
-              <button 
-                className="btn-save" 
-                onClick={handleSaveRole} 
+              <button
+                className="btn-save"
+                onClick={handleSaveRole}
                 disabled={savingRole}
                 style={{background: '#2563eb'}}
               >
@@ -3542,6 +3767,22 @@ export default function Portal() {
           </div>
         </div>
       )}
+
+      {/* Modern Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        confirmLabel={confirmDialog.confirmLabel}
+        cancelLabel={confirmDialog.cancelLabel}
+        isDestructive={confirmDialog.isDestructive}
+        isLoading={confirmDialog.isLoading}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={closeConfirm}
+      />
+
+      {/* Modern Toast Notifications */}
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 }

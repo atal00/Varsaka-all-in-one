@@ -3,6 +3,7 @@ import ImageUploadField from '../ImageUploadField';
 import RichContentEditor from '../RichContentEditor';
 import AccentColorPicker from './AccentColorPicker';
 import BlogDetailRenderer from './BlogDetailRenderer';
+import ConfirmDialog from '../ui/ConfirmDialog';
 
 const DEFAULT_BLOG_SECTIONS = [
   {
@@ -96,6 +97,16 @@ export default function BlogEditorModal({
 
   const [newTagInput, setNewTagInput] = useState('');
   const [editingSection, setEditingSection] = useState(null);
+  const [formError, setFormError] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState({
+    isOpen: false,
+    title: '',
+    description: '',
+    confirmLabel: 'Confirm',
+    cancelLabel: 'Cancel',
+    isDestructive: true,
+    action: null
+  });
 
   useEffect(() => {
     if (data) {
@@ -251,14 +262,22 @@ export default function BlogEditorModal({
   };
 
   const handleDeleteSection = (secId) => {
-    if (window.confirm('Delete this article section?')) {
-      setFormData(prev => ({
-        ...prev,
-        sections: prev.sections.filter(s => s.id !== secId)
-      }));
-      if (editingSection?.id === secId) setEditingSection(null);
-      setIsDirty(true);
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Delete Section?',
+      description: 'Are you sure you want to remove this article section? All section content will be discarded.',
+      confirmLabel: 'Delete Section',
+      cancelLabel: 'Cancel',
+      isDestructive: true,
+      action: () => {
+        setFormData(prev => ({
+          ...prev,
+          sections: prev.sections.filter(s => s.id !== secId)
+        }));
+        if (editingSection?.id === secId) setEditingSection(null);
+        setIsDirty(true);
+      }
+    });
   };
 
   const handleDuplicateSection = (sec) => {
@@ -296,16 +315,24 @@ export default function BlogEditorModal({
 
   const handleClose = () => {
     if (isDirty) {
-      if (!window.confirm('You have unsaved changes. Are you sure you want to discard them?')) {
-        return;
-      }
+      setConfirmDialog({
+        isOpen: true,
+        title: 'Discard Unsaved Changes?',
+        description: 'You have unsaved edits in this article. Are you sure you want to leave without saving?',
+        confirmLabel: 'Discard Changes',
+        cancelLabel: 'Keep Editing',
+        isDestructive: true,
+        action: () => onClose()
+      });
+      return;
     }
     onClose();
   };
 
   const handleSubmit = async (targetStatus) => {
+    setFormError(null);
     if (!formData.title.trim()) {
-      alert('Blog Title is required.');
+      setFormError('Blog Title is required.');
       setActiveTab('basic');
       return;
     }
@@ -337,11 +364,17 @@ export default function BlogEditorModal({
         slug: formData.slug || formData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
       };
 
+      // Strip empty id so database generates a new UUID
+      if (!finalPayload.id || typeof finalPayload.id !== 'string' || !finalPayload.id.trim()) {
+        delete finalPayload.id;
+      }
+
       await onSave(finalPayload);
       setIsDirty(false);
       onClose();
     } catch (err) {
-      alert(`Save failed: ${err.message}`);
+      console.error('Save blog error:', err);
+      setFormError('Unable to save article. Please verify the required fields and try again.');
     } finally {
       setSaving(false);
     }
@@ -349,10 +382,10 @@ export default function BlogEditorModal({
 
   return (
     <div className="custom-modal-overlay" style={{ zIndex: 1000, overflowY: 'auto', padding: '2rem 1rem' }}>
-      <div 
-        className="custom-modal-box" 
-        style={{ 
-          maxWidth: activeTab === 'preview' ? '1200px' : '960px', 
+      <div
+        className="custom-modal-box"
+        style={{
+          maxWidth: activeTab === 'preview' ? '1200px' : '960px',
           width: '95%',
           maxHeight: '90vh',
           display: 'flex',
@@ -373,6 +406,13 @@ export default function BlogEditorModal({
           </div>
           <button className="close-x" onClick={handleClose} type="button">✕</button>
         </div>
+
+        {formError && (
+          <div style={{ background: '#fef2f2', borderBottom: '1px solid #fecaca', color: '#b91c1c', padding: '10px 1.75rem', fontSize: '0.88rem', fontWeight: 600, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>⚠️ {formError}</span>
+            <button type="button" onClick={() => setFormError(null)} style={{ background: 'none', border: 'none', color: '#b91c1c', cursor: 'pointer', fontWeight: 700 }}>✕</button>
+          </div>
+        )}
 
         {/* Tab Navigation */}
         <div style={{
@@ -963,9 +1003,15 @@ export default function BlogEditorModal({
               <button
                 type="button"
                 onClick={() => {
-                  if (window.confirm('Permanently delete this Blog Article?')) {
-                    onDelete(formData.id);
-                  }
+                  setConfirmDialog({
+                    isOpen: true,
+                    title: 'Delete Blog Article?',
+                    description: `Permanently delete "${formData.title || 'this article'}"? This action cannot be undone.`,
+                    confirmLabel: 'Delete Article',
+                    cancelLabel: 'Cancel',
+                    isDestructive: true,
+                    action: () => onDelete(formData.id)
+                  });
                 }}
                 style={{
                   background: '#fef2f2',
@@ -1062,7 +1108,7 @@ export default function BlogEditorModal({
 
         {/* 🛠️ INDIVIDUAL BLOG SECTION EDITOR */}
         {editingSection && (
-          <div 
+          <div
             style={{
               position: 'fixed',
               inset: 0,
@@ -1090,8 +1136,8 @@ export default function BlogEditorModal({
                 <h4 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#1e293b' }}>
                   🛠️ Edit Section: {editingSection.title}
                 </h4>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => setEditingSection(null)}
                   style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#64748b' }}
                 >
@@ -1227,6 +1273,22 @@ export default function BlogEditorModal({
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        confirmLabel={confirmDialog.confirmLabel}
+        cancelLabel={confirmDialog.cancelLabel}
+        isDestructive={confirmDialog.isDestructive}
+        onConfirm={async () => {
+          if (confirmDialog.action) {
+            await confirmDialog.action();
+          }
+          setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+        }}
+        onCancel={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 }

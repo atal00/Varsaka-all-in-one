@@ -5,6 +5,7 @@ import './Home.css';
 import { sanitize, validateEmail } from '../utils/security';
 import SEO from '../components/SEO';
 import SecureCaptcha from '../components/SecureCaptcha';
+import { resolveServiceSlug } from '../utils/serviceSlug';
 
 const ALL_COUNTRIES = [
   { name: 'Afghanistan', code: '+93', flag: '🇦🇫' }, { name: 'Albania', code: '+355', flag: '🇦🇱' }, { name: 'Algeria', code: '+213', flag: '🇩🇿' },
@@ -129,11 +130,11 @@ export default function Home() {
         } else {
           // DB success! Use DB records; if empty, services is [] (clean empty state)
           setServices((sData || []).map((s, idx) => ({
-            icon: ['🧪', '🤖', '⚡', '🔐', '🧠', '📱'][idx % 6],
+            icon: s.icon || ['🧪', '🤖', '⚡', '🔐', '🧠', '📱'][idx % 6],
             title: s.name,
             desc: s.description || `Professional ${s.category} solutions delivered by Varsaka Labs experts.`,
             pill: s.category,
-            link: `/services/${s.name.toLowerCase().replace(/\s+/g, '-')}`
+            link: `/services/${resolveServiceSlug(s, sData)}`
           })));
         }
       } catch (err) {
