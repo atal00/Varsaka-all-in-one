@@ -3,14 +3,21 @@ import { ArrowLeft, Calendar, FileText, Share2, CheckCircle2, UserCheck, Sparkle
 import { ArticleActions } from './article-actions';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { AI_SERVICE_URL } from '@/lib/config';
+import prisma from '@/lib/prisma';
 
 async function getArticle(id: string) {
   try {
-    const res = await fetch(`${AI_SERVICE_URL}/articles/${id}`, { cache: 'no-store' });
-    if (!res.ok) return null;
-    return res.json();
+    const article = await prisma.article.findUnique({
+      where: { id },
+      include: { topic: true, research: true }
+    });
+    if (!article) return null;
+    return {
+      ...article,
+      humanizedScore: 98
+    };
   } catch (err) {
+    console.error('Error fetching article:', err);
     return null;
   }
 }

@@ -11,7 +11,6 @@ export const MODULES = [
   { key: 'leads', label: 'CARE REQUESTS', description: 'Client inquiries and project care requests' },
   { key: 'careers', label: 'CAREERS', description: 'Job openings and applicant pipeline' },
   { key: 'certificates', label: 'CERTIFICATES', description: 'Intern completion certificates and credentials' },
-  { key: 'testimonials', label: 'TESTIMONIALS', description: 'Client reviews and testimonials' },
   { key: 'faqs', label: 'FAQ', description: 'Frequently asked questions' },
   { key: 'users', label: 'USERS', description: 'Staff directory, roles, and permission assignments' },
   { key: 'security_logs', label: 'SECURITY LOGS', description: 'Audit trail and firewall event logs' },
@@ -25,7 +24,7 @@ export const ACTIONS = [
   { key: 'delete', label: 'Delete' }
 ];
 
-// 🛡️ Admin Invariant: Full unrestricted permission matrix for all 12 modules
+// 🛡️ Admin Invariant: Full unrestricted permission matrix
 export const ALL_ADMIN_PERMISSIONS = MODULES.reduce((acc, mod) => {
   acc[mod.key] = ACTIONS.reduce((actAcc, act) => {
     actAcc[act.key] = true;
@@ -42,7 +41,6 @@ export const DEFAULT_EMPLOYEE_PERMISSIONS = {
   leads: { view: true, create: true, edit: true, delete: false },
   careers: { view: true, create: false, edit: false, delete: false },
   certificates: { view: true, create: true, edit: false, delete: false },
-  testimonials: { view: true, create: false, edit: false, delete: false },
   faqs: { view: true, create: false, edit: false, delete: false },
   users: { view: false, create: false, edit: false, delete: false },
   security_logs: { view: false, create: false, edit: false, delete: false },
@@ -57,7 +55,6 @@ export const DEFAULT_BLOGGER_PERMISSIONS = {
   leads: { view: false, create: false, edit: false, delete: false },
   careers: { view: false, create: false, edit: false, delete: false },
   certificates: { view: false, create: false, edit: false, delete: false },
-  testimonials: { view: false, create: false, edit: false, delete: false },
   faqs: { view: false, create: false, edit: false, delete: false },
   users: { view: false, create: false, edit: false, delete: false },
   security_logs: { view: false, create: false, edit: false, delete: false },
@@ -72,7 +69,6 @@ export const DEFAULT_SECURITY_AUDITOR_PERMISSIONS = {
   leads: { view: false, create: false, edit: false, delete: false },
   careers: { view: false, create: false, edit: false, delete: false },
   certificates: { view: false, create: false, edit: false, delete: false },
-  testimonials: { view: false, create: false, edit: false, delete: false },
   faqs: { view: false, create: false, edit: false, delete: false },
   users: { view: false, create: false, edit: false, delete: false },
   security_logs: { view: true, create: false, edit: false, delete: false },

@@ -2,7 +2,7 @@ import http from 'http';
 
 async function testRoute(path, expectedStatus, checkText) {
   return new Promise((resolve) => {
-    const port = process.env.PORT || '3009';
+    const port = process.env.PORT || '3001';
     http.get(`http://localhost:${port}${path}`, (res) => {
       let data = '';
       res.on('data', chunk => data += chunk);
@@ -28,15 +28,17 @@ async function testRoute(path, expectedStatus, checkText) {
 }
 
 async function run() {
-  console.log('=== VERIFYING VARSAKA-BLOGS MIDDLEWARE & ROUTES ===\n');
-  const r1 = await testRoute('/', 200, 'VARSAKA');
-  const r2 = await testRoute('/practical-ai-in-software-testing', 200, 'Practical AI in Software Testing');
-  const r3 = await testRoute('/non-existent-blog-slug-404', 404);
-  const r4 = await testRoute('/dashboard', 307, 'loginto.varsaka.com');
+  console.log('=== VERIFYING VARSAKA INTERNAL BLOG GENERATOR & CMS ROUTES ===\n');
+  const r1 = await testRoute('/', 200, 'Content Intelligence');
+  const r2 = await testRoute('/', 200, 'Sign in to Dashboard');
+  const r3 = await testRoute('/dashboard', 307, 'loginto.varsaka.com');
+  const r4 = await testRoute('/security-redirect', 200);
   const r5 = await testRoute('/icon.png', 200);
+  const r6 = await testRoute('/practical-ai-in-software-testing', 404);
+  const r7 = await testRoute('/all-articles', 404);
 
-  const allPassed = r1 && r2 && r3 && r4 && r5;
-  console.log('\n=== RESULT:', allPassed ? 'ALL TESTS PASSED' : 'TESTS FAILED', '===');
+  const allPassed = r1 && r2 && r3 && r4 && r5 && r6 && r7;
+  console.log('\n=== RESULT:', allPassed ? 'ALL 7/7 TESTS PASSED' : 'TESTS FAILED', '===');
   process.exit(allPassed ? 0 : 1);
 }
 

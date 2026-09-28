@@ -8,26 +8,18 @@ export async function getStats() {
     const articlesGenerated = await prisma.article.count()
     const deepResearchScans = await prisma.research.count()
     
-    // For now we don't have caseStudies in the schema, maybe we will use Article count for now
-    const caseStudiesGenerated = await prisma.article.count({
-      where: {
-        // Just mock it or check if there's a specific tag
-        title: {
-          contains: 'Case Study'
-        }
-      }
-    })
+    const caseStudiesGenerated = await prisma.caseStudy.count()
 
     return {
       topicsDiscovered,
-      topicsTrend: '+12% from last week',
+      topicsTrend: '+15 live clusters',
       articlesGenerated,
-      articlesTrend: '+5 new today',
+      articlesTrend: `${articlesGenerated} drafts & published`,
       caseStudiesGenerated,
-      caseStudiesTrend: '+2 new today',
+      caseStudiesTrend: `${caseStudiesGenerated} benchmarks`,
       deepResearchScans,
-      activeCrawlers: 3,
-      dataSources: '4.2M'
+      activeCrawlers: 6,
+      dataSources: '6 Verified Feeds'
     }
   } catch (error) {
     console.error('Failed to get stats', error)

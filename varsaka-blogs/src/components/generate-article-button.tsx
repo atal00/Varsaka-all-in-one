@@ -16,7 +16,7 @@ export function GenerateArticleButton({ topicId, type = 'blog' }: { topicId: str
       const endpoint = type === 'blog' ? 'articles/generate' : 'case-studies/generate';
       const redirectBase = type === 'blog' ? 'articles' : 'case-studies';
       
-      const res = await fetch(`${AI_SERVICE_URL}/${endpoint}`, {
+      const res = await fetch(`/api/${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ topicId })

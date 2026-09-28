@@ -13,7 +13,7 @@ export function CaseStudyActions({ caseStudyId, isPublished, content }: { caseSt
   const handlePublish = async () => {
     setIsPublishing(true);
     try {
-      const res = await fetch(`${AI_SERVICE_URL}/case-studies/${caseStudyId}/publish`, {
+      const res = await fetch(`/api/case-studies/${caseStudyId}/publish`, {
         method: 'POST'
       });
       if (res.ok) {

@@ -26,10 +26,18 @@ async function check() {
   `);
   console.log('CASE STUDY COLUMNS:', csCols);
 
-  const blogs = await prisma.$queryRawUnsafe(`SELECT id, title, status FROM blogs;`);
+  const jobsCols = await prisma.$queryRawUnsafe(`
+    SELECT column_name, data_type 
+    FROM information_schema.columns 
+    WHERE table_name = 'jobs' 
+    ORDER BY ordinal_position;
+  `);
+  console.log('JOBS COLUMNS:', jobsCols);
+
+  const blogs = await prisma.$queryRawUnsafe(`SELECT id, title, status FROM public.blogs LIMIT 2;`);
   console.log('EXISTING BLOGS:', blogs);
 
-  const cs = await prisma.$queryRawUnsafe(`SELECT id, client, status FROM case_studies;`);
+  const cs = await prisma.$queryRawUnsafe(`SELECT id, client, status FROM public.case_studies LIMIT 2;`);
   console.log('EXISTING CASE STUDIES:', cs);
 
   await prisma.$disconnect();

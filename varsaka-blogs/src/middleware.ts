@@ -8,7 +8,7 @@ const FALLBACK_SUPABASE_ANON_KEY = 'sb_publishable_GyAl59bknkORHbIIFL9UgA_iOPDvc
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // 1. FAST PATH: Public blog routes never execute auth or Supabase edge calls
+  // 1. FAST PATH: Public/non-dashboard routes bypass auth processing
   if (!pathname.startsWith('/dashboard')) {
     return NextResponse.next()
   }
@@ -72,7 +72,7 @@ export async function middleware(request: NextRequest) {
   }
 }
 
-// Scoped strictly to protected dashboard routes — public blog routes bypass edge middleware entirely
+// Scoped strictly to protected dashboard routes
 export const config = {
   matcher: ['/dashboard/:path*'],
 }

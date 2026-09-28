@@ -13,7 +13,7 @@ export function ArticleActions({ articleId, isPublished, content }: { articleId:
   const handlePublish = async () => {
     setIsPublishing(true);
     try {
-      const res = await fetch(`${AI_SERVICE_URL}/articles/${articleId}/publish`, {
+      const res = await fetch(`/api/articles/${articleId}/publish`, {
         method: 'POST'
       });
       if (res.ok) {

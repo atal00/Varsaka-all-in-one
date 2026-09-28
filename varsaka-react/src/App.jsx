@@ -27,6 +27,7 @@ const PerformanceTesting = lazy(() => import('./pages/PerformanceTesting'));
 const SecurityTesting = lazy(() => import('./pages/SecurityTesting'));
 const AIPoweredTesting = lazy(() => import('./pages/AIPoweredTesting'));
 const MobileTesting = lazy(() => import('./pages/MobileTesting'));
+const ServiceDetail = lazy(() => import('./pages/ServiceDetail'));
 const Apply = lazy(() => import('./pages/Apply'));
 const BlogDetail = lazy(() => import('./pages/BlogDetail'));
 const CaseStudyDetail = lazy(() => import('./pages/CaseStudyDetail'));
@@ -186,6 +187,7 @@ function RequireAuth({ children, allowedRoles }) {
             <Route path="/services/security-testing" element={<><Navbar /><SecurityTesting /><Footer /></>} />
             <Route path="/services/ai-powered-testing" element={<><Navbar /><AIPoweredTesting /><Footer /></>} />
             <Route path="/services/mobile-testing" element={<><Navbar /><MobileTesting /><Footer /></>} />
+            <Route path="/services/:slug" element={<><Navbar /><ServiceDetail /><Footer /></>} />
             
             {/* Dynamic Security & 404 Pages */}
             <Route path="/404" element={<Fake404 />} />
